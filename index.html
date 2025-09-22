@@ -132,28 +132,37 @@ function extractJsonFromText(text){
 
 // ===== NOVO: parse do "name" com sufixo go:xxxxx =====
 function parseButtonNameAndLink(rawName, fallbackUrl){
-  // casa "qualquer coisa" + espaço + "go:algo" no final da string
   const m = rawName.match(/^(.*)\s+(go:[^\s]+)\s*$/i);
   if (m) {
-    const label = m[1].trim();   // "Canal 1"
-    const link  = m[2].trim();   // "go:espn1"
+    const label = m[1].trim();
+    const link  = m[2].trim();
     return { label, link };
   }
-  // se não tiver sufixo go:, usa o comportamento antigo
   return { label: rawName, link: fallbackUrl };
 }
 
-// Função para gerar logo do time automaticamente
-function getTeamLogo(teamName){
-  // Substitui espaços por "-" para URLs, exemplo simples
-  return `https://logo.clearbit.com/${teamName.replace(/\s+/g,'')}.com`; 
+// Carrega o JSON de times
+let teamsData = [];
+async function loadTeams(){
+  try {
+    const res = await fetch('teams.json', {cache:'no-store'});
+    teamsData = await res.json();
+  } catch(e){
+    console.warn("Erro ao carregar teams.json", e);
+    teamsData = [];
+  }
 }
 
-// Função para gerar logo do campeonato automaticamente
+// Busca a logo do time pelo nome
+function getTeamLogo(teamName){
+  if(!teamName || !teamsData.length) return 'https://via.placeholder.com/50?text=?';
+  const team = teamsData.find(t => t.name.toLowerCase() === teamName.toLowerCase());
+  return team ? team.logo : 'https://via.placeholder.com/50?text=?';
+}
+
+// Mantemos apenas o nome do campeonato
 function getChampionshipLogo(champ){
-  // Atenção: direto do Google Images não funciona por CORS
-  // Você pode usar API de imagens como Unsplash/Bing ou fallback manual
-  return `https://via.placeholder.com/24?text=${encodeURIComponent(champ.charAt(0))}`;
+  return '';
 }
 
 function renderList(items){
