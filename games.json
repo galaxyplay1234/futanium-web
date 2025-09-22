@@ -4,7 +4,7 @@
     "home_team": "Manchester City",
     "visiting_team": "Arsenal",
     "start_time": "16:00",
-    "is_live": true,
+    "is_live": false,
     "buttons": [
       { "name": "Canal 1", "url": "https://meuplayer.com/stream1" }
     ]
