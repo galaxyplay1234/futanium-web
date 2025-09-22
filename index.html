@@ -143,6 +143,19 @@ function parseButtonNameAndLink(rawName, fallbackUrl){
   return { label: rawName, link: fallbackUrl };
 }
 
+// Função para gerar logo do time automaticamente
+function getTeamLogo(teamName){
+  // Substitui espaços por "-" para URLs, exemplo simples
+  return `https://logo.clearbit.com/${teamName.replace(/\s+/g,'')}.com`; 
+}
+
+// Função para gerar logo do campeonato automaticamente
+function getChampionshipLogo(champ){
+  // Atenção: direto do Google Images não funciona por CORS
+  // Você pode usar API de imagens como Unsplash/Bing ou fallback manual
+  return `https://via.placeholder.com/24?text=${encodeURIComponent(champ.charAt(0))}`;
+}
+
 function renderList(items){
   listEl.innerHTML='';
   (items||[]).forEach((it)=>{
@@ -152,12 +165,11 @@ function renderList(items){
     const head = document.createElement('div');
     head.innerHTML = `
       <div class="champ">
-        ${it.championship_image_url?`<img class="clogo" src="${it.championship_image_url}" alt="">`:''}
-        <div>${it.championship||''}</div>
+        <img class="clogo" src="${it.championship_image_url || getChampionshipLogo(it.championship)}" alt="">        <div>${it.championship||''}</div>
       </div>
       <div class="row">
         <div class="team">
-          ${it.home_team_image_url?`<img class="tlogo" src="${it.home_team_image_url}" onerror="this.style.display='none'">`:''}
+          <img class="tlogo" src="${it.home_team_image_url || getTeamLogo(it.home_team)}" onerror="this.style.display='none'">
           <div class="tname">${it.home_team||''}</div>
         </div>
         <div class="timeBox">
@@ -165,7 +177,7 @@ function renderList(items){
           ${it.is_live?`<div class="live"><span class="ldot">•</span><span class="ltxt">ao vivo</span></div>`:''}
         </div>
         <div class="team">
-          ${it.visiting_team_image_url?`<img class="tlogo" src="${it.visiting_team_image_url}" onerror="this.style.display='none'">`:''}
+          <img class="tlogo" src="${it.visiting_team_image_url || getTeamLogo(it.visiting_team)}" onerror="this.style.display='none'">
           <div class="tname">${it.visiting_team||''}</div>
         </div>
       </div>`;
