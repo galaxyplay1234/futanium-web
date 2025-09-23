@@ -3,37 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <title>Painel Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
   <!-- Tela de Login -->
   <div id="login-screen" class="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-bold mb-4 text-center">Login</h2>
-    <input id="username" type="text" placeholder="Usuário" class="w-full p-2 border rounded mb-3">
-    <input id="password" type="password" placeholder="Senha" class="w-full p-2 border rounded mb-3">
-    <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+    <input id="username" type="text" placeholder="Usuário" 
+           class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <input id="password" type="password" placeholder="Senha" 
+           class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <button onclick="login()" 
+            class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
       Entrar
     </button>
-    <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Usuário ou senha incorretos!</p>
+    <p id="login-error" class="text-red-500 text-sm mt-3 hidden text-center">Usuário ou senha incorretos!</p>
   </div>
 
   <!-- Dashboard -->
-  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto p-4 sm:p-6">
+  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto p-4">
     <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-center sm:text-left">Painel de Administração</h1>
 
     <!-- Tabs -->
-    <div class="flex flex-wrap gap-2 mb-6">
-      <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded text-sm sm:text-base">Times</button>
-      <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded text-sm sm:text-base">Campeonatos</button>
+    <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
+      <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Times</button>
+      <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Campeonatos</button>
     </div>
 
     <!-- Conteúdo Times -->
     <div id="tab-times" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
       <form id="team-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="team-name" type="text" placeholder="Nome do time" class="flex-1 p-2 border rounded">
-        <input id="team-logo" type="text" placeholder="URL do escudo" class="flex-1 p-2 border rounded">
+        <input id="team-name" type="text" placeholder="Nome do time" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="team-logo" type="text" placeholder="URL do escudo" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
       </form>
       <div class="overflow-x-auto">
@@ -54,8 +60,10 @@
     <div id="tab-champions" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
       <form id="champ-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="champ-name" type="text" placeholder="Nome do campeonato" class="flex-1 p-2 border rounded">
-        <input id="champ-logo" type="text" placeholder="URL da logo" class="flex-1 p-2 border rounded">
+        <input id="champ-name" type="text" placeholder="Nome do campeonato" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="champ-logo" type="text" placeholder="URL da logo" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
       </form>
       <div class="overflow-x-auto">
@@ -102,10 +110,9 @@ document.getElementById("team-form").addEventListener("submit", e=>{
   const logo = document.getElementById("team-logo").value;
   const tr = document.createElement("tr");
   tr.innerHTML = `<td class="p-2">${name}</td>
-                  <td class="p-2"><img src="${logo}" alt="" class="h-6 sm:h-8"></td>
+                  <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
                   <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
   document.getElementById("teams-list").appendChild(tr);
-  e.target.reset();
 });
 
 // Campeonatos
@@ -115,10 +122,9 @@ document.getElementById("champ-form").addEventListener("submit", e=>{
   const logo = document.getElementById("champ-logo").value;
   const tr = document.createElement("tr");
   tr.innerHTML = `<td class="p-2">${name}</td>
-                  <td class="p-2"><img src="${logo}" alt="" class="h-6 sm:h-8"></td>
+                  <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
                   <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
   document.getElementById("champions-list").appendChild(tr);
-  e.target.reset();
 });
 </script>
 </body>
