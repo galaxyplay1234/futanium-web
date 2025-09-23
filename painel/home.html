@@ -28,11 +28,36 @@
 
     <!-- Tabs -->
     <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
+      <button onclick="showTab('home')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Home</button>
+      <button onclick="showTab('addgame')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Adicionar Jogo</button>
       <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Times</button>
       <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Campeonatos</button>
+      <button onclick="showTab('buttons')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Botões</button>
     </div>
 
-    <!-- Conteúdo Times -->
+    <!-- Home -->
+    <div id="tab-home" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
+      <ul id="games-list" class="space-y-2"></ul>
+    </div>
+
+    <!-- Adicionar Jogo -->
+    <div id="tab-addgame" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
+      <form id="game-form" class="flex flex-col gap-2 mb-4">
+        <input id="game-champ" type="text" placeholder="Campeonato" 
+               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="game-home-team" type="text" placeholder="Time da Casa" 
+               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="game-away-team" type="text" placeholder="Time Visitante" 
+               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
+               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar Jogo</button>
+      </form>
+    </div>
+
+    <!-- Times -->
     <div id="tab-times" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
       <form id="team-form" class="flex flex-col sm:flex-row gap-2 mb-4">
@@ -56,7 +81,7 @@
       </div>
     </div>
 
-    <!-- Conteúdo Campeonatos -->
+    <!-- Campeonatos -->
     <div id="tab-champions" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
       <form id="champ-form" class="flex flex-col sm:flex-row gap-2 mb-4">
@@ -76,6 +101,30 @@
             </tr>
           </thead>
           <tbody id="champions-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Botões -->
+    <div id="tab-buttons" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
+      <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="button-name" type="text" placeholder="Nome do canal" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="button-link" type="text" placeholder="Link do botão" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+      </form>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Canal</th>
+              <th class="p-2 text-left">Link</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="buttons-list"></tbody>
         </table>
       </div>
     </div>
@@ -125,6 +174,32 @@ document.getElementById("champ-form").addEventListener("submit", e=>{
                   <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
                   <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
   document.getElementById("champions-list").appendChild(tr);
+});
+
+// Botões
+document.getElementById("button-form").addEventListener("submit", e=>{
+  e.preventDefault();
+  const name = document.getElementById("button-name").value;
+  const link = document.getElementById("button-link").value;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td class="p-2">${name}</td>
+                  <td class="p-2"><a href="${link}" target="_blank" class="text-blue-600 underline">${link}</a></td>
+                  <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+  document.getElementById("buttons-list").appendChild(tr);
+});
+
+// Jogos
+document.getElementById("game-form").addEventListener("submit", e=>{
+  e.preventDefault();
+  const champ = document.getElementById("game-champ").value;
+  const home = document.getElementById("game-home-team").value;
+  const away = document.getElementById("game-away-team").value;
+  const time = document.getElementById("game-time").value;
+  const li = document.createElement("li");
+  li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
+  li.innerHTML = `<span>${time} - ${home} x ${away} (${champ})</span>
+                  <button onclick="this.closest('li').remove()" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>`;
+  document.getElementById("games-list").appendChild(li);
 });
 </script>
 </body>
