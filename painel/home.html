@@ -11,14 +11,9 @@
   <!-- Tela de Login -->
   <div id="login-screen" class="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
     <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
-    <input id="username" type="text" placeholder="Usuário" 
-           class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
-    <input id="password" type="password" placeholder="Senha" 
-           class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
-    <button onclick="login()" 
-            class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
-      Entrar
-    </button>
+    <input id="username" type="text" placeholder="Usuário" class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <input id="password" type="password" placeholder="Senha" class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+    <button onclick="login()" class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">Entrar</button>
     <p id="login-error" class="text-red-500 text-sm mt-3 hidden text-center">Usuário ou senha incorretos!</p>
   </div>
 
@@ -41,25 +36,28 @@
       <ul id="games-list" class="space-y-2"></ul>
     </div>
 
-    <!-- Adicionar Jogo -->
+    <!-- Adicionar/Editar Jogo -->
     <div id="tab-addgame" class="tab-content hidden">
-      <h2 class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Adicionar / Editar Jogo</h2>
       <form id="game-form" class="flex flex-col gap-2 mb-4">
-        <select id="game-champ" 
-                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-champ" class="p-2 border rounded">
           <option value="">Selecione o Campeonato</option>
         </select>
-        <select id="game-home-team" 
-                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-home-team" class="p-2 border rounded">
           <option value="">Selecione o Time da Casa</option>
         </select>
-        <select id="game-away-team" 
-                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-away-team" class="p-2 border rounded">
           <option value="">Selecione o Time Visitante</option>
         </select>
-        <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
-               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar Jogo</button>
+        <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" class="p-2 border rounded">
+
+        <!-- Canais -->
+        <select id="button1" class="p-2 border rounded"><option value="">Canal 1</option></select>
+        <select id="button2" class="p-2 border rounded"><option value="">Canal 2</option></select>
+        <select id="button3" class="p-2 border rounded"><option value="">Canal 3</option></select>
+        <select id="button4" class="p-2 border rounded"><option value="">Canal 4</option></select>
+
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
     </div>
 
@@ -67,21 +65,13 @@
     <div id="tab-times" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
       <form id="team-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="team-name" type="text" placeholder="Nome do time" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="team-logo" type="text" placeholder="URL do escudo" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="team-name" type="text" placeholder="Nome do time" class="flex-1 p-2 border rounded">
+        <input id="team-logo" type="text" placeholder="URL do escudo" class="flex-1 p-2 border rounded">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
       </form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="p-2 text-left">Time</th>
-              <th class="p-2 text-left">Escudo</th>
-              <th class="p-2 text-left">Ações</th>
-            </tr>
-          </thead>
+          <thead><tr class="bg-gray-200"><th class="p-2">Time</th><th class="p-2">Escudo</th><th class="p-2">Ações</th></tr></thead>
           <tbody id="teams-list"></tbody>
         </table>
       </div>
@@ -91,21 +81,13 @@
     <div id="tab-champions" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
       <form id="champ-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="champ-name" type="text" placeholder="Nome do campeonato" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="champ-logo" type="text" placeholder="URL da logo" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="champ-name" type="text" placeholder="Nome do campeonato" class="flex-1 p-2 border rounded">
+        <input id="champ-logo" type="text" placeholder="URL da logo" class="flex-1 p-2 border rounded">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
       </form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="p-2 text-left">Campeonato</th>
-              <th class="p-2 text-left">Logo</th>
-              <th class="p-2 text-left">Ações</th>
-            </tr>
-          </thead>
+          <thead><tr class="bg-gray-200"><th class="p-2">Campeonato</th><th class="p-2">Logo</th><th class="p-2">Ações</th></tr></thead>
           <tbody id="champions-list"></tbody>
         </table>
       </div>
@@ -115,21 +97,13 @@
     <div id="tab-buttons" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
       <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="button-name" type="text" placeholder="Nome do canal" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="button-link" type="text" placeholder="Link do botão" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="button-name" type="text" placeholder="Nome do canal" class="flex-1 p-2 border rounded">
+        <input id="button-link" type="text" placeholder="Link do botão" class="flex-1 p-2 border rounded">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
       </form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
-          <thead>
-            <tr class="bg-gray-200">
-              <th class="p-2 text-left">Canal</th>
-              <th class="p-2 text-left">Link</th>
-              <th class="p-2 text-left">Ações</th>
-            </tr>
-          </thead>
+          <thead><tr class="bg-gray-200"><th class="p-2">Canal</th><th class="p-2">Link</th><th class="p-2">Ações</th></tr></thead>
           <tbody id="buttons-list"></tbody>
         </table>
       </div>
@@ -139,176 +113,152 @@
 <!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
-    authDomain: "futanium-web.firebaseapp.com",
-    projectId: "futanium-web",
-    storageBucket: "futanium-web.firebasestorage.app",
-    messagingSenderId: "594412535848",
-    appId: "1:594412535848:web:83477e68402960c94ff51d",
-    measurementId: "G-L2RV01TXJC"
-  };
-
-const app = initializeApp(firebaseConfig);
+const app = initializeApp({
+  apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
+  authDomain: "futanium-web.firebaseapp.com",
+  projectId: "futanium-web",
+  storageBucket: "futanium-web.firebasestorage.app",
+  messagingSenderId: "594412535848",
+  appId: "1:594412535848:web:83477e68402960c94ff51d"
+});
 const db = getFirestore(app);
 
-const USER = "admin";
-const PASS = "12345";
+const USER="admin", PASS="12345";
+let editingGameId=null;
 
-window.login = function() {
-  const u = document.getElementById("username").value;
-  const p = document.getElementById("password").value;
-  if (u === USER && p === PASS) {
+window.login=function(){
+  if(document.getElementById("username").value===USER && document.getElementById("password").value===PASS){
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
-    showTab('home'); // vai abrir Home direto
-    loadData();
-  } else {
-    document.getElementById("login-error").classList.remove("hidden");
-  }
-};
-
-window.showTab = function(tab) {
-  document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-  document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("bg-blue-600","text-white"));
-  document.getElementById("tab-" + tab).classList.remove("hidden");
+    showTab('home'); loadData();
+  } else document.getElementById("login-error").classList.remove("hidden");
+}
+window.showTab=function(tab){
+  document.querySelectorAll(".tab-content").forEach(el=>el.classList.add("hidden"));
+  document.querySelectorAll(".tab-btn").forEach(el=>el.classList.remove("bg-blue-600","text-white"));
+  document.getElementById("tab-"+tab).classList.remove("hidden");
   event.target.classList.add("bg-blue-600","text-white");
-};
+}
 
 // ===== Times =====
-document.getElementById("team-form").addEventListener("submit", async e => {
+document.getElementById("team-form").addEventListener("submit",async e=>{
   e.preventDefault();
-  const name = document.getElementById("team-name").value;
-  const logo = document.getElementById("team-logo").value;
-  if (!name || !logo) return;
+  const name=document.getElementById("team-name").value;
+  const logo=document.getElementById("team-logo").value;
+  if(!name||!logo) return;
   await addDoc(collection(db,"teams"),{name,logo});
-  document.getElementById("team-form").reset();
-  loadTeams();
+  document.getElementById("team-form").reset(); loadTeams();
 });
-
 async function loadTeams(){
-  const q = await getDocs(collection(db,"teams"));
-  const tbody = document.getElementById("teams-list");
-  tbody.innerHTML = "";
+  const q=await getDocs(collection(db,"teams"));
+  const tbody=document.getElementById("teams-list"); tbody.innerHTML="";
+  document.getElementById("game-home-team").innerHTML='<option value="">Selecione o Time da Casa</option>';
+  document.getElementById("game-away-team").innerHTML='<option value="">Selecione o Time Visitante</option>';
   q.forEach(docSnap=>{
-    const t = docSnap.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${t.name}</td>
-                    <td class="p-2"><img src="${t.logo}" class="h-6"></td>
-                    <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    const t=docSnap.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="p-2">${t.name}</td><td class="p-2"><img src="${t.logo}" class="h-6"></td>
+                  <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
-
-    // adiciona no select
-    const opt1 = new Option(t.name, t.name);
-    const opt2 = new Option(t.name, t.name);
-    document.getElementById("game-home-team").appendChild(opt1);
-    document.getElementById("game-away-team").appendChild(opt2);
+    document.getElementById("game-home-team").appendChild(new Option(t.name,t.name));
+    document.getElementById("game-away-team").appendChild(new Option(t.name,t.name));
   });
 }
-window.deleteTeam = async function(id){
-  await deleteDoc(doc(db,"teams",id));
-  loadTeams();
-};
+window.deleteTeam=async id=>{ await deleteDoc(doc(db,"teams",id)); loadTeams(); }
 
 // ===== Campeonatos =====
-document.getElementById("champ-form").addEventListener("submit", async e=>{
+document.getElementById("champ-form").addEventListener("submit",async e=>{
   e.preventDefault();
-  const name = document.getElementById("champ-name").value;
-  const logo = document.getElementById("champ-logo").value;
-  if(!name || !logo) return;
+  const name=document.getElementById("champ-name").value;
+  const logo=document.getElementById("champ-logo").value;
+  if(!name||!logo) return;
   await addDoc(collection(db,"championships"),{name,logo});
-  document.getElementById("champ-form").reset();
-  loadChamps();
+  document.getElementById("champ-form").reset(); loadChamps();
 });
 async function loadChamps(){
-  const q = await getDocs(collection(db,"championships"));
-  const tbody = document.getElementById("champions-list");
-  tbody.innerHTML = "";
-  document.getElementById("game-champ").innerHTML = `<option value="">Selecione o Campeonato</option>`;
+  const q=await getDocs(collection(db,"championships"));
+  const tbody=document.getElementById("champions-list"); tbody.innerHTML="";
+  document.getElementById("game-champ").innerHTML='<option value="">Selecione o Campeonato</option>';
   q.forEach(docSnap=>{
-    const c = docSnap.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${c.name}</td>
-                    <td class="p-2"><img src="${c.logo}" class="h-6"></td>
-                    <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    const c=docSnap.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="p-2">${c.name}</td><td class="p-2"><img src="${c.logo}" class="h-6"></td>
+                  <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
-
-    const opt = new Option(c.name, c.name);
-    document.getElementById("game-champ").appendChild(opt);
+    document.getElementById("game-champ").appendChild(new Option(c.name,c.name));
   });
 }
-window.deleteChamp = async function(id){
-  await deleteDoc(doc(db,"championships",id));
-  loadChamps();
-};
+window.deleteChamp=async id=>{ await deleteDoc(doc(db,"championships",id)); loadChamps(); }
 
 // ===== Botões =====
-document.getElementById("button-form").addEventListener("submit", async e=>{
+document.getElementById("button-form").addEventListener("submit",async e=>{
   e.preventDefault();
-  const name = document.getElementById("button-name").value;
-  const link = document.getElementById("button-link").value;
-  if(!name || !link) return;
+  const name=document.getElementById("button-name").value;
+  const link=document.getElementById("button-link").value;
+  if(!name||!link) return;
   await addDoc(collection(db,"buttons"),{name,link});
-  document.getElementById("button-form").reset();
-  loadButtons();
+  document.getElementById("button-form").reset(); loadButtons();
 });
 async function loadButtons(){
-  const q = await getDocs(collection(db,"buttons"));
-  const tbody = document.getElementById("buttons-list");
-  tbody.innerHTML = "";
+  const q=await getDocs(collection(db,"buttons"));
+  const tbody=document.getElementById("buttons-list"); tbody.innerHTML="";
+  ["button1","button2","button3","button4"].forEach(id=>document.getElementById(id).innerHTML=`<option value="">${id.replace('button','Canal ')}</option>`);
   q.forEach(docSnap=>{
-    const b = docSnap.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${b.name}</td>
-                    <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline">${b.link}</a></td>
-                    <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    const b=docSnap.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="p-2">${b.name}</td><td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline">${b.link}</a></td>
+                  <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
+    ["button1","button2","button3","button4"].forEach(id=>document.getElementById(id).appendChild(new Option(b.name,b.name)));
   });
 }
-window.deleteButton = async function(id){
-  await deleteDoc(doc(db,"buttons",id));
-  loadButtons();
-};
+window.deleteButton=async id=>{ await deleteDoc(doc(db,"buttons",id)); loadButtons(); }
 
 // ===== Jogos =====
-document.getElementById("game-form").addEventListener("submit", async e=>{
+let editingGameId=null;
+document.getElementById("game-form").addEventListener("submit",async e=>{
   e.preventDefault();
-  const champ = document.getElementById("game-champ").value;
-  const home = document.getElementById("game-home-team").value;
-  const away = document.getElementById("game-away-team").value;
-  const time = document.getElementById("game-time").value;
-  if(!champ || !home || !away || !time) return;
-  await addDoc(collection(db,"games"),{champ,home,away,time});
-  document.getElementById("game-form").reset();
-  loadGames();
+  const champ=document.getElementById("game-champ").value;
+  const home=document.getElementById("game-home-team").value;
+  const away=document.getElementById("game-away-team").value;
+  const time=document.getElementById("game-time").value;
+  const buttons=[1,2,3,4].map(n=>document.getElementById("button"+n).value).filter(v=>v);
+  if(!champ||!home||!away||!time) return;
+  if(editingGameId){ await updateDoc(doc(db,"games",editingGameId),{champ,home,away,time,buttons}); editingGameId=null; }
+  else await addDoc(collection(db,"games"),{champ,home,away,time,buttons});
+  document.getElementById("game-form").reset(); loadGames(); showTab('home');
 });
 async function loadGames(){
-  const q = await getDocs(collection(db,"games"));
-  const ul = document.getElementById("games-list");
-  ul.innerHTML = "";
+  const q=await getDocs(collection(db,"games"));
+  const ul=document.getElementById("games-list"); ul.innerHTML="";
   q.forEach(docSnap=>{
-    const g = docSnap.data();
-    const li = document.createElement("li");
-    li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
-    li.innerHTML = `<span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
-                    <button onclick="deleteGame('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>`;
+    const g=docSnap.data();
+    const li=document.createElement("li");
+    li.className="bg-white p-3 rounded shadow flex justify-between items-center";
+    li.innerHTML=`<span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
+    <div>
+      <button onclick="editGame('${docSnap.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm mr-1">Editar</button>
+      <button onclick="deleteGame('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
+    </div>`;
     ul.appendChild(li);
   });
 }
-window.deleteGame = async function(id){
-  await deleteDoc(doc(db,"games",id));
-  loadGames();
-};
+window.deleteGame=async id=>{ await deleteDoc(doc(db,"games",id)); loadGames(); }
+window.editGame=async id=>{
+  editingGameId=id;
+  const g=(await getDoc(doc(db,"games",id))).data();
+  document.getElementById("game-champ").value=g.champ;
+  document.getElementById("game-home-team").value=g.home;
+  document.getElementById("game-away-team").value=g.away;
+  document.getElementById("game-time").value=g.time;
+  ["button1","button2","button3","button4"].forEach((id,i)=>document.getElementById(id).value=g.buttons?g.buttons[i]||"": "");
+  showTab('addgame');
+}
 
 // ===== Carregar tudo =====
-async function loadData(){
-  await loadTeams();
-  await loadChamps();
-  await loadButtons();
-  await loadGames();
-}
+async function loadData(){ await loadTeams(); await loadChamps(); await loadButtons(); await loadGames(); }
 </script>
 </body>
 </html>
