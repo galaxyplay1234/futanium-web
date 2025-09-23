@@ -10,4 +10,16 @@
       { "name": "Canal 2", "url": "https://meuplayer.com/stream1" }
     ]
   }
+  
+  {
+    "championship": "Campeonato Francês",
+    "home_team": "Marseille",
+    "visiting_team": "PSG",
+    "start_time": "16:00",
+    "is_live": false,
+    "buttons": [
+      { "name": "Canal 1", "url": "https://meuplayer.com/stream1" }
+      { "name": "Canal 2", "url": "https://meuplayer.com/stream1" }
+    ]
+  }
 ]
