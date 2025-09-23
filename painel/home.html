@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+  <!-- Tela de Login -->
+  <div id="login-screen" class="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-bold mb-4 text-center">Login</h2>
+    <input id="username" type="text" placeholder="Usuário" class="w-full p-2 border rounded mb-3">
+    <input id="password" type="password" placeholder="Senha" class="w-full p-2 border rounded mb-3">
+    <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+      Entrar
+    </button>
+    <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Usuário ou senha incorretos!</p>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden w-full p-6">
+    <h1 class="text-3xl font-bold mb-6">Painel de Administração</h1>
+
+    <!-- Tabs -->
+    <div class="flex space-x-4 mb-6">
+      <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Times</button>
+      <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Campeonatos</button>
+    </div>
+
+    <!-- Conteúdo Times -->
+    <div id="tab-times" class="tab-content hidden">
+      <h2 class="text-xl font-semibold mb-4">Times</h2>
+      <form id="team-form" class="mb-4">
+        <input id="team-name" type="text" placeholder="Nome do time" class="p-2 border rounded mr-2">
+        <input id="team-logo" type="text" placeholder="URL do escudo" class="p-2 border rounded mr-2">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+      </form>
+      <table class="w-full bg-white rounded shadow">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2">Time</th>
+            <th class="p-2">Escudo</th>
+            <th class="p-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="teams-list"></tbody>
+      </table>
+    </div>
+
+    <!-- Conteúdo Campeonatos -->
+    <div id="tab-champions" class="tab-content hidden">
+      <h2 class="text-xl font-semibold mb-4">Campeonatos</h2>
+      <form id="champ-form" class="mb-4">
+        <input id="champ-name" type="text" placeholder="Nome do campeonato" class="p-2 border rounded mr-2">
+        <input id="champ-logo" type="text" placeholder="URL da logo" class="p-2 border rounded mr-2">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+      </form>
+      <table class="w-full bg-white rounded shadow">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2">Campeonato</th>
+            <th class="p-2">Logo</th>
+            <th class="p-2">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="champions-list"></tbody>
+      </table>
+    </div>
+  </div>
+
+<script>
+const USER = "admin";
+const PASS = "12345";
+
+function login(){
+  const u = document.getElementById("username").value;
+  const p = document.getElementById("password").value;
+  if(u === USER && p === PASS){
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+  } else {
+    document.getElementById("login-error").classList.remove("hidden");
+  }
+}
+
+function showTab(tab){
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+  document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("bg-blue-600","text-white"));
+  document.getElementById("tab-"+tab).classList.remove("hidden");
+  event.target.classList.add("bg-blue-600","text-white");
+}
+
+// Times
+document.getElementById("team-form").addEventListener("submit", e=>{
+  e.preventDefault();
+  const name = document.getElementById("team-name").value;
+  const logo = document.getElementById("team-logo").value;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td class="p-2">${name}</td>
+                  <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
+                  <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+  document.getElementById("teams-list").appendChild(tr);
+});
+
+// Campeonatos
+document.getElementById("champ-form").addEventListener("submit", e=>{
+  e.preventDefault();
+  const name = document.getElementById("champ-name").value;
+  const logo = document.getElementById("champ-logo").value;
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td class="p-2">${name}</td>
+                  <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
+                  <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+  document.getElementById("champions-list").appendChild(tr);
+});
+</script>
+</body>
+</html>
