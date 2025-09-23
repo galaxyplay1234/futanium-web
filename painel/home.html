@@ -5,6 +5,30 @@
   <title>Painel Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
+      authDomain: "futanium-web.firebaseapp.com",
+      projectId: "futanium-web",
+      storageBucket: "futanium-web.firebasestorage.app",
+      messagingSenderId: "594412535848",
+      appId: "1:594412535848:web:1cb933a46b4d35c34ff51d",
+      measurementId: "G-MK0W4M6RV5"
+    };
+
+    // Inicializa Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db; // deixa global para usar fora do módulo
+    window.firestoreFns = { collection, addDoc, getDocs, deleteDoc, doc };
+  </script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
@@ -45,16 +69,13 @@
     <div id="tab-addgame" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
       <form id="game-form" class="flex flex-col gap-2 mb-4">
-        <select id="game-champ" 
-                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-champ" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">Selecione o Campeonato</option>
         </select>
-        <select id="game-home-team" 
-                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-home-team" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">Selecione o Time da Casa</option>
         </select>
-        <select id="game-away-team" 
-                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-away-team" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">Selecione o Time Visitante</option>
         </select>
         <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
@@ -146,6 +167,9 @@ function login(){
   if(u === USER && p === PASS){
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
+    // abre direto na home
+    showTab('home');
+    loadAll();
   } else {
     document.getElementById("login-error").classList.remove("hidden");
   }
@@ -158,65 +182,132 @@ function showTab(tab){
   event.target.classList.add("bg-blue-600","text-white");
 }
 
+// -------- FIREBASE --------
+async function loadAll(){
+  await loadTeams();
+  await loadChampions();
+  await loadButtons();
+  await loadGames();
+}
+
 // Times
-document.getElementById("team-form").addEventListener("submit", e=>{
+document.getElementById("team-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const name = document.getElementById("team-name").value;
   const logo = document.getElementById("team-logo").value;
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td class="p-2">${name}</td>
-                  <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
-                  <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-  document.getElementById("teams-list").appendChild(tr);
-
-  // adiciona no select
-  const opt1 = new Option(name, name);
-  const opt2 = new Option(name, name);
-  document.getElementById("game-home-team").appendChild(opt1);
-  document.getElementById("game-away-team").appendChild(opt2);
+  await firestoreFns.addDoc(firestoreFns.collection(db,"times"),{nome:name,logo:logo});
+  document.getElementById("team-form").reset();
+  loadTeams();
 });
+async function loadTeams(){
+  const snap = await firestoreFns.getDocs(firestoreFns.collection(db,"times"));
+  const list = document.getElementById("teams-list");
+  list.innerHTML="";
+  const selectHome = document.getElementById("game-home-team");
+  const selectAway = document.getElementById("game-away-team");
+  selectHome.innerHTML = "<option value=''>Selecione o Time da Casa</option>";
+  selectAway.innerHTML = "<option value=''>Selecione o Time Visitante</option>";
+  snap.forEach(docSnap=>{
+    const t=docSnap.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="p-2">${t.nome}</td>
+                  <td class="p-2"><img src="${t.logo}" class="h-6"></td>
+                  <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    list.appendChild(tr);
+    selectHome.appendChild(new Option(t.nome,t.nome));
+    selectAway.appendChild(new Option(t.nome,t.nome));
+  });
+}
+async function deleteTeam(id){
+  await firestoreFns.deleteDoc(firestoreFns.doc(db,"times",id));
+  loadTeams();
+}
 
 // Campeonatos
-document.getElementById("champ-form").addEventListener("submit", e=>{
+document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const name = document.getElementById("champ-name").value;
-  const logo = document.getElementById("champ-logo").value;
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td class="p-2">${name}</td>
-                  <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
-                  <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-  document.getElementById("champions-list").appendChild(tr);
-
-  // adiciona no select
-  const opt = new Option(name, name);
-  document.getElementById("game-champ").appendChild(opt);
+  const name=document.getElementById("champ-name").value;
+  const logo=document.getElementById("champ-logo").value;
+  await firestoreFns.addDoc(firestoreFns.collection(db,"champions"),{nome:name,logo:logo});
+  document.getElementById("champ-form").reset();
+  loadChampions();
 });
+async function loadChampions(){
+  const snap=await firestoreFns.getDocs(firestoreFns.collection(db,"champions"));
+  const list=document.getElementById("champions-list");
+  list.innerHTML="";
+  const selectChamp=document.getElementById("game-champ");
+  selectChamp.innerHTML="<option value=''>Selecione o Campeonato</option>";
+  snap.forEach(docSnap=>{
+    const c=docSnap.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="p-2">${c.nome}</td>
+                  <td class="p-2"><img src="${c.logo}" class="h-6"></td>
+                  <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    list.appendChild(tr);
+    selectChamp.appendChild(new Option(c.nome,c.nome));
+  });
+}
+async function deleteChamp(id){
+  await firestoreFns.deleteDoc(firestoreFns.doc(db,"champions",id));
+  loadChampions();
+}
 
 // Botões
-document.getElementById("button-form").addEventListener("submit", e=>{
+document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const name = document.getElementById("button-name").value;
-  const link = document.getElementById("button-link").value;
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td class="p-2">${name}</td>
-                  <td class="p-2"><a href="${link}" target="_blank" class="text-blue-600 underline">${link}</a></td>
-                  <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-  document.getElementById("buttons-list").appendChild(tr);
+  const name=document.getElementById("button-name").value;
+  const link=document.getElementById("button-link").value;
+  await firestoreFns.addDoc(firestoreFns.collection(db,"buttons"),{nome:name,link:link});
+  document.getElementById("button-form").reset();
+  loadButtons();
 });
+async function loadButtons(){
+  const snap=await firestoreFns.getDocs(firestoreFns.collection(db,"buttons"));
+  const list=document.getElementById("buttons-list");
+  list.innerHTML="";
+  snap.forEach(docSnap=>{
+    const b=docSnap.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="p-2">${b.nome}</td>
+                  <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline">${b.link}</a></td>
+                  <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    list.appendChild(tr);
+  });
+}
+async function deleteButton(id){
+  await firestoreFns.deleteDoc(firestoreFns.doc(db,"buttons",id));
+  loadButtons();
+}
 
 // Jogos
-document.getElementById("game-form").addEventListener("submit", e=>{
+document.getElementById("game-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const champ = document.getElementById("game-champ").value;
-  const home = document.getElementById("game-home-team").value;
-  const away = document.getElementById("game-away-team").value;
-  const time = document.getElementById("game-time").value;
-  const li = document.createElement("li");
-  li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
-  li.innerHTML = `<span>${time} - ${home} x ${away} (${champ})</span>
-                  <button onclick="this.closest('li').remove()" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>`;
-  document.getElementById("games-list").appendChild(li);
+  const champ=document.getElementById("game-champ").value;
+  const home=document.getElementById("game-home-team").value;
+  const away=document.getElementById("game-away-team").value;
+  const time=document.getElementById("game-time").value;
+  await firestoreFns.addDoc(firestoreFns.collection(db,"games"),{champ:champ,home:home,away:away,time:time});
+  document.getElementById("game-form").reset();
+  loadGames();
 });
+async function loadGames(){
+  const snap=await firestoreFns.getDocs(firestoreFns.collection(db,"games"));
+  const list=document.getElementById("games-list");
+  list.innerHTML="";
+  snap.forEach(docSnap=>{
+    const g=docSnap.data();
+    const li=document.createElement("li");
+    li.className="bg-white p-3 rounded shadow flex justify-between items-center";
+    li.innerHTML=`<span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
+                  <button onclick="deleteGame('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>`;
+    list.appendChild(li);
+  });
+}
+async function deleteGame(id){
+  await firestoreFns.deleteDoc(firestoreFns.doc(db,"games",id));
+  loadGames();
+}
 </script>
 </body>
 </html>
