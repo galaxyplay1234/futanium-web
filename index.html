@@ -129,7 +129,7 @@ function extractJsonFromText(text){
   return m ? m[0] : text;
 }
 
-// ===== NOVO: parse do "name" com sufixo go:xxxxx =====
+// ===== parse do "name" com sufixo go:xxxxx =====
 function parseButtonNameAndLink(rawName, fallbackUrl){
   const m = rawName.match(/^(.*)\s+(go:[^\s]+)\s*$/i);
   if (m) {
@@ -140,7 +140,7 @@ function parseButtonNameAndLink(rawName, fallbackUrl){
   return { label: rawName, link: fallbackUrl };
 }
 
-// Carrega o JSON de times
+// ==================== TEAMS ====================
 let teamsData = [];
 async function loadTeams(){
   try {
@@ -151,19 +151,30 @@ async function loadTeams(){
     teamsData = [];
   }
 }
-
-// Busca a logo do time pelo nome
 function getTeamLogo(teamName){
   if(!teamName || !teamsData.length) return 'https://via.placeholder.com/50?text=?';
   const team = teamsData.find(t => t.name.toLowerCase() === teamName.toLowerCase());
   return team ? team.logo : 'https://via.placeholder.com/50?text=?';
 }
 
-// Mantemos apenas o nome do campeonato
-function getChampionshipLogo(champ){
-  return '';
+// ==================== CHAMPIONS ====================
+let championsData = [];
+async function loadChampions(){
+  try {
+    const res = await fetch('champions.json', {cache:'no-store'});
+    championsData = await res.json();
+  } catch(e){
+    console.warn("Erro ao carregar champions.json", e);
+    championsData = [];
+  }
+}
+function getChampionshipLogo(champName){
+  if(!champName || !championsData.length) return 'https://via.placeholder.com/24?text=?';
+  const champ = championsData.find(c => c.name.toLowerCase() === champName.toLowerCase());
+  return champ ? champ.logo : 'https://via.placeholder.com/24?text=?';
 }
 
+// ==================== RENDER ====================
 function renderList(items){
   listEl.innerHTML='';
   (items||[]).forEach((it)=>{
@@ -173,7 +184,8 @@ function renderList(items){
     const head = document.createElement('div');
     head.innerHTML = `
       <div class="champ">
-        <img class="clogo" src="${it.championship_image_url || getChampionshipLogo(it.championship)}" alt="">        <div>${it.championship||''}</div>
+        <img class="clogo" src="${it.championship_image_url || getChampionshipLogo(it.championship)}" alt="">
+        <div>${it.championship||''}</div>
       </div>
       <div class="row">
         <div class="team">
@@ -195,11 +207,10 @@ function renderList(items){
     if(hasBtns){
       it.buttons.forEach((b,i)=>{
         const { label, link } = parseButtonNameAndLink(b.name || `Canal ${i+1}`, b.url);
-
         const a=document.createElement('a');
         a.className='btn';
-        a.textContent = label;   // exibe só "Canal 1"
-        a.href = link;           // se tiver "go:xxx", usa ele; senão usa b.url
+        a.textContent = label;
+        a.href = link;
         a.target="_blank";
         a.rel="noopener";
         btns.appendChild(a);
@@ -212,6 +223,7 @@ function renderList(items){
   });
 }
 
+// ==================== LOAD ====================
 async function fetchJson(url){
   const res = await fetch(url, {cache:'no-store'});
   let txt = await res.text();
@@ -225,22 +237,17 @@ async function load(){
     const data = await fetchJson(API_HTTP);
     const arr = Array.isArray(data)?data:(data.items||data.data||[]);
     renderList(arr.filter(x=>x&&(x.home_team||x.visiting_team||x.championship)));
-  }catch(e1){
-    try{
-      const data2 = await fetchJson(API_FALLBACK);
-      const arr2 = Array.isArray(data2)?data2:(data2.items||data2.data||[]);
-      renderList(arr2.filter(x=>x&&(x.home_team||x.visiting_team||x.championship)));
-    }catch(e2){
-      listEl.innerHTML = "<p style='padding:12px'>Erro ao carregar jogos.</p>";
-    }
+  }catch(e){
+    listEl.innerHTML = "<p style='padding:12px'>Erro ao carregar jogos.</p>";
   }finally{
     setTimeout(()=>icoRef.classList.remove('spin'), 300);
   }
 }
 btnRef.onclick = load;
 
-// 🔹 IMPORTANTE: carregar teams.json ANTES dos jogos
+// 🔹 Carrega primeiro os assets (times + campeonatos), depois jogos
 await loadTeams();
+await loadChampions();
 layout();
 load();
 </script>
