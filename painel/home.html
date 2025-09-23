@@ -45,12 +45,18 @@
     <div id="tab-addgame" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
       <form id="game-form" class="flex flex-col gap-2 mb-4">
-        <input id="game-champ" type="text" placeholder="Campeonato" 
-               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="game-home-team" type="text" placeholder="Time da Casa" 
-               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="game-away-team" type="text" placeholder="Time Visitante" 
-               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-champ" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Campeonato</option>
+        </select>
+        <select id="game-home-team" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Time da Casa</option>
+        </select>
+        <select id="game-away-team" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Time Visitante</option>
+        </select>
         <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar Jogo</button>
@@ -162,6 +168,12 @@ document.getElementById("team-form").addEventListener("submit", e=>{
                   <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
                   <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
   document.getElementById("teams-list").appendChild(tr);
+
+  // adiciona no select
+  const opt1 = new Option(name, name);
+  const opt2 = new Option(name, name);
+  document.getElementById("game-home-team").appendChild(opt1);
+  document.getElementById("game-away-team").appendChild(opt2);
 });
 
 // Campeonatos
@@ -174,6 +186,10 @@ document.getElementById("champ-form").addEventListener("submit", e=>{
                   <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
                   <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
   document.getElementById("champions-list").appendChild(tr);
+
+  // adiciona no select
+  const opt = new Option(name, name);
+  document.getElementById("game-champ").appendChild(opt);
 });
 
 // Botões
