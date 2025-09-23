@@ -19,53 +19,57 @@
   </div>
 
   <!-- Dashboard -->
-  <div id="dashboard" class="hidden w-full p-6">
-    <h1 class="text-3xl font-bold mb-6">Painel de Administração</h1>
+  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto p-4 sm:p-6">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-center sm:text-left">Painel de Administração</h1>
 
     <!-- Tabs -->
-    <div class="flex space-x-4 mb-6">
-      <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Times</button>
-      <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Campeonatos</button>
+    <div class="flex flex-wrap gap-2 mb-6">
+      <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded text-sm sm:text-base">Times</button>
+      <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded text-sm sm:text-base">Campeonatos</button>
     </div>
 
     <!-- Conteúdo Times -->
     <div id="tab-times" class="tab-content hidden">
-      <h2 class="text-xl font-semibold mb-4">Times</h2>
-      <form id="team-form" class="mb-4">
-        <input id="team-name" type="text" placeholder="Nome do time" class="p-2 border rounded mr-2">
-        <input id="team-logo" type="text" placeholder="URL do escudo" class="p-2 border rounded mr-2">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
+      <form id="team-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="team-name" type="text" placeholder="Nome do time" class="flex-1 p-2 border rounded">
+        <input id="team-logo" type="text" placeholder="URL do escudo" class="flex-1 p-2 border rounded">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
       </form>
-      <table class="w-full bg-white rounded shadow">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2">Time</th>
-            <th class="p-2">Escudo</th>
-            <th class="p-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody id="teams-list"></tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Time</th>
+              <th class="p-2 text-left">Escudo</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="teams-list"></tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Conteúdo Campeonatos -->
     <div id="tab-champions" class="tab-content hidden">
-      <h2 class="text-xl font-semibold mb-4">Campeonatos</h2>
-      <form id="champ-form" class="mb-4">
-        <input id="champ-name" type="text" placeholder="Nome do campeonato" class="p-2 border rounded mr-2">
-        <input id="champ-logo" type="text" placeholder="URL da logo" class="p-2 border rounded mr-2">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
+      <form id="champ-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="champ-name" type="text" placeholder="Nome do campeonato" class="flex-1 p-2 border rounded">
+        <input id="champ-logo" type="text" placeholder="URL da logo" class="flex-1 p-2 border rounded">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
       </form>
-      <table class="w-full bg-white rounded shadow">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2">Campeonato</th>
-            <th class="p-2">Logo</th>
-            <th class="p-2">Ações</th>
-          </tr>
-        </thead>
-        <tbody id="champions-list"></tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Campeonato</th>
+              <th class="p-2 text-left">Logo</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="champions-list"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -98,9 +102,10 @@ document.getElementById("team-form").addEventListener("submit", e=>{
   const logo = document.getElementById("team-logo").value;
   const tr = document.createElement("tr");
   tr.innerHTML = `<td class="p-2">${name}</td>
-                  <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
+                  <td class="p-2"><img src="${logo}" alt="" class="h-6 sm:h-8"></td>
                   <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
   document.getElementById("teams-list").appendChild(tr);
+  e.target.reset();
 });
 
 // Campeonatos
@@ -110,9 +115,10 @@ document.getElementById("champ-form").addEventListener("submit", e=>{
   const logo = document.getElementById("champ-logo").value;
   const tr = document.createElement("tr");
   tr.innerHTML = `<td class="p-2">${name}</td>
-                  <td class="p-2"><img src="${logo}" alt="" class="h-6"></td>
+                  <td class="p-2"><img src="${logo}" alt="" class="h-6 sm:h-8"></td>
                   <td class="p-2"><button onclick="this.closest('tr').remove()" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
   document.getElementById("champions-list").appendChild(tr);
+  e.target.reset();
 });
 </script>
 </body>
