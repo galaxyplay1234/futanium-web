@@ -98,7 +98,7 @@
   <div id="list" class="list"></div>
 </div>
 
-<script>
+<script type="module">
 const API_HTTP = "games.json";
 const API_FALLBACK = "https://r.jina.ai/http://91.108.124.236:8080/games/api";
 
@@ -240,6 +240,8 @@ async function load(){
 }
 btnRef.onclick = load;
 
+// 🔹 IMPORTANTE: carregar teams.json ANTES dos jogos
+await loadTeams();
 layout();
 load();
 </script>
