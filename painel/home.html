@@ -28,7 +28,7 @@
 
     <!-- Tabs -->
     <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
-      <button onclick="showTab('home')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Home</button>
+      <button onclick="showTab('home')" class="tab-btn bg-blue-600 text-white px-4 py-2 rounded">Home</button>
       <button onclick="showTab('addgame')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Adicionar Jogo</button>
       <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Times</button>
       <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Campeonatos</button>
@@ -36,7 +36,7 @@
     </div>
 
     <!-- Home -->
-    <div id="tab-home" class="tab-content hidden">
+    <div id="tab-home" class="tab-content">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
       <ul id="games-list" class="space-y-2"></ul>
     </div>
@@ -45,13 +45,16 @@
     <div id="tab-addgame" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
       <form id="game-form" class="flex flex-col gap-2 mb-4">
-        <select id="game-champ" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-champ" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">Selecione o Campeonato</option>
         </select>
-        <select id="game-home-team" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-home-team" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">Selecione o Time da Casa</option>
         </select>
-        <select id="game-away-team" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <select id="game-away-team" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">Selecione o Time Visitante</option>
         </select>
         <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
@@ -133,7 +136,7 @@
     </div>
   </div>
 
-<!-- Firebase + Lógica -->
+<!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
@@ -147,145 +150,162 @@ const firebaseConfig = {
   appId: "1:594412535848:web:1cb933a46b4d35c34ff51d",
   measurementId: "G-MK0W4M6RV5"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const USER = "admin";
 const PASS = "12345";
 
-function login(){
+window.login = function() {
   const u = document.getElementById("username").value;
   const p = document.getElementById("password").value;
-  if(u === USER && p === PASS){
+  if (u === USER && p === PASS) {
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
-    showTab('home'); // abre Home direto
-    loadAllData();
+    showTab('home'); // vai abrir Home direto
+    loadData();
   } else {
     document.getElementById("login-error").classList.remove("hidden");
   }
-}
-window.login = login;
+};
 
-function showTab(tab){
+window.showTab = function(tab) {
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
   document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("bg-blue-600","text-white"));
-  document.getElementById("tab-"+tab).classList.remove("hidden");
+  document.getElementById("tab-" + tab).classList.remove("hidden");
   event.target.classList.add("bg-blue-600","text-white");
-}
-window.showTab = showTab;
+};
 
-// ---------------- TIMES ----------------
-document.getElementById("team-form").addEventListener("submit", async e=>{
+// ===== Times =====
+document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("team-name").value;
   const logo = document.getElementById("team-logo").value;
-  await addDoc(collection(db,"teams"), { name, logo });
+  if (!name || !logo) return;
+  await addDoc(collection(db,"teams"),{name,logo});
+  document.getElementById("team-form").reset();
   loadTeams();
 });
 
-// ---------------- CAMPEONATOS ----------------
+async function loadTeams(){
+  const q = await getDocs(collection(db,"teams"));
+  const tbody = document.getElementById("teams-list");
+  tbody.innerHTML = "";
+  q.forEach(docSnap=>{
+    const t = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="p-2">${t.name}</td>
+                    <td class="p-2"><img src="${t.logo}" class="h-6"></td>
+                    <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    tbody.appendChild(tr);
+
+    // adiciona no select
+    const opt1 = new Option(t.name, t.name);
+    const opt2 = new Option(t.name, t.name);
+    document.getElementById("game-home-team").appendChild(opt1);
+    document.getElementById("game-away-team").appendChild(opt2);
+  });
+}
+window.deleteTeam = async function(id){
+  await deleteDoc(doc(db,"teams",id));
+  loadTeams();
+};
+
+// ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const name = document.getElementById("champ-name").value;
   const logo = document.getElementById("champ-logo").value;
-  await addDoc(collection(db,"championships"), { name, logo });
-  loadChampionships();
+  if(!name || !logo) return;
+  await addDoc(collection(db,"championships"),{name,logo});
+  document.getElementById("champ-form").reset();
+  loadChamps();
 });
+async function loadChamps(){
+  const q = await getDocs(collection(db,"championships"));
+  const tbody = document.getElementById("champions-list");
+  tbody.innerHTML = "";
+  document.getElementById("game-champ").innerHTML = `<option value="">Selecione o Campeonato</option>`;
+  q.forEach(docSnap=>{
+    const c = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="p-2">${c.name}</td>
+                    <td class="p-2"><img src="${c.logo}" class="h-6"></td>
+                    <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    tbody.appendChild(tr);
 
-// ---------------- BOTÕES ----------------
+    const opt = new Option(c.name, c.name);
+    document.getElementById("game-champ").appendChild(opt);
+  });
+}
+window.deleteChamp = async function(id){
+  await deleteDoc(doc(db,"championships",id));
+  loadChamps();
+};
+
+// ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const name = document.getElementById("button-name").value;
   const link = document.getElementById("button-link").value;
-  await addDoc(collection(db,"buttons"), { name, link });
+  if(!name || !link) return;
+  await addDoc(collection(db,"buttons"),{name,link});
+  document.getElementById("button-form").reset();
   loadButtons();
 });
+async function loadButtons(){
+  const q = await getDocs(collection(db,"buttons"));
+  const tbody = document.getElementById("buttons-list");
+  tbody.innerHTML = "";
+  q.forEach(docSnap=>{
+    const b = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="p-2">${b.name}</td>
+                    <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline">${b.link}</a></td>
+                    <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.deleteButton = async function(id){
+  await deleteDoc(doc(db,"buttons",id));
+  loadButtons();
+};
 
-// ---------------- JOGOS ----------------
+// ===== Jogos =====
 document.getElementById("game-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const champ = document.getElementById("game-champ").value;
   const home = document.getElementById("game-home-team").value;
   const away = document.getElementById("game-away-team").value;
   const time = document.getElementById("game-time").value;
-  await addDoc(collection(db,"games"), { champ, home, away, time });
+  if(!champ || !home || !away || !time) return;
+  await addDoc(collection(db,"games"),{champ,home,away,time});
+  document.getElementById("game-form").reset();
   loadGames();
 });
-
-// -------- FUNÇÕES DE CARREGAR --------
-async function loadTeams(){
-  const tbody = document.getElementById("teams-list");
-  tbody.innerHTML = "";
-  const selectHome = document.getElementById("game-home-team");
-  const selectAway = document.getElementById("game-away-team");
-  selectHome.innerHTML = '<option value="">Selecione o Time da Casa</option>';
-  selectAway.innerHTML = '<option value="">Selecione o Time Visitante</option>';
-  const snap = await getDocs(collection(db,"teams"));
-  snap.forEach(docSnap=>{
-    const data = docSnap.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${data.name}</td>
-                    <td class="p-2"><img src="${data.logo}" class="h-6"></td>
-                    <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-    tbody.appendChild(tr);
-    selectHome.appendChild(new Option(data.name, data.name));
-    selectAway.appendChild(new Option(data.name, data.name));
-  });
-}
-window.deleteTeam = async(id)=>{ await deleteDoc(doc(db,"teams",id)); loadTeams(); }
-
-async function loadChampionships(){
-  const tbody = document.getElementById("champions-list");
-  tbody.innerHTML = "";
-  const selectChamp = document.getElementById("game-champ");
-  selectChamp.innerHTML = '<option value="">Selecione o Campeonato</option>';
-  const snap = await getDocs(collection(db,"championships"));
-  snap.forEach(docSnap=>{
-    const data = docSnap.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${data.name}</td>
-                    <td class="p-2"><img src="${data.logo}" class="h-6"></td>
-                    <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-    tbody.appendChild(tr);
-    selectChamp.appendChild(new Option(data.name, data.name));
-  });
-}
-window.deleteChamp = async(id)=>{ await deleteDoc(doc(db,"championships",id)); loadChampionships(); }
-
-async function loadButtons(){
-  const tbody = document.getElementById("buttons-list");
-  tbody.innerHTML = "";
-  const snap = await getDocs(collection(db,"buttons"));
-  snap.forEach(docSnap=>{
-    const data = docSnap.data();
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${data.name}</td>
-                    <td class="p-2"><a href="${data.link}" target="_blank" class="text-blue-600 underline">${data.link}</a></td>
-                    <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-    tbody.appendChild(tr);
-  });
-}
-window.deleteButton = async(id)=>{ await deleteDoc(doc(db,"buttons",id)); loadButtons(); }
-
 async function loadGames(){
+  const q = await getDocs(collection(db,"games"));
   const ul = document.getElementById("games-list");
   ul.innerHTML = "";
-  const snap = await getDocs(collection(db,"games"));
-  snap.forEach(docSnap=>{
-    const data = docSnap.data();
+  q.forEach(docSnap=>{
+    const g = docSnap.data();
     const li = document.createElement("li");
     li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
-    li.innerHTML = `<span>${data.time} - ${data.home} x ${data.away} (${data.champ})</span>
+    li.innerHTML = `<span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
                     <button onclick="deleteGame('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>`;
     ul.appendChild(li);
   });
 }
-window.deleteGame = async(id)=>{ await deleteDoc(doc(db,"games",id)); loadGames(); }
+window.deleteGame = async function(id){
+  await deleteDoc(doc(db,"games",id));
+  loadGames();
+};
 
-async function loadAllData(){
+// ===== Carregar tudo =====
+async function loadData(){
   await loadTeams();
-  await loadChampionships();
+  await loadChamps();
   await loadButtons();
   await loadGames();
 }
