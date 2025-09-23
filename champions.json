@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Premier League",
+    "logo": "https://upload.wikimedia.org/wikipedia/en/f/f2/Premier_League_Logo.svg"
+  },
+  {
+    "name": "La Liga",
+    "logo": "https://upload.wikimedia.org/wikipedia/en/9/92/La_Liga_logo.svg"
+  },
+  {
+    "name": "Champions League",
+    "logo": "https://upload.wikimedia.org/wikipedia/en/b/bf/UEFA_Champions_League_logo_2.svg"
+  },
+  {
+    "name": "Brasileirão",
+    "logo": "https://upload.wikimedia.org/wikipedia/pt/5/55/Campeonato_Brasileiro_S%C3%A9rie_A_logo.png"
+  }
+]
