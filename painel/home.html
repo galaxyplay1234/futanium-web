@@ -5,30 +5,6 @@
   <title>Painel Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-    // Configuração do Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
-      authDomain: "futanium-web.firebaseapp.com",
-      projectId: "futanium-web",
-      storageBucket: "futanium-web.firebasestorage.app",
-      messagingSenderId: "594412535848",
-      appId: "1:594412535848:web:1cb933a46b4d35c34ff51d",
-      measurementId: "G-MK0W4M6RV5"
-    };
-
-    // Inicializa Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    window.db = db; // deixa global para usar fora do módulo
-    window.firestoreFns = { collection, addDoc, getDocs, deleteDoc, doc };
-  </script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
@@ -157,7 +133,23 @@
     </div>
   </div>
 
-<script>
+<!-- Firebase + Lógica -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
+  authDomain: "futanium-web.firebaseapp.com",
+  projectId: "futanium-web",
+  storageBucket: "futanium-web.firebasestorage.app",
+  messagingSenderId: "594412535848",
+  appId: "1:594412535848:web:1cb933a46b4d35c34ff51d",
+  measurementId: "G-MK0W4M6RV5"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
 const USER = "admin";
 const PASS = "12345";
 
@@ -167,13 +159,13 @@ function login(){
   if(u === USER && p === PASS){
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
-    // abre direto na home
-    showTab('home');
-    loadAll();
+    showTab('home'); // abre Home direto
+    loadAllData();
   } else {
     document.getElementById("login-error").classList.remove("hidden");
   }
 }
+window.login = login;
 
 function showTab(tab){
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
@@ -181,132 +173,121 @@ function showTab(tab){
   document.getElementById("tab-"+tab).classList.remove("hidden");
   event.target.classList.add("bg-blue-600","text-white");
 }
+window.showTab = showTab;
 
-// -------- FIREBASE --------
-async function loadAll(){
-  await loadTeams();
-  await loadChampions();
-  await loadButtons();
-  await loadGames();
-}
-
-// Times
+// ---------------- TIMES ----------------
 document.getElementById("team-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const name = document.getElementById("team-name").value;
   const logo = document.getElementById("team-logo").value;
-  await firestoreFns.addDoc(firestoreFns.collection(db,"times"),{nome:name,logo:logo});
-  document.getElementById("team-form").reset();
+  await addDoc(collection(db,"teams"), { name, logo });
   loadTeams();
 });
-async function loadTeams(){
-  const snap = await firestoreFns.getDocs(firestoreFns.collection(db,"times"));
-  const list = document.getElementById("teams-list");
-  list.innerHTML="";
-  const selectHome = document.getElementById("game-home-team");
-  const selectAway = document.getElementById("game-away-team");
-  selectHome.innerHTML = "<option value=''>Selecione o Time da Casa</option>";
-  selectAway.innerHTML = "<option value=''>Selecione o Time Visitante</option>";
-  snap.forEach(docSnap=>{
-    const t=docSnap.data();
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td class="p-2">${t.nome}</td>
-                  <td class="p-2"><img src="${t.logo}" class="h-6"></td>
-                  <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-    list.appendChild(tr);
-    selectHome.appendChild(new Option(t.nome,t.nome));
-    selectAway.appendChild(new Option(t.nome,t.nome));
-  });
-}
-async function deleteTeam(id){
-  await firestoreFns.deleteDoc(firestoreFns.doc(db,"times",id));
-  loadTeams();
-}
 
-// Campeonatos
+// ---------------- CAMPEONATOS ----------------
 document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const name=document.getElementById("champ-name").value;
-  const logo=document.getElementById("champ-logo").value;
-  await firestoreFns.addDoc(firestoreFns.collection(db,"champions"),{nome:name,logo:logo});
-  document.getElementById("champ-form").reset();
-  loadChampions();
+  const name = document.getElementById("champ-name").value;
+  const logo = document.getElementById("champ-logo").value;
+  await addDoc(collection(db,"championships"), { name, logo });
+  loadChampionships();
 });
-async function loadChampions(){
-  const snap=await firestoreFns.getDocs(firestoreFns.collection(db,"champions"));
-  const list=document.getElementById("champions-list");
-  list.innerHTML="";
-  const selectChamp=document.getElementById("game-champ");
-  selectChamp.innerHTML="<option value=''>Selecione o Campeonato</option>";
-  snap.forEach(docSnap=>{
-    const c=docSnap.data();
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td class="p-2">${c.nome}</td>
-                  <td class="p-2"><img src="${c.logo}" class="h-6"></td>
-                  <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-    list.appendChild(tr);
-    selectChamp.appendChild(new Option(c.nome,c.nome));
-  });
-}
-async function deleteChamp(id){
-  await firestoreFns.deleteDoc(firestoreFns.doc(db,"champions",id));
-  loadChampions();
-}
 
-// Botões
+// ---------------- BOTÕES ----------------
 document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const name=document.getElementById("button-name").value;
-  const link=document.getElementById("button-link").value;
-  await firestoreFns.addDoc(firestoreFns.collection(db,"buttons"),{nome:name,link:link});
-  document.getElementById("button-form").reset();
+  const name = document.getElementById("button-name").value;
+  const link = document.getElementById("button-link").value;
+  await addDoc(collection(db,"buttons"), { name, link });
   loadButtons();
 });
-async function loadButtons(){
-  const snap=await firestoreFns.getDocs(firestoreFns.collection(db,"buttons"));
-  const list=document.getElementById("buttons-list");
-  list.innerHTML="";
-  snap.forEach(docSnap=>{
-    const b=docSnap.data();
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td class="p-2">${b.nome}</td>
-                  <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline">${b.link}</a></td>
-                  <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
-    list.appendChild(tr);
-  });
-}
-async function deleteButton(id){
-  await firestoreFns.deleteDoc(firestoreFns.doc(db,"buttons",id));
-  loadButtons();
-}
 
-// Jogos
+// ---------------- JOGOS ----------------
 document.getElementById("game-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const champ=document.getElementById("game-champ").value;
-  const home=document.getElementById("game-home-team").value;
-  const away=document.getElementById("game-away-team").value;
-  const time=document.getElementById("game-time").value;
-  await firestoreFns.addDoc(firestoreFns.collection(db,"games"),{champ:champ,home:home,away:away,time:time});
-  document.getElementById("game-form").reset();
+  const champ = document.getElementById("game-champ").value;
+  const home = document.getElementById("game-home-team").value;
+  const away = document.getElementById("game-away-team").value;
+  const time = document.getElementById("game-time").value;
+  await addDoc(collection(db,"games"), { champ, home, away, time });
   loadGames();
 });
-async function loadGames(){
-  const snap=await firestoreFns.getDocs(firestoreFns.collection(db,"games"));
-  const list=document.getElementById("games-list");
-  list.innerHTML="";
+
+// -------- FUNÇÕES DE CARREGAR --------
+async function loadTeams(){
+  const tbody = document.getElementById("teams-list");
+  tbody.innerHTML = "";
+  const selectHome = document.getElementById("game-home-team");
+  const selectAway = document.getElementById("game-away-team");
+  selectHome.innerHTML = '<option value="">Selecione o Time da Casa</option>';
+  selectAway.innerHTML = '<option value="">Selecione o Time Visitante</option>';
+  const snap = await getDocs(collection(db,"teams"));
   snap.forEach(docSnap=>{
-    const g=docSnap.data();
-    const li=document.createElement("li");
-    li.className="bg-white p-3 rounded shadow flex justify-between items-center";
-    li.innerHTML=`<span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
-                  <button onclick="deleteGame('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>`;
-    list.appendChild(li);
+    const data = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="p-2">${data.name}</td>
+                    <td class="p-2"><img src="${data.logo}" class="h-6"></td>
+                    <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    tbody.appendChild(tr);
+    selectHome.appendChild(new Option(data.name, data.name));
+    selectAway.appendChild(new Option(data.name, data.name));
   });
 }
-async function deleteGame(id){
-  await firestoreFns.deleteDoc(firestoreFns.doc(db,"games",id));
-  loadGames();
+window.deleteTeam = async(id)=>{ await deleteDoc(doc(db,"teams",id)); loadTeams(); }
+
+async function loadChampionships(){
+  const tbody = document.getElementById("champions-list");
+  tbody.innerHTML = "";
+  const selectChamp = document.getElementById("game-champ");
+  selectChamp.innerHTML = '<option value="">Selecione o Campeonato</option>';
+  const snap = await getDocs(collection(db,"championships"));
+  snap.forEach(docSnap=>{
+    const data = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="p-2">${data.name}</td>
+                    <td class="p-2"><img src="${data.logo}" class="h-6"></td>
+                    <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    tbody.appendChild(tr);
+    selectChamp.appendChild(new Option(data.name, data.name));
+  });
+}
+window.deleteChamp = async(id)=>{ await deleteDoc(doc(db,"championships",id)); loadChampionships(); }
+
+async function loadButtons(){
+  const tbody = document.getElementById("buttons-list");
+  tbody.innerHTML = "";
+  const snap = await getDocs(collection(db,"buttons"));
+  snap.forEach(docSnap=>{
+    const data = docSnap.data();
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="p-2">${data.name}</td>
+                    <td class="p-2"><a href="${data.link}" target="_blank" class="text-blue-600 underline">${data.link}</a></td>
+                    <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    tbody.appendChild(tr);
+  });
+}
+window.deleteButton = async(id)=>{ await deleteDoc(doc(db,"buttons",id)); loadButtons(); }
+
+async function loadGames(){
+  const ul = document.getElementById("games-list");
+  ul.innerHTML = "";
+  const snap = await getDocs(collection(db,"games"));
+  snap.forEach(docSnap=>{
+    const data = docSnap.data();
+    const li = document.createElement("li");
+    li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
+    li.innerHTML = `<span>${data.time} - ${data.home} x ${data.away} (${data.champ})</span>
+                    <button onclick="deleteGame('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>`;
+    ul.appendChild(li);
+  });
+}
+window.deleteGame = async(id)=>{ await deleteDoc(doc(db,"games",id)); loadGames(); }
+
+async function loadAllData(){
+  await loadTeams();
+  await loadChampionships();
+  await loadButtons();
+  await loadGames();
 }
 </script>
 </body>
