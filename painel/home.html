@@ -354,15 +354,40 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
 
   if(!champ || !home || !away || !time) return;
 
-  const payload = { champ, home, away, time, channels: selected };
+  // Buscar logo do campeonato
+let champLogo = "";
+const champsSnap = await getDocs(collection(db,"championships"));
+champsSnap.forEach(docSnap => {
+  if(docSnap.data().name === champ) champLogo = docSnap.data().logo;
+});
 
-  if(currentEditId){
-    await updateDoc(doc(db,"games",currentEditId), payload);
-    currentEditId = null;
-    document.getElementById("form-title").innerText = "Adicionar Jogo";
-  }else{
-    await addDoc(collection(db,"games"), payload);
-  }
+// Buscar logo dos times
+let homeLogo = "";
+let awayLogo = "";
+const teamsSnap = await getDocs(collection(db,"teams"));
+teamsSnap.forEach(docSnap => {
+  if(docSnap.data().name === home) homeLogo = docSnap.data().logo;
+  if(docSnap.data().name === away) awayLogo = docSnap.data().logo;
+});
+
+const payload = {
+  champ,
+  champ_logo: champLogo,
+  home,
+  home_logo: homeLogo,
+  away,
+  away_logo: awayLogo,
+  time,
+  channels: selected
+};
+
+if(currentEditId){
+  await updateDoc(doc(db,"games",currentEditId), payload);
+  currentEditId = null;
+  document.getElementById("form-title").innerText = "Adicionar Jogo";
+}else{
+  await addDoc(collection(db,"games"), payload);
+}
 
   document.getElementById("game-form").reset();
   await loadGames();
