@@ -24,16 +24,19 @@
 
   <!-- Dashboard -->
   <div id="dashboard" class="hidden w-full max-w-5xl mx-auto p-4">
-    <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-center sm:text-left">Painel de Administração</h1>
+    <div class="fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-50">
+  <div class="font-bold text-lg">Painel Futanium</div>
+</div>
+<div class="h-14"></div> <!-- espaçamento pro conteúdo não ficar atrás do menu -->
 
     <!-- Tabs -->
-    <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
-      <button onclick="showTab('home')" class="tab-btn bg-blue-600 text-white px-4 py-2 rounded">Home</button>
-      <button onclick="showTab('addgame')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Adicionar Jogo</button>
-      <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Times</button>
-      <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Campeonatos</button>
-      <button onclick="showTab('buttons')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Botões</button>
-    </div>
+    <div class="sticky top-14 left-0 right-0 bg-gray-800 flex justify-start gap-2 px-4 py-2 z-40">
+  <button onclick="showTab('home')" class="tab-btn bg-gray-700 text-white px-4 py-2 rounded">Home</button>
+  <button onclick="showTab('addgame')" class="tab-btn bg-gray-600 text-gray-200 px-4 py-2 rounded">Adicionar Jogo</button>
+  <button onclick="showTab('times')" class="tab-btn bg-gray-600 text-gray-200 px-4 py-2 rounded">Times</button>
+  <button onclick="showTab('champions')" class="tab-btn bg-gray-600 text-gray-200 px-4 py-2 rounded">Campeonatos</button>
+  <button onclick="showTab('buttons')" class="tab-btn bg-gray-600 text-gray-200 px-4 py-2 rounded">Botões</button>
+</div>
 
     <!-- Home -->
     <div id="tab-home" class="tab-content">
