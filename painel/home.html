@@ -24,10 +24,10 @@
 
   <!-- Dashboard -->
 <div id="dashboard" class="hidden w-full max-w-5xl mx-auto p-4">
-  
-  <!-- Wrapper para o conteúdo -->
-  <div class="mt-[104px]"> 
-    <!-- 56px (h-14 topbar) + 48px (tabs) = 104px -->
+
+  <!-- Espaço para compensar a barra e tabs fixas -->
+  <div class="pt-[104px]"> 
+    <!-- 56px (h-14 da topbar) + 48px (tabs) = 104px -->
     
     <!-- Home -->
     <div id="tab-home" class="tab-content">
@@ -37,22 +37,28 @@
 
     <!-- Adicionar Jogo -->
     <div id="tab-addgame" class="tab-content hidden">
-      ...
+      <h2 id="form-title" class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
+      <form id="game-form" class="flex flex-col gap-2 mb-4">
+        <!-- seus inputs aqui -->
+      </form>
     </div>
 
     <!-- Times -->
     <div id="tab-times" class="tab-content hidden">
-      ...
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
+      <!-- conteúdo times -->
     </div>
 
     <!-- Campeonatos -->
     <div id="tab-champions" class="tab-content hidden">
-      ...
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
+      <!-- conteúdo campeonatos -->
     </div>
 
     <!-- Botões -->
     <div id="tab-buttons" class="tab-content hidden">
-      ...
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
+      <!-- conteúdo botões -->
     </div>
   </div>
 </div>
