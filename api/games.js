@@ -17,11 +17,11 @@ export default async function handler(req, res) {
 
       return {
         championship: f.champ?.stringValue || "",
-        championship_image_url: null, // pode buscar depois de outra coleção
+        championship_image_url: f.champ_logo?.stringValue || null,
         home_team: f.home?.stringValue || "",
         visiting_team: f.away?.stringValue || "",
-        home_team_image_url: null, // pode buscar depois
-        visiting_team_image_url: null, // pode buscar depois
+        home_team_image_url: f.home_logo?.stringValue || null,
+        visiting_team_image_url: f.away_logo?.stringValue || null,
         start_time: f.time?.stringValue || "",
         end_time: null,        // vamos calcular depois
         is_live: null,         // vamos calcular depois
