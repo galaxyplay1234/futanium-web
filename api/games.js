@@ -1,8 +1,7 @@
-// pages/api/games.js
+// api/games.js
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
 
-// Config do Firebase (a mesma do painel)
 const firebaseConfig = {
   apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
   authDomain: "futanium-web.firebaseapp.com",
@@ -19,42 +18,26 @@ const db = getFirestore(app);
 export default async function handler(req, res) {
   try {
     const snapshot = await getDocs(collection(db, "games"));
-    const games = [];
-
-    for (const docSnap of snapshot.docs) {
-      const g = docSnap.data();
-
-      games.push({
+    const games = snapshot.docs.map(doc => {
+      const g = doc.data();
+      return {
         championship: g.champ,
-        championship_image_url: await getChampLogo(g.champ),
+        championship_image_url: null,
         home_team: g.home,
         visiting_team: g.away,
-        home_team_image_url: await getTeamLogo(g.home),
-        visiting_team_image_url: await getTeamLogo(g.away),
+        home_team_image_url: null,
+        visiting_team_image_url: null,
         start_time: g.time,
-        end_time: null,        // calcular depois
-        is_live: null,         // calcular depois
-        is_finished: null,     // calcular depois
+        end_time: null,
+        is_live: null,
+        is_finished: null,
         buttons: g.channels || []
-      });
-    }
+      };
+    });
 
     res.status(200).json(games);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar jogos" });
+    console.error("API error:", err);
+    res.status(500).json({ error: "Erro ao buscar jogos", details: err.message });
   }
-}
-
-// Helpers
-async function getChampLogo(name) {
-  const snap = await getDocs(collection(db, "championships"));
-  const champ = snap.docs.find(d => d.data().name === name);
-  return champ ? champ.data().logo : null;
-}
-
-async function getTeamLogo(name) {
-  const snap = await getDocs(collection(db, "teams"));
-  const team = snap.docs.find(d => d.data().name === name);
-  return team ? team.data().logo : null;
 }
