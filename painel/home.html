@@ -6,30 +6,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      padding-top: calc(56px + 48px); /* topbar (56px) + tabs (48px) */
-    }
-  </style>
+  /* remove o padding-top do body */
+  body {
+    margin: 0;
+  }
+
+  /* aplica apenas no dashboard */
+  #dashboard {
+    padding-top: calc(56px + 48px); /* topbar + tabs */
+  }
+</style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
   <!-- Tela de Login -->
-<div id="login-screen" class="flex items-center justify-center min-h-screen">
-  <div class="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
-    <input id="username" type="text" placeholder="Usuário" 
-           class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
-    <input id="password" type="password" placeholder="Senha" 
-           class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
-    <button onclick="login()" 
-            class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
-      Entrar
-    </button>
-    <p id="login-error" class="text-red-500 text-sm mt-3 hidden text-center">Usuário ou senha incorretos!</p>
+  <div id="login-screen" class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+      <input id="username" type="text" placeholder="Usuário" 
+             class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <input id="password" type="password" placeholder="Senha" 
+             class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <button onclick="login()" 
+              class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
+        Entrar
+      </button>
+      <p id="login-error" class="text-red-500 text-sm mt-3 hidden text-center">Usuário ou senha incorretos!</p>
+    </div>
   </div>
-</div>
 
-  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto px-4 pt-[104px]">
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto px-4">
 
   <!-- Top bar -->
   <div class="fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-50">
