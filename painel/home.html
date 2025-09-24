@@ -6,146 +6,166 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body {
-      margin: 0;
-    }
-    #dashboard {
-      padding-top: calc(56px + 48px); /* topbar + tabs */
-    }
-  </style>
+  /* remove o padding-top do body */
+  body {
+    margin: 0;
+  }
+
+  /* aplica apenas no dashboard */
+  #dashboard {
+    padding-top: calc(56px + 48px); /* topbar + tabs */
+  }
+</style>
 </head>
 <body class="bg-gray-100 min-h-screen">
 
+  
+  
+
   <!-- Dashboard -->
-  <div id="dashboard" class="w-full max-w-5xl mx-auto px-4">
+  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto px-4">
 
-    <!-- Top bar -->
-    <div class="fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-50">
-      <div class="font-bold text-lg">Painel Futanium</div>
+  <!-- Top bar -->
+  <div class="fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-50">
+    <div class="font-bold text-lg">Painel Futanium</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="fixed top-14 left-0 right-0 bg-gray-100 px-2 h-12 flex items-center gap-2 z-40 shadow overflow-x-auto whitespace-nowrap">
+    <button onclick="showTab('home')" id="btn-home"
+            class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">Home</button>
+    <button onclick="showTab('addgame')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('times')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Times</button>
+    <button onclick="showTab('champions')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Ligas</button>
+    <button onclick="showTab('buttons')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
+  </div>
+
+  <!-- Conteúdo (abaixo da barra + tabs) -->
+  <div class="mt-[104px]">
+    <!-- 56px (h-14 da topbar) + 48px (tabs) = 104px -->
+
+
+
+    <!-- Home -->
+    <div id="tab-home" class="tab-content">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
+      <ul id="games-list" class="space-y-2"></ul>
     </div>
 
-    <!-- Tabs -->
-    <div class="fixed top-14 left-0 right-0 bg-gray-100 px-2 h-12 flex items-center gap-2 z-40 shadow overflow-x-auto whitespace-nowrap">
-      <button onclick="showTab('home')" id="btn-home"
-              class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">Home</button>
-      <button onclick="showTab('addgame')"
-              class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
-      <button onclick="showTab('times')"
-              class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Times</button>
-      <button onclick="showTab('champions')"
-              class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Ligas</button>
-      <button onclick="showTab('buttons')"
-              class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
+    <!-- Adicionar Jogo -->
+    <div id="tab-addgame" class="tab-content hidden">
+      <h2 id="form-title" class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
+      <form id="game-form" class="flex flex-col gap-2 mb-4">
+        <select id="game-champ" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Campeonato</option>
+        </select>
+        <select id="game-home-team" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Time da Casa</option>
+        </select>
+        <select id="game-away-team" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Time Visitante</option>
+        </select>
+        <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
+               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+        <!-- Campos fixos para Canais -->
+        <label class="mt-2 font-semibold">Canal 1</label>
+        <select id="game-channel1" class="p-2 border rounded">
+          <option value="">Selecione um botão</option>
+        </select>
+        <label class="mt-2 font-semibold">Canal 2</label>
+        <select id="game-channel2" class="p-2 border rounded">
+          <option value="">Selecione um botão</option>
+        </select>
+        <label class="mt-2 font-semibold">Canal 3</label>
+        <select id="game-channel3" class="p-2 border rounded">
+          <option value="">Selecione um botão</option>
+        </select>
+        <label class="mt-2 font-semibold">Canal 4</label>
+        <select id="game-channel4" class="p-2 border rounded">
+          <option value="">Selecione um botão</option>
+        </select>
+
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
+      </form>
     </div>
 
-    <!-- Conteúdo -->
-    <div class="mt-[104px]">
-      <!-- Home -->
-      <div id="tab-home" class="tab-content">
-        <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
-        <ul id="games-list" class="space-y-2"></ul>
+    <!-- Times -->
+    <div id="tab-times" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
+      <form id="team-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="team-name" type="text" placeholder="Nome do time" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="team-logo" type="text" placeholder="URL do escudo" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+      </form>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Time</th>
+              <th class="p-2 text-left">Escudo</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="teams-list"></tbody>
+        </table>
       </div>
+    </div>
 
-      <!-- Adicionar Jogo -->
-      <div id="tab-addgame" class="tab-content hidden">
-        <h2 id="form-title" class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
-        <form id="game-form" class="flex flex-col gap-2 mb-4">
-          <select id="game-champ" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <option value="">Selecione o Campeonato</option>
-          </select>
-          <select id="game-home-team" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <option value="">Selecione o Time da Casa</option>
-          </select>
-          <select id="game-away-team" class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <option value="">Selecione o Time Visitante</option>
-          </select>
-          <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)"
-                 class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-
-          <!-- Canais fixos -->
-          <label class="mt-2 font-semibold">Canal 1</label>
-          <select id="game-channel1" class="p-2 border rounded"></select>
-          <label class="mt-2 font-semibold">Canal 2</label>
-          <select id="game-channel2" class="p-2 border rounded"></select>
-          <label class="mt-2 font-semibold">Canal 3</label>
-          <select id="game-channel3" class="p-2 border rounded"></select>
-          <label class="mt-2 font-semibold">Canal 4</label>
-          <select id="game-channel4" class="p-2 border rounded"></select>
-
-          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
-        </form>
+    <!-- Campeonatos -->
+    <div id="tab-champions" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
+      <form id="champ-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="champ-name" type="text" placeholder="Nome do campeonato" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="champ-logo" type="text" placeholder="URL da logo" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+      </form>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Campeonato</th>
+              <th class="p-2 text-left">Logo</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="champions-list"></tbody>
+        </table>
       </div>
+    </div>
 
-      <!-- Times -->
-      <div id="tab-times" class="tab-content hidden">
-        <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
-        <form id="team-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-          <input id="team-name" type="text" placeholder="Nome do time"
-                 class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <input id="team-logo" type="text" placeholder="URL do escudo"
-                 class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
-        </form>
-        <div class="overflow-x-auto">
-          <table class="w-full bg-white rounded shadow text-sm sm:text-base">
-            <thead>
-              <tr class="bg-gray-200">
-                <th class="p-2 text-left">Time</th>
-                <th class="p-2 text-left">Escudo</th>
-                <th class="p-2 text-left">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="teams-list"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Campeonatos -->
-      <div id="tab-champions" class="tab-content hidden">
-        <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
-        <form id="champ-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-          <input id="champ-name" type="text" placeholder="Nome do campeonato"
-                 class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <input id="champ-logo" type="text" placeholder="URL da logo"
-                 class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
-        </form>
-        <div class="overflow-x-auto">
-          <table class="w-full bg-white rounded shadow text-sm sm:text-base">
-            <thead>
-              <tr class="bg-gray-200">
-                <th class="p-2 text-left">Campeonato</th>
-                <th class="p-2 text-left">Logo</th>
-                <th class="p-2 text-left">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="champions-list"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Botões -->
-      <div id="tab-buttons" class="tab-content hidden">
-        <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
-        <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-          <input id="button-name" type="text" placeholder="Nome do canal"
-                 class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <input id="button-link" type="text" placeholder="Link do botão"
-                 class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-          <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
-        </form>
-        <div class="overflow-x-auto">
-          <table class="w-full bg-white rounded shadow text-sm sm:text-base">
-            <thead>
-              <tr class="bg-gray-200">
-                <th class="p-2 text-left">Canal</th>
-                <th class="p-2 text-left">Link</th>
-                <th class="p-2 text-left">Ações</th>
-              </tr>
-            </thead>
-            <tbody id="buttons-list"></tbody>
-          </table>
-        </div>
+    <!-- Botões -->
+    <div id="tab-buttons" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
+      <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input id="button-name" type="text" placeholder="Nome do canal" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <input id="button-link" type="text" placeholder="Link do botão" 
+               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+      </form>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Canal</th>
+              <th class="p-2 text-left">Link</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="buttons-list"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -153,34 +173,51 @@
 <!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, getDoc, doc } 
-  from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
-  authDomain: "futanium-web.firebaseapp.com",
-  projectId: "futanium-web",
-  storageBucket: "futanium-web.firebasestorage.app",
-  messagingSenderId: "594412535848",
-  appId: "1:594412535848:web:83477e68402960c94ff51d",
-  measurementId: "G-L2RV01TXJC"
-};
+    apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
+    authDomain: "futanium-web.firebaseapp.com",
+    projectId: "futanium-web",
+    storageBucket: "futanium-web.firebasestorage.app",
+    messagingSenderId: "594412535848",
+    appId: "1:594412535848:web:83477e68402960c94ff51d",
+    measurementId: "G-L2RV01TXJC"
+  };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+const USER = "admin";
+const PASS = "12345";
 let currentEditId = null;
 
-/* ---- showTab (abas) ---- */
+// ===== Auth & Tabs =====
+window.login = function() {
+  const u = document.getElementById("username").value;
+  const p = document.getElementById("password").value;
+  if (u === USER && p === PASS) {
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    showTab('home', true); // abre Home direto e força ativo
+    loadData();
+  } else {
+    document.getElementById("login-error").classList.remove("hidden");
+  }
+};
+
 window.showTab = function(tab, forceActive = false) {
+  // Esconde todas as abas
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
   document.getElementById("tab-" + tab).classList.remove("hidden");
 
+  // Reseta todos para cinza
   document.querySelectorAll(".tab-btn").forEach(el => {
     el.classList.remove("bg-blue-500","text-white");
     el.classList.add("bg-gray-200","text-gray-700");
   });
 
+  // Marca o botão clicado
   if (forceActive) {
     document.getElementById("btn-home").classList.remove("bg-gray-200","text-gray-700");
     document.getElementById("btn-home").classList.add("bg-blue-500","text-white");
@@ -190,10 +227,11 @@ window.showTab = function(tab, forceActive = false) {
   }
 };
 
-/* ---- helpers selects ---- */
+// ===== Helpers para selects =====
 function resetSelect(el, placeholder){
   el.innerHTML = `<option value="">${placeholder}</option>`;
 }
+
 function populateChannelSelects(buttons){
   const selects = [
     {el: document.getElementById('game-channel1'), label:'Selecione um botão'},
@@ -204,29 +242,34 @@ function populateChannelSelects(buttons){
   selects.forEach(s=>{
     resetSelect(s.el, s.label);
     buttons.forEach(b=>{
+      // valor = link, texto = nome do botão
       s.el.appendChild(new Option(b.name, b.link));
     });
   });
 }
 
-/* ---- Times ---- */
-document.getElementById("team-form").addEventListener("submit", async e=>{
+// ===== Times =====
+document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("team-name").value.trim();
   const logo = document.getElementById("team-logo").value.trim();
-  if(!name || !logo) return;
+  if (!name || !logo) return;
   await addDoc(collection(db,"teams"),{name,logo});
   document.getElementById("team-form").reset();
   await loadTeams();
 });
+
 async function loadTeams(){
   const q = await getDocs(collection(db,"teams"));
   const tbody = document.getElementById("teams-list");
   tbody.innerHTML = "";
+
+  // reseta selects de times antes de repopular
   const homeSel = document.getElementById("game-home-team");
   const awaySel = document.getElementById("game-away-team");
-  resetSelect(homeSel,"Selecione o Time da Casa");
-  resetSelect(awaySel,"Selecione o Time Visitante");
+  resetSelect(homeSel, "Selecione o Time da Casa");
+  resetSelect(awaySel, "Selecione o Time Visitante");
+
   q.forEach(docSnap=>{
     const t = docSnap.data();
     const tr = document.createElement("tr");
@@ -234,8 +277,9 @@ async function loadTeams(){
                     <td class="p-2"><img src="${t.logo}" class="h-6"></td>
                     <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
-    homeSel.appendChild(new Option(t.name,t.name));
-    awaySel.appendChild(new Option(t.name,t.name));
+
+    homeSel.appendChild(new Option(t.name, t.name));
+    awaySel.appendChild(new Option(t.name, t.name));
   });
 }
 window.deleteTeam = async function(id){
@@ -243,7 +287,7 @@ window.deleteTeam = async function(id){
   await loadTeams();
 };
 
-/* ---- Campeonatos ---- */
+// ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const name = document.getElementById("champ-name").value.trim();
@@ -257,8 +301,10 @@ async function loadChamps(){
   const q = await getDocs(collection(db,"championships"));
   const tbody = document.getElementById("champions-list");
   tbody.innerHTML = "";
+
   const champSel = document.getElementById("game-champ");
-  resetSelect(champSel,"Selecione o Campeonato");
+  resetSelect(champSel, "Selecione o Campeonato");
+
   q.forEach(docSnap=>{
     const c = docSnap.data();
     const tr = document.createElement("tr");
@@ -266,7 +312,8 @@ async function loadChamps(){
                     <td class="p-2"><img src="${c.logo}" class="h-6"></td>
                     <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
-    champSel.appendChild(new Option(c.name,c.name));
+
+    champSel.appendChild(new Option(c.name, c.name));
   });
 }
 window.deleteChamp = async function(id){
@@ -274,7 +321,7 @@ window.deleteChamp = async function(id){
   await loadChamps();
 };
 
-/* ---- Botões ---- */
+// ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const name = document.getElementById("button-name").value.trim();
@@ -288,16 +335,19 @@ async function loadButtons(){
   const q = await getDocs(collection(db,"buttons"));
   const tbody = document.getElementById("buttons-list");
   tbody.innerHTML = "";
+
   const buttonsArr = [];
   q.forEach(docSnap=>{
     const b = docSnap.data();
-    buttonsArr.push({id:docSnap.id,...b});
+    buttonsArr.push({id: docSnap.id, ...b});
     const tr = document.createElement("tr");
     tr.innerHTML = `<td class="p-2">${b.name}</td>
                     <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">${b.link}</a></td>
                     <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
   });
+
+  // repopula os selects dos 4 canais
   populateChannelSelects(buttonsArr);
 }
 window.deleteButton = async function(id){
@@ -305,50 +355,72 @@ window.deleteButton = async function(id){
   await loadButtons();
 };
 
-/* ---- Jogos ---- */
+// ===== Jogos (Adicionar / Editar) =====
 document.getElementById("game-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const champ = document.getElementById("game-champ").value;
-  const home = document.getElementById("game-home-team").value;
-  const away = document.getElementById("game-away-team").value;
-  const time = document.getElementById("game-time").value;
+  const home  = document.getElementById("game-home-team").value;
+  const away  = document.getElementById("game-away-team").value;
+  const time  = document.getElementById("game-time").value;
+
+  // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
   const selected = [
-    {name:"Canal 1",url:document.getElementById("game-channel1").value},
-    {name:"Canal 2",url:document.getElementById("game-channel2").value},
-    {name:"Canal 3",url:document.getElementById("game-channel3").value},
-    {name:"Canal 4",url:document.getElementById("game-channel4").value},
-  ].filter(c=>c.url && c.url.length);
-  if(!champ||!home||!away||!time) return;
+    {name:"Canal 1", url: document.getElementById("game-channel1").value},
+    {name:"Canal 2", url: document.getElementById("game-channel2").value},
+    {name:"Canal 3", url: document.getElementById("game-channel3").value},
+    {name:"Canal 4", url: document.getElementById("game-channel4").value},
+  ].filter(c => c.url && c.url.length);
 
-  let champLogo="",homeLogo="",awayLogo="";
-  const champsSnap = await getDocs(collection(db,"championships"));
-  champsSnap.forEach(d=>{if(d.data().name===champ) champLogo=d.data().logo;});
-  const teamsSnap = await getDocs(collection(db,"teams"));
-  teamsSnap.forEach(d=>{
-    if(d.data().name===home) homeLogo=d.data().logo;
-    if(d.data().name===away) awayLogo=d.data().logo;
-  });
+  if(!champ || !home || !away || !time) return;
 
-  const payload = {champ,champ_logo:champLogo,home,home_logo:homeLogo,away,away_logo:awayLogo,time,channels:selected};
-  if(currentEditId){
-    await updateDoc(doc(db,"games",currentEditId),payload);
-    currentEditId=null;
-    document.getElementById("form-title").innerText="Adicionar Jogo";
-  }else{
-    await addDoc(collection(db,"games"),payload);
-  }
+  // Buscar logo do campeonato
+let champLogo = "";
+const champsSnap = await getDocs(collection(db,"championships"));
+champsSnap.forEach(docSnap => {
+  if(docSnap.data().name === champ) champLogo = docSnap.data().logo;
+});
+
+// Buscar logo dos times
+let homeLogo = "";
+let awayLogo = "";
+const teamsSnap = await getDocs(collection(db,"teams"));
+teamsSnap.forEach(docSnap => {
+  if(docSnap.data().name === home) homeLogo = docSnap.data().logo;
+  if(docSnap.data().name === away) awayLogo = docSnap.data().logo;
+});
+
+const payload = {
+  champ,
+  champ_logo: champLogo,
+  home,
+  home_logo: homeLogo,
+  away,
+  away_logo: awayLogo,
+  time,
+  channels: selected
+};
+
+if(currentEditId){
+  await updateDoc(doc(db,"games",currentEditId), payload);
+  currentEditId = null;
+  document.getElementById("form-title").innerText = "Adicionar Jogo";
+}else{
+  await addDoc(collection(db,"games"), payload);
+}
+
   document.getElementById("game-form").reset();
   await loadGames();
   showTab('home');
 });
+
 async function loadGames(){
   const q = await getDocs(collection(db,"games"));
   const ul = document.getElementById("games-list");
-  ul.innerHTML="";
+  ul.innerHTML = "";
   q.forEach(docSnap=>{
-    const g=docSnap.data();
-    const li=document.createElement("li");
-    li.className="bg-white p-3 rounded shadow flex flex-col gap-1";
+    const g = docSnap.data();
+    const li = document.createElement("li");
+    li.className = "bg-white p-3 rounded shadow flex flex-col gap-1";
     const canaisLabel = (g.channels && g.channels.length)
       ? `<div class="text-sm text-gray-600">Canais: ${g.channels.map(c=>c.name).join(", ")}</div>`
       : "";
