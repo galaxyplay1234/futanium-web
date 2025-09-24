@@ -209,23 +209,18 @@ window.login = function() {
 
 window.showTab = function(tab) {
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-  document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("bg-blue-600","text-white"));
   document.getElementById("tab-" + tab).classList.remove("hidden");
-  // adiciona highlight no botão clicado, e funciona também quando chamamos programaticamente
-  if (window.event && event.target) {
-    event.target.classList.add("bg-blue-600","text-white");
-  } else {
-    // se não tiver evento (ex: chamado via editGame), mantém a Home como ativa visualmente
-    document.querySelectorAll(".tab-btn").forEach(el => {
-  el.classList.remove("bg-blue-700","text-white");
-  el.classList.add("bg-gray-700"); // volta todos para cinza
-});
 
-if (window.event && event.target) {
-  event.target.classList.remove("bg-gray-700");
-  event.target.classList.add("bg-blue-700","text-white");
-}
-    });
+  // limpa seleção de todos os botões
+  document.querySelectorAll(".tab-btn").forEach(el => {
+    el.classList.remove("bg-blue-700","text-white");
+    el.classList.add("bg-gray-700");
+  });
+
+  // marca o botão clicado
+  if (window.event && event.target) {
+    event.target.classList.remove("bg-gray-700");
+    event.target.classList.add("bg-blue-700","text-white");
   }
 };
 
