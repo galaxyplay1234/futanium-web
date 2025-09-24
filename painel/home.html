@@ -23,7 +23,39 @@
   </div>
 
   <!-- Dashboard -->
-<div id="dashboard" class="hidden w-full max-w-5xl mx-auto p-4 pt-[112px]">
+<div id="dashboard" class="hidden w-full max-w-5xl mx-auto p-4">
+  
+  <!-- Wrapper para o conteúdo -->
+  <div class="mt-[104px]"> 
+    <!-- 56px (h-14 topbar) + 48px (tabs) = 104px -->
+    
+    <!-- Home -->
+    <div id="tab-home" class="tab-content">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
+      <ul id="games-list" class="space-y-2"></ul>
+    </div>
+
+    <!-- Adicionar Jogo -->
+    <div id="tab-addgame" class="tab-content hidden">
+      ...
+    </div>
+
+    <!-- Times -->
+    <div id="tab-times" class="tab-content hidden">
+      ...
+    </div>
+
+    <!-- Campeonatos -->
+    <div id="tab-champions" class="tab-content hidden">
+      ...
+    </div>
+
+    <!-- Botões -->
+    <div id="tab-buttons" class="tab-content hidden">
+      ...
+    </div>
+  </div>
+</div>
   
   <!-- Top bar -->
   <div class="fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-50">
