@@ -31,19 +31,25 @@
 
     <!-- Tabs -->
 <div class="fixed top-14 left-0 right-0 px-4 py-2 flex flex-wrap gap-2 z-40">
-  <button onclick="showTab('home')" class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">
-  Home
-</button>
-  <button onclick="showTab('addgame')" class="tab-btn bg-gray-700 text-white px-3 py-1 rounded text-sm">
+  <button onclick="showTab('home')" 
+          id="btn-home"
+          class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">
+    Home
+  </button>
+  <button onclick="showTab('addgame')" 
+          class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
     Adicionar Jogo
   </button>
-  <button onclick="showTab('times')" class="tab-btn bg-gray-700 text-white px-3 py-1 rounded text-sm">
+  <button onclick="showTab('times')" 
+          class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
     Times
   </button>
-  <button onclick="showTab('champions')" class="tab-btn bg-gray-700 text-white px-3 py-1 rounded text-sm">
+  <button onclick="showTab('champions')" 
+          class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
     Campeonatos
   </button>
-  <button onclick="showTab('buttons')" class="tab-btn bg-gray-700 text-white px-3 py-1 rounded text-sm">
+  <button onclick="showTab('buttons')" 
+          class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
     Botões
   </button>
 </div>
@@ -208,22 +214,23 @@ window.login = function() {
 };
 
 window.showTab = function(tab, forceActive = false) {
+  // Esconde todas as abas
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
   document.getElementById("tab-" + tab).classList.remove("hidden");
 
-  // limpa seleção
+  // Reseta todos para cinza
   document.querySelectorAll(".tab-btn").forEach(el => {
     el.classList.remove("bg-blue-500","text-white");
-el.classList.add("bg-gray-200","text-gray-600");
+    el.classList.add("bg-gray-200","text-gray-700");
   });
 
-  // marca o botão
+  // Marca o botão clicado
   if (forceActive) {
-    document.querySelector(".tab-btn").classList.remove("bg-gray-700");
-    document.querySelector(".tab-btn").classList.add("bg-blue-500","text-white");
+    document.getElementById("btn-home").classList.remove("bg-gray-200","text-gray-700");
+    document.getElementById("btn-home").classList.add("bg-blue-500","text-white");
   } else if (window.event && event.target) {
-    event.target.classList.remove("bg-gray-200","text-gray-600");
-event.target.classList.add("bg-blue-500","text-white");
+    event.target.classList.remove("bg-gray-200","text-gray-700");
+    event.target.classList.add("bg-blue-500","text-white");
   }
 };
 
