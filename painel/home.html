@@ -30,7 +30,7 @@
 <div class="h-14"></div> <!-- espaçamento pro conteúdo não ficar atrás do menu -->
 
     <!-- Tabs -->
-<div class="fixed top-14 left-0 right-0 bg-gray-900 p-2 flex flex-wrap gap-2 z-40">
+<div class="fixed top-14 left-0 right-0 px-4 py-2 flex flex-wrap gap-2 z-40">
   <button onclick="showTab('home')" class="tab-btn bg-blue-700 text-white px-3 py-1 rounded text-sm">
     Home
   </button>
@@ -200,7 +200,7 @@ window.login = function() {
   if (u === USER && p === PASS) {
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
-    showTab('home'); // abre Home direto
+    showTab('home', true); // abre Home direto e força ativo
     loadData();
   } else {
     document.getElementById("login-error").classList.remove("hidden");
