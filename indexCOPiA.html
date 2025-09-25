@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="monetag" content="d3727eeea3ec4b655a9e4ad8872dd2e9">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#151823"/>
+<title>Futanium Box 3.0</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@400" rel="stylesheet"/>
+
+<style>
+  :root{
+    --header:#151823; --bg:#F3F3F3; --card:#FFFFFF; --muted:#9EA3AF; --ink:#0B0F1A;
+    --list-top: 0px;
+    --shadow:0 2px 8px rgba(0,0,0,.10);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
+  html,body{ height:100%; margin:0; overflow:hidden; }
+  body{
+    background:var(--bg); color:var(--ink);
+    font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  }
+  .app{ position:relative; width:100vw; height:100vh; overflow:hidden; }
+
+  .top{
+    position:absolute; left:0; right:0; top:0; z-index:1000;
+    display:flex; align-items:center; justify-content:space-between;
+    height:60px; padding:0 12px; background:#151823; color:#fff;
+    box-shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+  .brand{ font-weight:700; font-size:18px }
+  .iconBtn{
+    width:46px; height:46px; border:0; background:transparent; color:#fff;
+    display:inline-grid; place-items:center; border-radius:50%; cursor:pointer;
+    transition:transform .06s ease, background .12s ease;
+  }
+  .iconBtn:active{ transform:scale(.92); background:rgba(255,255,255,.08) }
+  .mi{ font-family:"Material Symbols Outlined"; font-size:26px; line-height:1 }
+  .spin{ animation:rot 900ms linear infinite }
+  @keyframes rot{ to{ transform:rotate(360deg) } }
+
+  .chipWrap{ position:absolute; left:0; right:0; z-index:910; top:60px; }
+  .chipRow{ display:flex; justify-content:center; padding:8px 0 }
+  .chip{
+    display:inline-block; padding:6px 14px; border-radius:12px; background:#fff; color:#555;
+    font-weight:700; letter-spacing:.35px; box-shadow:0 3px 8px rgba(0,0,0,.15);
+  }
+
+  .list{
+    position:absolute; left:0; right:0; bottom:0; top:var(--list-top);
+    overflow:auto; padding:8px 12px 28px; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .list::-webkit-scrollbar{ display:none }
+
+  .card{
+    background:var(--card); border-radius:14px; padding:12px; margin-bottom:12px;
+    box-shadow:var(--shadow); transition:transform .05s ease;
+  }
+  .card:active{ transform:scale(.997) }
+  .champ{ display:flex; align-items:center; gap:8px; color:var(--muted); font-weight:600; margin-bottom:8px }
+  .clogo{ width:24px; height:24px; object-fit:contain }
+  .row{ display:flex; align-items:center; justify-content:space-between; gap:8px }
+  .team{ width:150px; text-align:center }
+  .tlogo{ width:50px; height:50px; object-fit:contain }
+  .tname{ margin-top:6px; font-size:12px; min-height:32px }
+  .timeBox{ height:50px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative }
+  .ttxt{ font-size:20px; font-weight:700; color:#000; transform:translateY(-6px) }
+  .live{ position:absolute; left:0; right:0; bottom:-12px; display:flex; align-items:center; justify-content:center; gap:4px }
+  .ldot{ color:red; font-size:22px; font-weight:700; animation:blink 1.4s infinite }
+  .ltxt{ color:red; font-size:12px; font-weight:700 }
+  @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:0} }
+
+  .btns{ overflow:hidden; max-height:0; opacity:.0; transform:translateY(-4px); transition:max-height .25s ease, opacity .18s ease, transform .18s ease; }
+  .btns.open{ opacity:1; transform:translateY(0) }
+  .btn{
+    display:inline-block;
+    background:#EAEAEA; color:#000; font-weight:600; border:0; border-radius:8px;
+    padding:8px 12px; margin:8px 8px 0 0; cursor:pointer; text-decoration:none;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="top">
+    <div class="brand">Futanium Web</div>
+    <button id="btnRefresh" class="iconBtn" title="Atualizar">
+      <span id="icoRefresh" class="mi">autorenew</span>
+    </button>
+  </div>
+
+  <div id="chipWrap" class="chipWrap">
+    <div class="chipRow"><div id="todayChip" class="chip">JOGOS DE HOJE</div></div>
+  </div>
+
+  <div id="list" class="list"></div>
+</div>
+
+<script type="module">
+const API_HTTP = "https://futaniumwebapp.vercel.app/api/games"; // 🔹 agora consome da API
+
+const listEl   = document.getElementById('list');
+const chipWrap = document.getElementById('chipWrap');
+const todayChip= document.getElementById('todayChip');
+const btnRef   = document.getElementById('btnRefresh');
+const icoRef   = document.getElementById('icoRefresh');
+
+function layout(){
+  const headerH = 60;
+  const chipH   = chipWrap.getBoundingClientRect().height || 40;
+  const listTop = headerH + chipH;
+  document.documentElement.style.setProperty('--list-top', listTop + 'px');
+}
+function todayLabel(){
+  const d=new Date(), dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
+  return `JOGOS DE HOJE ${dd}/${mm}`;
+}
+todayChip.textContent = todayLabel();
+layout();
+addEventListener('resize', layout);
+
+function collapse(el){ el.style.maxHeight=el.scrollHeight+'px'; requestAnimationFrame(()=>{ el.classList.remove('open'); el.style.maxHeight='0px'; }); }
+function expand(el){ el.classList.add('open'); el.style.maxHeight=el.scrollHeight+'px'; setTimeout(()=>{ el.style.maxHeight='9999px'; },260); }
+
+// ==================== RENDER ====================
+function renderList(items){
+  listEl.innerHTML='';
+  (items||[]).forEach((it)=>{
+    const hasBtns = Array.isArray(it?.buttons)&&it.buttons.length>0;
+    const card = document.createElement('div'); card.className='card';
+
+    const head = document.createElement('div');
+    head.innerHTML = `
+      <div class="champ">
+        <img class="clogo" src="${it.championship_image_url || ''}" alt="">
+        <div>${it.championship||''}</div>
+      </div>
+      <div class="row">
+        <div class="team">
+          <img class="tlogo" src="${it.home_team_image_url || ''}" onerror="this.style.display='none'">
+          <div class="tname">${it.home_team||''}</div>
+        </div>
+        <div class="timeBox">
+          <div class="ttxt">${it.start_time||''}</div>
+          ${it.is_live?`<div class="live"><span class="ldot">•</span><span class="ltxt">ao vivo</span></div>`:''}
+        </div>
+        <div class="team">
+          <img class="tlogo" src="${it.visiting_team_image_url || ''}" onerror="this.style.display='none'">
+          <div class="tname">${it.visiting_team||''}</div>
+        </div>
+      </div>`;
+    card.appendChild(head);
+
+    const btns = document.createElement('div'); btns.className='btns';
+    if(hasBtns){
+      it.buttons.forEach((b,i)=>{
+        const a=document.createElement('a');
+        a.className='btn';
+        a.textContent = b.name || `Canal ${i+1}`;
+        a.href = b.url;
+        a.target="_blank";
+        a.rel="noopener";
+        btns.appendChild(a);
+      });
+      card.appendChild(btns);
+      let open=false; head.style.cursor='pointer';
+      head.onclick=()=>{ open?collapse(btns):expand(btns); open=!open; };
+    }
+    listEl.appendChild(card);
+  });
+}
+
+// ==================== LOAD ====================
+async function load(){
+  try{
+    icoRef.classList.add('spin');
+    const res = await fetch(API_HTTP, {cache:'no-store'});
+    const data = await res.json();
+    renderList(data.filter(x=>x&&(x.home_team||x.visiting_team||x.championship)));
+  }catch(e){
+    listEl.innerHTML = "<p style='padding:12px'>Erro ao carregar jogos.</p>";
+  }finally{
+    setTimeout(()=>icoRef.classList.remove('spin'), 300);
+  }
+}
+btnRef.onclick = load;
+
+layout();
+load();
+</script>
+</body>
+</html>
