@@ -9,19 +9,18 @@
 <style>
   :root{
     --header:#151823; --bg:#F3F3F3; --card:#FFFFFF; --muted:#9EA3AF; --ink:#0B0F1A;
-    --list-top: 0px;
     --shadow:0 2px 8px rgba(0,0,0,.10);
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent }
-  html,body{ height:100%; margin:0; overflow:hidden; }
+  html,body{ height:100%; margin:0; }
   body{
     background:var(--bg); color:var(--ink);
     font:15px/1.35 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   }
-  .app{ position:relative; width:100vw; height:100vh; overflow:hidden; }
+  .app{ position:relative; width:100vw; min-height:100vh; }
 
   .top{
-    position:absolute; left:0; right:0; top:0; z-index:1000;
+    position:fixed; left:0; right:0; top:0; z-index:1000;
     display:flex; align-items:center; justify-content:space-between;
     height:60px; padding:0 12px; background:#151823; color:#fff;
     box-shadow:0 2px 10px rgba(0,0,0,.35);
@@ -30,99 +29,81 @@
   .iconBtn{
     width:46px; height:46px; border:0; background:transparent; color:#fff;
     display:inline-grid; place-items:center; border-radius:50%; cursor:pointer;
-    transition:transform .06s ease, background .12s ease;
   }
-  .iconBtn:active{ transform:scale(.92); background:rgba(255,255,255,.08) }
-  .mi{ font-family:"Material Symbols Outlined"; font-size:26px; line-height:1 }
-  .spin{ animation:rot 900ms linear infinite }
-  @keyframes rot{ to{ transform:rotate(360deg) } }
+  .mi{ font-family:"Material Symbols Outlined"; font-size:26px; }
 
-  .chipWrap{ position:absolute; left:0; right:0; z-index:910; top:60px; }
-  .chipRow{ display:flex; justify-content:center; padding:8px 0 }
+  .chipWrap{ margin-top:60px; display:flex; justify-content:center; padding:8px 0; }
   .chip{
     display:inline-block; padding:6px 14px; border-radius:12px; background:#fff; color:#555;
-    font-weight:700; letter-spacing:.35px; box-shadow:0 3px 8px rgba(0,0,0,.15);
+    font-weight:700; box-shadow:0 3px 8px rgba(0,0,0,.15);
   }
 
-  .list{
-    position:absolute; left:0; right:0; bottom:0; top:var(--list-top);
-    overflow:auto; padding:8px 12px 28px; -webkit-overflow-scrolling:touch;
-    scrollbar-width:none;
-  }
-  .list::-webkit-scrollbar{ display:none }
-
-  /* PLAYER */
-  #player-container {
+  /* Player */
+  .player-section {
     width: 100%;
-    aspect-ratio: 16/9;
-    background: #000;
+    max-width: 95%;
+    margin: 20px auto;
     border-radius: 14px;
-    box-shadow: var(--shadow);
-    margin: 12px 0;
-    position: relative;
     overflow: hidden;
+    box-shadow: var(--shadow);
+    background: #000;
+    position: relative;
+    aspect-ratio: 16 / 9;
   }
-  #player-container iframe {
+  #playerFrame {
     width: 100%;
     height: 100%;
     border: none;
   }
-  #player-message {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff;
-    font-size: 18px;
-    text-align: center;
-    padding: 0 10px;
-  }
-  #fullscreen-btn {
+  .fullscreen-btn {
     position: absolute;
     top: 10px;
     right: 10px;
     background: rgba(0,0,0,0.6);
     color: #fff;
-    padding: 6px 10px;
+    padding: 6px 12px;
     border-radius: 8px;
-    cursor: pointer;
     font-size: 14px;
-    border: none;
+    cursor: pointer;
   }
 
-  .channel-buttons {
+  /* Botões canais */
+  .channels {
+    max-width: 95%;
+    margin: 12px auto 20px;
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 12px;
   }
-  .channel-buttons button {
-    background: #EAEAEA;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 16px;
-    font-size: 15px;
+  .channels button {
+    background: #e5e5e5;
+    color: #000;
     font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 15px;
     cursor: pointer;
+    transition: background .2s;
+  }
+  .channels button:hover {
+    background: #d4d4d4;
   }
 
+  /* Cards */
+  .list{ padding: 0 12px 28px; }
   .card{
     background:var(--card); border-radius:14px; padding:12px; margin-bottom:12px;
-    box-shadow:var(--shadow); transition:transform .05s ease;
+    box-shadow:var(--shadow); cursor:pointer;
   }
-  .card:active{ transform:scale(.997) }
   .champ{ display:flex; align-items:center; gap:8px; color:var(--muted); font-weight:600; margin-bottom:8px }
   .clogo{ width:24px; height:24px; object-fit:contain }
   .row{ display:flex; align-items:center; justify-content:space-between; gap:8px }
   .team{ width:150px; text-align:center }
   .tlogo{ width:50px; height:50px; object-fit:contain }
   .tname{ margin-top:6px; font-size:12px; min-height:32px }
-  .timeBox{ height:50px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative }
-  .ttxt{ font-size:20px; font-weight:700; color:#000; transform:translateY(-6px) }
-  .live{ position:absolute; left:0; right:0; bottom:-12px; display:flex; align-items:center; justify-content:center; gap:4px }
-  .ldot{ color:red; font-size:22px; font-weight:700; animation:blink 1.4s infinite }
-  .ltxt{ color:red; font-size:12px; font-weight:700 }
-  @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:0} }
+  .timeBox{ height:50px; display:flex; flex-direction:column; align-items:center; justify-content:center }
+  .ttxt{ font-size:20px; font-weight:700; color:#000 }
 </style>
 </head>
 <body>
@@ -130,114 +111,95 @@
 
   <div class="top">
     <div class="brand">Futanium Web</div>
-    <button id="btnRefresh" class="iconBtn" title="Atualizar">
-      <span id="icoRefresh" class="mi">autorenew</span>
-    </button>
+    <button class="iconBtn" id="btnRefresh"><span class="mi">autorenew</span></button>
   </div>
 
-  <div id="chipWrap" class="chipWrap">
-    <div class="chipRow"><div id="todayChip" class="chip">JOGOS DE HOJE</div></div>
+  <div class="chipWrap"><div class="chip" id="todayChip">JOGOS DE HOJE</div></div>
+
+  <!-- Player -->
+  <div class="player-section" id="playerSection">
+    <iframe id="playerFrame" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    <div class="fullscreen-btn" onclick="goFullscreen()">Tela cheia</div>
   </div>
 
-  <div class="list">
-    <!-- Player fixo -->
-    <div id="player-container">
-      <div id="player-message">Escolha um jogo para assistir</div>
-      <button id="fullscreen-btn" onclick="toggleFullscreen()">Tela cheia</button>
-    </div>
-    <div class="channel-buttons" id="channel-buttons"></div>
+  <!-- Botões de canais -->
+  <div class="channels" id="channelButtons"></div>
 
-    <!-- Lista de jogos -->
-    <div id="list"></div>
-  </div>
+  <!-- Lista de jogos -->
+  <div class="list" id="list"></div>
 </div>
 
 <script type="module">
 const API_HTTP = "https://futaniumwebapp.vercel.app/api/games";
-const listEl   = document.getElementById('list');
-const chipWrap = document.getElementById('chipWrap');
-const todayChip= document.getElementById('todayChip');
-const btnRef   = document.getElementById('btnRefresh');
-const icoRef   = document.getElementById('icoRefresh');
-const playerMessage = document.getElementById('player-message');
-const playerContainer = document.getElementById('player-container');
-const channelButtons = document.getElementById('channel-buttons');
+const listEl = document.getElementById('list');
+const playerFrame = document.getElementById('playerFrame');
+const channelButtons = document.getElementById('channelButtons');
+const todayChip = document.getElementById('todayChip');
 
-function layout(){
-  const headerH = 60;
-  const chipH   = chipWrap.getBoundingClientRect().height || 40;
-  const listTop = headerH + chipH;
-  document.documentElement.style.setProperty('--list-top', listTop + 'px');
-}
-layout();
-addEventListener('resize', layout);
+// Label de hoje
+const d=new Date(), dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
+todayChip.textContent = `JOGOS DE HOJE ${dd}/${mm}`;
 
-function todayLabel(){
-  const d=new Date(), dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
-  return `JOGOS DE HOJE ${dd}/${mm}`;
-}
-todayChip.textContent = todayLabel();
+// Função fullscreen real
+window.goFullscreen = function(){
+  const iframe = playerFrame;
+  if(iframe.requestFullscreen){ iframe.requestFullscreen(); }
+  else if(iframe.webkitRequestFullscreen){ iframe.webkitRequestFullscreen(); }
+  else if(iframe.msRequestFullscreen){ iframe.msRequestFullscreen(); }
+};
 
-function toggleFullscreen(){
-  const iframe = playerContainer.querySelector('iframe');
-  if (iframe) {
-    if (iframe.requestFullscreen) iframe.requestFullscreen();
-    else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
-  }
-}
-
+// Renderiza cards
 function renderList(items){
   listEl.innerHTML='';
-  (items||[]).forEach((it)=>{
-    const card = document.createElement('div'); card.className='card';
-
-    const head = document.createElement('div');
-    head.innerHTML = `
+  (items||[]).forEach(it=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
       <div class="champ">
         <img class="clogo" src="${it.championship_image_url || ''}">
         <div>${it.championship||''}</div>
       </div>
       <div class="row">
-        <div class="team"><img class="tlogo" src="${it.home_team_image_url || ''}"><div class="tname">${it.home_team||''}</div></div>
+        <div class="team">
+          <img class="tlogo" src="${it.home_team_image_url || ''}">
+          <div class="tname">${it.home_team||''}</div>
+        </div>
         <div class="timeBox"><div class="ttxt">${it.start_time||''}</div></div>
-        <div class="team"><img class="tlogo" src="${it.visiting_team_image_url || ''}"><div class="tname">${it.visiting_team||''}</div></div>
+        <div class="team">
+          <img class="tlogo" src="${it.visiting_team_image_url || ''}">
+          <div class="tname">${it.visiting_team||''}</div>
+        </div>
       </div>`;
-    card.appendChild(head);
-
-    card.onclick = ()=>{
-      playerMessage.innerText = `Escolha um canal para assistir ${it.home_team} x ${it.visiting_team}`;
-      channelButtons.innerHTML = "";
-      if(it.buttons && it.buttons.length){
-        it.buttons.forEach((b)=>{
-          const btn = document.createElement('button');
-          btn.textContent = b.name;
-          btn.onclick = ()=>{
-            playerContainer.innerHTML = `
-              <iframe src="${b.url}?autoplay=1&mute=0" allow="autoplay"></iframe>
-              <button id="fullscreen-btn" onclick="toggleFullscreen()">Tela cheia</button>
-            `;
-          };
-          channelButtons.appendChild(btn);
-        });
-      }
-    };
+    card.onclick = ()=>selectMatch(it);
     listEl.appendChild(card);
   });
 }
 
-async function load(){
-  try{
-    icoRef.classList.add('spin');
-    const res = await fetch(API_HTTP, {cache:'no-store'});
-    const data = await res.json();
-    renderList(data.filter(x=>x&&(x.home_team||x.visiting_team||x.championship)));
-  }catch(e){
-    listEl.innerHTML = "<p style='padding:12px'>Erro ao carregar jogos.</p>";
-  }finally{
-    setTimeout(()=>icoRef.classList.remove('spin'), 300);
+// Selecionar jogo
+function selectMatch(match){
+  const buttons = match.buttons || [];
+  channelButtons.innerHTML = "";
+  if(buttons.length){
+    buttons.forEach((btn,i)=>{
+      const b = document.createElement("button");
+      b.textContent = btn.name || `Canal ${i+1}`;
+      b.onclick = ()=>loadChannel(btn.url);
+      channelButtons.appendChild(b);
+    });
   }
 }
-btnRef.onclick = load;
+
+// Carregar canal no player (com autoplay e som)
+function loadChannel(url){
+  playerFrame.src = `${url}?autoplay=1&mute=0`;
+}
+
+// Carregar dados
+async function load(){
+  const res = await fetch(API_HTTP);
+  const data = await res.json();
+  renderList(data);
+}
 load();
 </script>
 </body>
