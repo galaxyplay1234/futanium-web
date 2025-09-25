@@ -65,6 +65,25 @@
     border-radius: 8px;
     font-size: 14px;
     cursor: pointer;
+    user-select: none;
+  }
+
+  /* Fullscreen (overlay CSS – funciona no iOS/Safari) */
+  .player-section.fullscreen{
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    border-radius: 0;
+    margin: 0;
+    max-width: none;
+    width: 100vw;
+    height: 100vh;
+    aspect-ratio: auto;
+    background:#000;
+  }
+  .player-section.fullscreen #playerFrame{
+    width: 100%;
+    height: 100%;
   }
 
   /* Botões canais */
@@ -86,11 +105,9 @@
     cursor: pointer;
     transition: background .2s;
   }
-  .channels button:hover {
-    background: #d4d4d4;
-  }
+  .channels button:hover { background: #d4d4d4; }
 
-  /* Cards */
+  /* Lista de jogos */
   .list{ padding: 0 12px 28px; }
   .card{
     background:var(--card); border-radius:14px; padding:12px; margin-bottom:12px;
@@ -118,8 +135,12 @@
 
   <!-- Player -->
   <div class="player-section" id="playerSection">
-    <iframe id="playerFrame" allow="autoplay; fullscreen" allowfullscreen></iframe>
-    <div class="fullscreen-btn" onclick="goFullscreen()">Tela cheia</div>
+    <iframe id="playerFrame"
+      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+      allowfullscreen
+      referrerpolicy="no-referrer">
+    </iframe>
+    <div class="fullscreen-btn" id="fsBtn">Tela cheia</div>
   </div>
 
   <!-- Botões de canais -->
@@ -133,22 +154,32 @@
 const API_HTTP = "https://futaniumwebapp.vercel.app/api/games";
 const listEl = document.getElementById('list');
 const playerFrame = document.getElementById('playerFrame');
+const playerSection = document.getElementById('playerSection');
 const channelButtons = document.getElementById('channelButtons');
 const todayChip = document.getElementById('todayChip');
+const fsBtn = document.getElementById('fsBtn');
 
-// Label de hoje
+// Label HOJE
 const d=new Date(), dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
 todayChip.textContent = `JOGOS DE HOJE ${dd}/${mm}`;
 
-// Função fullscreen real
-window.goFullscreen = function(){
-  const iframe = playerFrame;
-  if(iframe.requestFullscreen){ iframe.requestFullscreen(); }
-  else if(iframe.webkitRequestFullscreen){ iframe.webkitRequestFullscreen(); }
-  else if(iframe.msRequestFullscreen){ iframe.msRequestFullscreen(); }
-};
+// --- Fullscreen (overlay CSS, compatível iOS/Safari) ---
+let isFS = false;
+function toggleFullscreen(){
+  isFS = !isFS;
+  if(isFS){
+    playerSection.classList.add('fullscreen');
+    fsBtn.textContent = 'Sair';
+    document.documentElement.style.overflow = 'hidden';
+  }else{
+    playerSection.classList.remove('fullscreen');
+    fsBtn.textContent = 'Tela cheia';
+    document.documentElement.style.overflow = '';
+  }
+}
+fsBtn.addEventListener('click', toggleFullscreen);
 
-// Renderiza cards
+// --- Render lista ---
 function renderList(items){
   listEl.innerHTML='';
   (items||[]).forEach(it=>{
@@ -175,7 +206,7 @@ function renderList(items){
   });
 }
 
-// Selecionar jogo
+// --- Selecionar jogo e montar botões ---
 function selectMatch(match){
   const buttons = match.buttons || [];
   channelButtons.innerHTML = "";
@@ -183,20 +214,33 @@ function selectMatch(match){
     buttons.forEach((btn,i)=>{
       const b = document.createElement("button");
       b.textContent = btn.name || `Canal ${i+1}`;
-      b.onclick = ()=>loadChannel(btn.url);
+      b.addEventListener('click', ()=>loadChannel(btn.url), {once:false});
       channelButtons.appendChild(b);
     });
   }
 }
 
-// Carregar canal no player (com autoplay e som)
+// --- Carregar canal no iframe (força autoplay e som quando possível) ---
 function loadChannel(url){
-  playerFrame.src = `${url}?autoplay=1&mute=0`;
+  const sep = url.includes('?') ? '&' : '?';
+  // Flags comuns reconhecidas por muitos players
+  const flags = 'autoplay=1&muted=0&volume=1&playsinline=1';
+  const finalUrl = `${url}${sep}${flags}`;
+  playerFrame.src = finalUrl;
+
+  // Após carregar, tenta "desmutar" via postMessage (quando o player suporta)
+  playerFrame.onload = () => {
+    try{
+      playerFrame.contentWindow.postMessage({type:'unmute'}, '*');
+      playerFrame.contentWindow.postMessage({event:'command', func:'unMute'}, '*'); // players tipo YouTube-like
+      playerFrame.contentWindow.postMessage({method:'setVolume', value:1}, '*');
+    }catch(e){}
+  };
 }
 
-// Carregar dados
+// --- Carregar dados ---
 async function load(){
-  const res = await fetch(API_HTTP);
+  const res = await fetch(API_HTTP, {cache:'no-store'});
   const data = await res.json();
   renderList(data);
 }
