@@ -47,6 +47,38 @@
     font-weight:700; letter-spacing:.35px; box-shadow:0 3px 8px rgba(0,0,0,.15);
   }
 
+  /* === PLAYER BOX === */
+  #playerBox {
+    display: none;
+    margin: 12px auto;
+    max-width: 95%;
+    background: #000;
+    color: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.4);
+  }
+  #playerBox h3 {
+    font-size: 16px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  #playerChannels {
+    text-align: center;
+  }
+  #playerChannels a {
+    display: inline-block;
+    margin: 6px;
+    padding: 8px 14px;
+    background: #1e90ff;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
   .list{
     position:absolute; left:0; right:0; bottom:0; top:var(--list-top);
     overflow:auto; padding:8px 12px 28px; -webkit-overflow-scrolling:touch;
@@ -71,14 +103,6 @@
   .ldot{ color:red; font-size:22px; font-weight:700; animation:blink 1.4s infinite }
   .ltxt{ color:red; font-size:12px; font-weight:700 }
   @keyframes blink{ 0%,100%{opacity:1} 50%{opacity:0} }
-
-  .btns{ overflow:hidden; max-height:0; opacity:.0; transform:translateY(-4px); transition:max-height .25s ease, opacity .18s ease, transform .18s ease; }
-  .btns.open{ opacity:1; transform:translateY(0) }
-  .btn{
-    display:inline-block;
-    background:#EAEAEA; color:#000; font-weight:600; border:0; border-radius:8px;
-    padding:8px 12px; margin:8px 8px 0 0; cursor:pointer; text-decoration:none;
-  }
 </style>
 </head>
 <body>
@@ -95,11 +119,10 @@
     <div class="chipRow"><div id="todayChip" class="chip">JOGOS DE HOJE</div></div>
   </div>
 
-  <!-- 🆕 Quadro do player -->
-  <div id="playerBox" style="display:none; max-width: 100%; margin: 12px auto; background: #000; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); padding: 16px; color: #fff; text-align: center;">
-    <h3 id="playerTitle" style="font-size: 16px; margin-bottom: 12px; font-weight: 600;"></h3>
-    <div id="playerFrame" style="width: 100%; aspect-ratio: 16/9; background: #111; border-radius: 12px; margin-bottom: 12px;"></div>
-    <div id="playerButtons" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;"></div>
+  <!-- ✅ PLAYER BOX AQUI -->
+  <div id="playerBox">
+    <h3 id="playerTitle"></h3>
+    <div id="playerChannels"></div>
   </div>
 
   <div id="list" class="list"></div>
@@ -113,6 +136,10 @@ const chipWrap = document.getElementById('chipWrap');
 const todayChip= document.getElementById('todayChip');
 const btnRef   = document.getElementById('btnRefresh');
 const icoRef   = document.getElementById('icoRefresh');
+
+const playerBox = document.getElementById('playerBox');
+const playerTitle = document.getElementById('playerTitle');
+const playerChannels = document.getElementById('playerChannels');
 
 function layout(){
   const headerH = 60;
@@ -129,38 +156,17 @@ layout();
 addEventListener('resize', layout);
 
 // ==================== PLAYER ====================
-function showPlayer(game){
-  const playerBox = document.getElementById("playerBox");
-  const playerTitle = document.getElementById("playerTitle");
-  const playerFrame = document.getElementById("playerFrame");
-  const playerButtons = document.getElementById("playerButtons");
-
-  playerTitle.textContent = `Você está assistindo: ${game.home_team} x ${game.visiting_team}`;
-
-  if(game.buttons && game.buttons[0]){
-    playerFrame.innerHTML = `<iframe src="${game.buttons[0].url}" style="width:100%; height:100%; border:none; border-radius:12px;" allowfullscreen></iframe>`;
-  } else {
-    playerFrame.innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#aaa;">Nenhum canal disponível</div>`;
-  }
-
-  playerButtons.innerHTML = '';
-  if(game.buttons){
-    game.buttons.forEach((btn, i)=>{
-      const b = document.createElement("button");
-      b.textContent = btn.name || `Canal ${i+1}`;
-      b.style.cssText = `
-        background:#1e90ff; color:#fff; border:none; padding:8px 16px;
-        border-radius:8px; cursor:pointer; font-weight:600;
-      `;
-      b.onclick = () => {
-        playerFrame.innerHTML = `<iframe src="${btn.url}" style="width:100%; height:100%; border:none; border-radius:12px;" allowfullscreen></iframe>`;
-      };
-      playerButtons.appendChild(b);
-    });
-  }
-
-  playerBox.style.display = "block";
-  playerBox.scrollIntoView({ behavior: "smooth", block: "start" });
+function showPlayer(match) {
+  playerTitle.textContent = `Você está assistindo: ${match.home_team} x ${match.visiting_team}`;
+  playerChannels.innerHTML = '';
+  (match.buttons || []).forEach((b,i)=>{
+    const btn = document.createElement('a');
+    btn.textContent = b.name || `Canal ${i+1}`;
+    btn.href = b.url;
+    btn.target = "_blank";
+    playerChannels.appendChild(btn);
+  });
+  playerBox.style.display = 'block';
 }
 
 // ==================== RENDER ====================
@@ -168,9 +174,7 @@ function renderList(items){
   listEl.innerHTML='';
   (items||[]).forEach((it)=>{
     const card = document.createElement('div'); card.className='card';
-
-    const head = document.createElement('div');
-    head.innerHTML = `
+    card.innerHTML = `
       <div class="champ">
         <img class="clogo" src="${it.championship_image_url || ''}" alt="">
         <div>${it.championship||''}</div>
@@ -189,12 +193,7 @@ function renderList(items){
           <div class="tname">${it.visiting_team||''}</div>
         </div>
       </div>`;
-    card.appendChild(head);
-
-    // Clique no card -> abre o player
-    head.style.cursor = 'pointer';
-    head.onclick = () => showPlayer(it);
-
+    card.onclick = ()=> showPlayer(it);
     listEl.appendChild(card);
   });
 }
