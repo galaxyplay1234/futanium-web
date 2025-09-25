@@ -54,16 +54,43 @@
 
   /* Player fixo */
   .player-container{
-    background:#000; color:#fff; border-radius:14px; padding:30px 16px;
-    box-shadow:var(--shadow); margin:12px auto; text-align:center;
+    background:#000; color:#fff;
+    width:100%; max-width:700px;
+    margin:20px auto;
+    border-radius:14px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.4);
+    position:relative;
+    aspect-ratio:16/9;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:10px;
   }
-  .player-message{ font-size:16px; font-weight:600; }
-  .channel-buttons{
-    display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; justify-content:flex-start;
+  #playerFrame {
+    position:absolute;
+    top:0; left:0; width:100%; height:100%;
+    border:0; display:none;
+    border-radius:14px;
   }
-  .channel-buttons .btn{
-    background:#EAEAEA; color:#000; padding:8px 12px; border-radius:8px;
-    text-decoration:none; font-weight:600; cursor:pointer;
+  #playerMessage{
+    z-index:2;
+    font-size:18px;
+    padding:0 20px;
+  }
+  #channelButtons {
+    max-width:700px;
+    margin:8px auto 20px;
+    padding:0 8px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .btn{
+    background:#EAEAEA; color:#000; font-weight:600;
+    border:0; border-radius:8px;
+    padding:8px 12px; cursor:pointer;
+    text-decoration:none;
   }
 
   .card{
@@ -100,47 +127,38 @@
   </div>
 
   <div class="list">
-    <!-- Player fixo -->
-    <div id="playerContainer" class="player-container">
-      <div id="playerMessage" class="player-message">Escolha um jogo para assistir</div>
-      <div id="channelButtons" class="channel-buttons"></div>
+    <!-- 🎥 Player fixo -->
+    <div class="player-container">
+      <iframe id="playerFrame" allowfullscreen></iframe>
+      <div id="playerMessage">Escolha um jogo para assistir</div>
     </div>
 
-    <!-- Lista de jogos -->
+    <!-- 🔘 Botões dos canais -->
+    <div id="channelButtons"></div>
+
+    <!-- 📋 Lista de jogos -->
     <div id="list"></div>
   </div>
 </div>
 
 <script type="module">
-const API_HTTP = "https://futaniumwebapp.vercel.app/api/games";
+const API_HTTP = "https://futaniumwebapp.vercel.app/api/games"; 
 const listEl   = document.getElementById('list');
-const chipWrap = document.getElementById('chipWrap');
-const todayChip= document.getElementById('todayChip');
-const btnRef   = document.getElementById('btnRefresh');
-const icoRef   = document.getElementById('icoRefresh');
+const playerFrame = document.getElementById('playerFrame');
+const playerMessage = document.getElementById('playerMessage');
+const channelButtons = document.getElementById('channelButtons');
 
-const playerMessage = document.getElementById("playerMessage");
-const channelButtons = document.getElementById("channelButtons");
-
-function layout(){
-  const headerH = 60;
-  const chipH   = chipWrap.getBoundingClientRect().height || 40;
-  const listTop = headerH + chipH;
-  document.documentElement.style.setProperty('--list-top', listTop + 'px');
-}
 function todayLabel(){
   const d=new Date(), dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
   return `JOGOS DE HOJE ${dd}/${mm}`;
 }
-todayChip.textContent = todayLabel();
-layout();
-addEventListener('resize', layout);
+document.getElementById('todayChip').textContent = todayLabel();
 
-// Render da lista
 function renderList(items){
   listEl.innerHTML='';
   (items||[]).forEach((it)=>{
-    const card = document.createElement('div'); card.className='card';
+    const card = document.createElement('div'); 
+    card.className='card';
     card.innerHTML = `
       <div class="champ">
         <img class="clogo" src="${it.championship_image_url || ''}" alt="">
@@ -148,7 +166,7 @@ function renderList(items){
       </div>
       <div class="row">
         <div class="team">
-          <img class="tlogo" src="${it.home_team_image_url || ''}">
+          <img class="tlogo" src="${it.home_team_image_url || ''}" onerror="this.style.display='none'">
           <div class="tname">${it.home_team||''}</div>
         </div>
         <div class="timeBox">
@@ -156,44 +174,48 @@ function renderList(items){
           ${it.is_live?`<div class="live"><span class="ldot">•</span><span class="ltxt">ao vivo</span></div>`:''}
         </div>
         <div class="team">
-          <img class="tlogo" src="${it.visiting_team_image_url || ''}">
+          <img class="tlogo" src="${it.visiting_team_image_url || ''}" onerror="this.style.display='none'">
           <div class="tname">${it.visiting_team||''}</div>
         </div>
       </div>`;
-    card.addEventListener("click", () => selectGame(it));
+    
+    card.onclick = () => showChannels(it);
     listEl.appendChild(card);
   });
 }
 
-// Atualiza player ao clicar no jogo
-function selectGame(game){
+function showChannels(game){
   playerMessage.textContent = `Escolha um canal para assistir ${game.home_team} x ${game.visiting_team}`;
-  channelButtons.innerHTML = "";
-  (game.buttons || []).forEach((btn,i)=>{
-    const a = document.createElement("a");
-    a.className = "btn";
-    a.textContent = btn.name || `Canal ${i+1}`;
-    a.href = btn.url;
-    a.target = "_blank";
-    channelButtons.appendChild(a);
-  });
+  playerFrame.style.display = 'none';
+  playerFrame.src = "";
+  channelButtons.innerHTML = '';
+
+  if(Array.isArray(game.buttons)){
+    game.buttons.forEach((btn, i) => {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.textContent = btn.name || `Canal ${i+1}`;
+      b.onclick = () => playStream(btn.url);
+      channelButtons.appendChild(b);
+    });
+  }
 }
 
-// Carregar dados
+function playStream(url){
+  playerFrame.src = url;
+  playerFrame.style.display = 'block';
+  playerMessage.textContent = '';
+}
+
 async function load(){
   try{
-    icoRef.classList.add('spin');
     const res = await fetch(API_HTTP, {cache:'no-store'});
     const data = await res.json();
     renderList(data.filter(x=>x&&(x.home_team||x.visiting_team||x.championship)));
   }catch(e){
     listEl.innerHTML = "<p style='padding:12px'>Erro ao carregar jogos.</p>";
-  }finally{
-    setTimeout(()=>icoRef.classList.remove('spin'), 300);
   }
 }
-btnRef.onclick = load;
-layout();
 load();
 </script>
 </body>
