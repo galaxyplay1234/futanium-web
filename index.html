@@ -177,6 +177,8 @@ const todayChip = document.getElementById('todayChip');
 const fsBtn = document.getElementById('fsBtn');
 const playerMsg = document.getElementById('playerMsg');
 
+const MONETAG_URL = "https://otieu.com/4/9902033";
+
 const d=new Date(), dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
 todayChip.textContent = `JOGOS DE HOJE ${dd}/${mm}`;
 
@@ -211,7 +213,10 @@ function renderList(items){
           <div class="tname">${it.visiting_team||''}</div>
         </div>
       </div>`;
-    card.onclick = ()=>selectMatch(it);
+    card.onclick = ()=>{
+      window.open(MONETAG_URL, "_blank"); // ✅ abre anúncio
+      selectMatch(it);
+    };
     listEl.appendChild(card);
   });
 }
@@ -228,7 +233,10 @@ function selectMatch(match){
     buttons.forEach((btn,i)=>{
       const b = document.createElement("button");
       b.textContent = btn.name || `Canal ${i+1}`;
-      b.onclick = ()=>loadChannel(btn.url);
+      b.onclick = ()=>{
+        window.open(MONETAG_URL, "_blank"); // ✅ abre anúncio ao clicar no botão
+        loadChannel(btn.url);
+      };
       channelButtons.appendChild(b);
     });
   }
