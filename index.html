@@ -95,11 +95,18 @@
     <div class="chipRow"><div id="todayChip" class="chip">JOGOS DE HOJE</div></div>
   </div>
 
+  <!-- 🆕 Quadro do player -->
+  <div id="playerBox" style="display:none; max-width: 100%; margin: 12px auto; background: #000; border-radius: 14px; box-shadow: 0 3px 10px rgba(0,0,0,0.3); padding: 16px; color: #fff; text-align: center;">
+    <h3 id="playerTitle" style="font-size: 16px; margin-bottom: 12px; font-weight: 600;"></h3>
+    <div id="playerFrame" style="width: 100%; aspect-ratio: 16/9; background: #111; border-radius: 12px; margin-bottom: 12px;"></div>
+    <div id="playerButtons" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;"></div>
+  </div>
+
   <div id="list" class="list"></div>
 </div>
 
 <script type="module">
-const API_HTTP = "https://futaniumwebapp.vercel.app/api/games"; // 🔹 agora consome da API
+const API_HTTP = "https://futaniumwebapp.vercel.app/api/games";
 
 const listEl   = document.getElementById('list');
 const chipWrap = document.getElementById('chipWrap');
@@ -121,14 +128,45 @@ todayChip.textContent = todayLabel();
 layout();
 addEventListener('resize', layout);
 
-function collapse(el){ el.style.maxHeight=el.scrollHeight+'px'; requestAnimationFrame(()=>{ el.classList.remove('open'); el.style.maxHeight='0px'; }); }
-function expand(el){ el.classList.add('open'); el.style.maxHeight=el.scrollHeight+'px'; setTimeout(()=>{ el.style.maxHeight='9999px'; },260); }
+// ==================== PLAYER ====================
+function showPlayer(game){
+  const playerBox = document.getElementById("playerBox");
+  const playerTitle = document.getElementById("playerTitle");
+  const playerFrame = document.getElementById("playerFrame");
+  const playerButtons = document.getElementById("playerButtons");
+
+  playerTitle.textContent = `Você está assistindo: ${game.home_team} x ${game.visiting_team}`;
+
+  if(game.buttons && game.buttons[0]){
+    playerFrame.innerHTML = `<iframe src="${game.buttons[0].url}" style="width:100%; height:100%; border:none; border-radius:12px;" allowfullscreen></iframe>`;
+  } else {
+    playerFrame.innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#aaa;">Nenhum canal disponível</div>`;
+  }
+
+  playerButtons.innerHTML = '';
+  if(game.buttons){
+    game.buttons.forEach((btn, i)=>{
+      const b = document.createElement("button");
+      b.textContent = btn.name || `Canal ${i+1}`;
+      b.style.cssText = `
+        background:#1e90ff; color:#fff; border:none; padding:8px 16px;
+        border-radius:8px; cursor:pointer; font-weight:600;
+      `;
+      b.onclick = () => {
+        playerFrame.innerHTML = `<iframe src="${btn.url}" style="width:100%; height:100%; border:none; border-radius:12px;" allowfullscreen></iframe>`;
+      };
+      playerButtons.appendChild(b);
+    });
+  }
+
+  playerBox.style.display = "block";
+  playerBox.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 // ==================== RENDER ====================
 function renderList(items){
   listEl.innerHTML='';
   (items||[]).forEach((it)=>{
-    const hasBtns = Array.isArray(it?.buttons)&&it.buttons.length>0;
     const card = document.createElement('div'); card.className='card';
 
     const head = document.createElement('div');
@@ -153,21 +191,10 @@ function renderList(items){
       </div>`;
     card.appendChild(head);
 
-    const btns = document.createElement('div'); btns.className='btns';
-    if(hasBtns){
-      it.buttons.forEach((b,i)=>{
-        const a=document.createElement('a');
-        a.className='btn';
-        a.textContent = b.name || `Canal ${i+1}`;
-        a.href = b.url;
-        a.target="_blank";
-        a.rel="noopener";
-        btns.appendChild(a);
-      });
-      card.appendChild(btns);
-      let open=false; head.style.cursor='pointer';
-      head.onclick=()=>{ open?collapse(btns):expand(btns); open=!open; };
-    }
+    // Clique no card -> abre o player
+    head.style.cursor = 'pointer';
+    head.onclick = () => showPlayer(it);
+
     listEl.appendChild(card);
   });
 }
