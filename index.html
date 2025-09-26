@@ -162,7 +162,7 @@
 
   <div class="top">
     <div class="brand">Futanium Web</div>
-    <button class="iconBtn" id="btnRefresh"><span class="mi">autorenew</span></button>
+    <button class="iconBtn" id="btnRefresh"><span class="mi" id="icoRefresh">autorenew</span></button>
   </div>
 
   <div class="chipWrap"><div class="chip" id="todayChip">JOGOS DE HOJE</div></div>
@@ -282,14 +282,6 @@ function loadChannel(url){
   };
 }
 
-// Carregar jogos
-async function load(){
-  const res = await fetch(API_HTTP, {cache:'no-store'});
-  const data = await res.json();
-  renderList(data);
-}
-load();
-
 // ==================== LOAD ====================
 async function load(){
   try{
@@ -304,8 +296,6 @@ async function load(){
   }
 }
 btnRef.onclick = load;
-
-layout();
 load();
 
 </script>
