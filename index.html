@@ -39,6 +39,15 @@
   }
   
   
+  /* Animação de rotação do botão atualizar */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.iconBtn.spin {
+  animation: spin 0.8s ease;
+}
+  
   .info-text {
   max-width: 95%;
   margin: 8px auto 0;
@@ -279,6 +288,15 @@ async function load(){
   renderList(data);
 }
 load();
+
+// --- Botão de atualizar ---
+const btnRefresh = document.getElementById('btnRefresh');
+btnRefresh.addEventListener('click', () => {
+  btnRefresh.classList.add('spin'); // ativa a animação
+  load(); // recarrega os jogos
+  setTimeout(() => btnRefresh.classList.remove('spin'), 800); // remove animação depois
+});
+
 </script>
 </body>
 </html>
