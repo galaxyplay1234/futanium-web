@@ -143,6 +143,18 @@
   padding: 0 12px 15vh; /* espaço dinâmico conforme altura da tela */
   margin-top: 20px;
 }
+
+.match-info {
+  max-width: 95%;
+  margin: 14px auto 0;
+  text-align: center;
+  color: #555; /* cinza igual ao aviso */
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+
   .card{
     background:var(--card); border-radius:14px; padding:12px; margin-bottom:12px;
     box-shadow:var(--shadow); cursor:pointer;
@@ -182,6 +194,9 @@
     <div class="player-msg" id="playerMsg">Escolha um jogo para assistir</div>
     <div class="fullscreen-btn" id="fsBtn">Tela cheia</div>
   </div>
+  
+  <!-- Texto abaixo do player -->
+<div id="matchInfo" class="match-info"></div>
 
   <!-- Botões de canais -->
   <div class="channels" id="channelButtons"></div>
@@ -250,7 +265,10 @@ function renderList(items){
 function selectMatch(match){
   const home = match.home_team || '';
   const away = match.visiting_team || '';
-  playerMsg.innerHTML = `Escolha um canal para assistir:<br>${home} x ${away}`;
+  
+  // mostra o texto abaixo do player
+  const matchInfo = document.getElementById('matchInfo');
+  matchInfo.textContent = `Escolha um canal para assistir: ${home} x ${away}`;
 
   const buttons = match.buttons || [];
   channelButtons.innerHTML = "";
@@ -259,7 +277,7 @@ function selectMatch(match){
       const b = document.createElement("button");
       b.textContent = btn.name || `Canal ${i+1}`;
       b.onclick = ()=>{
-        window.open(MONETAG_URL, "_blank"); // ✅ abre anúncio ao clicar no botão
+        window.open(MONETAG_URL, "_blank");
         loadChannel(btn.url);
       };
       channelButtons.appendChild(b);
