@@ -48,12 +48,14 @@
 }
   
   .info-text {
-  max-width: 95%;
-  margin: 8px auto 0;
+  max-width: 90%;
+  margin: 6px auto 0;
   text-align: center;
   color: #555;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 13px;         /* 👈 diminuí um pouco a fonte */
+  line-height: 1.3;        /* 👈 deixa o texto mais compacto */
+  word-break: keep-all;    /* 👈 evita que ele quebre demais */
+  white-space: normal;     /* 👈 mantém a quebra natural */
 }
 
   /* Player */
