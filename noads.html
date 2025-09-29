@@ -191,14 +191,19 @@
 
   <!-- Player -->
   <div class="player-section" id="playerSection">
-    <iframe id="playerFrame"
-      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-      allowfullscreen
-      referrerpolicy="no-referrer">
-    </iframe>
-    <div class="player-msg" id="playerMsg">Escolha um jogo para assistir</div>
-    <div class="fullscreen-btn" id="fsBtn">Tela cheia</div>
-  </div>
+  <iframe id="playerFrame"
+    sandbox="allow-scripts allow-same-origin allow-fullscreen"
+    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+    allowfullscreen
+    referrerpolicy="no-referrer">
+  </iframe>
+
+  <!-- 👇 camada invisível que bloqueia popups -->
+  <div class="ad-blocker"></div>
+
+  <div class="player-msg" id="playerMsg">Escolha um jogo para assistir</div>
+  <div class="fullscreen-btn" id="fsBtn">Tela cheia</div>
+</div>
   
   <!-- Texto abaixo do player -->
 <div id="matchInfo" class="match-info"></div>
