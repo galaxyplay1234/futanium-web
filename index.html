@@ -224,15 +224,16 @@ const MONETAG_URL = "https://otieu.com/4/9902033";
 const d=new Date(), dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
 todayChip.textContent = `JOGOS DE HOJE ${dd}/${mm}`;
 
-// Fullscreen real + rotação automática para paisagem
+// ==================== FULLSCREEN REAL + ROTAÇÃO ====================
 fsBtn.onclick = async () => {
   const player = playerSection;
 
   if (!document.fullscreenElement) {
     try {
+      // 👇 entra no modo fullscreen
       await player.requestFullscreen();
 
-      // 👇 tenta travar a tela em paisagem quando entrar em fullscreen
+      // 👇 tenta travar em modo paisagem ao entrar
       if (screen.orientation && screen.orientation.lock) {
         try {
           await screen.orientation.lock("landscape");
@@ -247,9 +248,10 @@ fsBtn.onclick = async () => {
     }
   } else {
     try {
+      // 👇 sai do modo fullscreen
       await document.exitFullscreen();
 
-      // 👇 volta a orientação ao padrão ao sair
+      // 👇 destrava a rotação ao sair
       if (screen.orientation && screen.orientation.unlock) {
         screen.orientation.unlock();
       }
@@ -260,6 +262,16 @@ fsBtn.onclick = async () => {
     }
   }
 };
+
+// 👇 Garante que o botão e a rotação sejam resetados mesmo se o usuário sair manualmente
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement) {
+    fsBtn.textContent = "Tela cheia";
+    if (screen.orientation && screen.orientation.unlock) {
+      screen.orientation.unlock();
+    }
+  }
+});
 
 // Render lista
 function renderList(items){
