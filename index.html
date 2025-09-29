@@ -224,20 +224,36 @@ const MONETAG_URL = "https://otieu.com/4/9902033";
 const d=new Date(), dd=('0'+d.getDate()).slice(-2), mm=('0'+(d.getMonth()+1)).slice(-2);
 todayChip.textContent = `JOGOS DE HOJE ${dd}/${mm}`;
 
-// Fullscreen real com API nativa
+// Fullscreen real + rotação automática para paisagem
 fsBtn.onclick = async () => {
   const player = playerSection;
 
   if (!document.fullscreenElement) {
     try {
-      await player.requestFullscreen(); // entra em tela cheia real
+      await player.requestFullscreen();
+
+      // 👇 tenta travar a tela em paisagem quando entrar em fullscreen
+      if (screen.orientation && screen.orientation.lock) {
+        try {
+          await screen.orientation.lock("landscape");
+        } catch (e) {
+          console.warn("Rotação não suportada neste dispositivo:", e);
+        }
+      }
+
       fsBtn.textContent = "Sair";
     } catch (err) {
       console.error("Erro ao entrar em tela cheia:", err);
     }
   } else {
     try {
-      await document.exitFullscreen(); // sai do fullscreen
+      await document.exitFullscreen();
+
+      // 👇 volta a orientação ao padrão ao sair
+      if (screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+      }
+
       fsBtn.textContent = "Tela cheia";
     } catch (err) {
       console.error("Erro ao sair do fullscreen:", err);
