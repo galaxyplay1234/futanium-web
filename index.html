@@ -76,6 +76,20 @@
     height: 100%;
     border: none;
   }
+  /* Bloqueia overlays ou popups que aparecem sobre o vídeo */
+  #playerFrame::-webkit-scrollbar { display: none; }
+  .ad-blocker {
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    z-index: 5;
+  }
+  
+  
   .fullscreen-btn {
     position: absolute;
     top: 10px;
@@ -191,14 +205,19 @@
 
   <!-- Player -->
   <div class="player-section" id="playerSection">
-    <iframe id="playerFrame"
-      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-      allowfullscreen
-      referrerpolicy="no-referrer">
-    </iframe>
-    <div class="player-msg" id="playerMsg">Escolha um jogo para assistir</div>
-    <div class="fullscreen-btn" id="fsBtn">Tela cheia</div>
-  </div>
+  <iframe id="playerFrame"
+    sandbox="allow-scripts allow-same-origin allow-fullscreen"
+    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+    allowfullscreen
+    referrerpolicy="no-referrer">
+  </iframe>
+
+  <!-- 👇 camada invisível que bloqueia popups -->
+  <div class="ad-blocker"></div>
+
+  <div class="player-msg" id="playerMsg">Escolha um jogo para assistir</div>
+  <div class="fullscreen-btn" id="fsBtn">Tela cheia</div>
+</div>
   
   <!-- Texto abaixo do player -->
 <div id="matchInfo" class="match-info"></div>
