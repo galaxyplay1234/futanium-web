@@ -313,7 +313,7 @@ function selectMatch(match){
   
   // mostra o texto abaixo do player
   const matchInfo = document.getElementById('matchInfo');
-  matchInfo.innerHTML = `Escolha um canal para assistir:<br>${home} x ${away}`;
+  matchInfo.innerHTML = `Escolha um canal para assistir: <strong>${home} x ${away}</strong>`;
 
   const buttons = match.buttons || [];
   channelButtons.innerHTML = "";
