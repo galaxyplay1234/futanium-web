@@ -505,7 +505,7 @@ async function loadGames() {
 
   gamesArr.forEach(g => {
     const canaisLabel = (g.channels && g.channels.length)
-  ? `<div class="text-[13px] font-semibold text-gray-500 mt-0.5">
+  ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
        ${g.channels.map(c => `${c.name}`).join("<br>")}
      </div>`
   : "";
