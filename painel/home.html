@@ -265,18 +265,20 @@ function resetSelect(el, placeholder){
   el.innerHTML = `<option value="">${placeholder}</option>`;
 }
 
-function populateChannelSelects(buttons){
+function populateChannelSelects(buttons) {
   const selects = [
-    {el: document.getElementById('game-channel1'), label:'Selecione um botão'},
-    {el: document.getElementById('game-channel2'), label:'Selecione um botão'},
-    {el: document.getElementById('game-channel3'), label:'Selecione um botão'},
-    {el: document.getElementById('game-channel4'), label:'Selecione um botão'},
+    document.getElementById('game-channel1'),
+    document.getElementById('game-channel2'),
+    document.getElementById('game-channel3'),
+    document.getElementById('game-channel4'),
   ];
-  selects.forEach(s=>{
-    resetSelect(s.el, s.label);
-    buttons.forEach(b=>{
-      // valor = link, texto = nome do botão
-      s.el.appendChild(new Option(b.name, b.link));
+
+  selects.forEach(sel => {
+    sel.innerHTML = `<option value="">Selecione um botão</option>`;
+    buttons.forEach(btn => {
+      // Aqui o text = nome real do botão (Ex: ESPN 1)
+      const opt = new Option(btn.name, btn.link);
+      sel.appendChild(opt);
     });
   });
 }
