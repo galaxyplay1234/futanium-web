@@ -502,8 +502,8 @@ async function loadGames() {
 
   gamesArr.forEach(g => {
     const canaisLabel = (g.channels && g.channels.length)
-      ? `<div class="text-[13px] text-gray-700 mt-0.5">Canais:<br>${g.channels.map(c => `• ${c.name}`).join("<br>")}</div>`
-      : "";
+  ? `<div class="text-[13px] text-gray-700 mt-1">${g.channels.map(c => `• ${c.name}`).join("<br>")}</div>`
+  : "";
 
     const li = document.createElement("li");
     li.className = "bg-white p-4 rounded shadow flex flex-col gap-2";
