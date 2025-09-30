@@ -489,23 +489,20 @@ async function loadGames() {
   const q = await getDocs(collection(db, "games"));
   const gamesArr = [];
 
-  // 📦 Coleta todos os jogos
   q.forEach(docSnap => gamesArr.push({ id: docSnap.id, ...docSnap.data() }));
 
-  // 🕐 Ordena do maior horário para o menor
   gamesArr.sort((a, b) => {
     const timeA = parseInt(a.time.replace(":", ""));
     const timeB = parseInt(b.time.replace(":", ""));
     return timeB - timeA;
   });
 
-  // 🧱 Renderiza lista ordenada
   const ul = document.getElementById("games-list");
   ul.innerHTML = "";
 
   gamesArr.forEach(g => {
     const canaisLabel = (g.channels && g.channels.length)
-      ? `<div class="text-[11px] font-semibold text-gray-400 mt-[2px] leading-snug">
+      ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
            ${g.channels.map(c => `${c.name}`).join("<br>")}
          </div>`
       : "";
@@ -514,21 +511,21 @@ async function loadGames() {
     li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
 
     li.innerHTML = `
-      <div class="flex flex-col">
-        <div class="text-base font-semibold leading-tight mb-0.5">${g.time} - ${g.home} x ${g.away}</div>
+  <div class="flex justify-between items-start">
+    <div class="flex items-center gap-2">
+      <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
+      <span class="text-[12px] text-gray-500">${g.champ}</span>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
+      <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
+    </div>
+  </div>
 
-        <!-- Campeonato e botões lado a lado -->
-        <div class="flex items-center justify-between">
-          <div class="text-sm text-gray-500">${g.champ}</div>
-          <div class="flex gap-2 flex-shrink-0">
-            <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
-            <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
-          </div>
-        </div>
+  <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
 
-        ${canaisLabel}
-      </div>
-    `;
+  ${canaisLabel}
+`;
     ul.appendChild(li);
   });
 }
