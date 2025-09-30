@@ -499,16 +499,21 @@ async function loadGames() {
   // 🧱 Renderiza lista ordenada
   const ul = document.getElementById("games-list");
   ul.innerHTML = "";
+
   gamesArr.forEach(g => {
     const canaisLabel = (g.channels && g.channels.length)
       ? `<div class="text-sm text-gray-600">Canais: ${g.channels.map(c => c.name).join(", ")}</div>`
       : "";
 
     const li = document.createElement("li");
-    li.className = "bg-white p-3 rounded shadow flex flex-col gap-1";
+    li.className = "bg-white p-4 rounded shadow flex flex-col gap-2";
+
     li.innerHTML = `
-      <div class="flex justify-between items-center">
-        <span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="text-lg font-semibold text-gray-900">${g.time} - ${g.home} x ${g.away}</div>
+          <div class="text-sm text-gray-500 font-medium mt-1">${g.champ}</div>
+        </div>
         <div class="flex gap-2">
           <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
           <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
