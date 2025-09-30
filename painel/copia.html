@@ -5,35 +5,63 @@
   <title>Painel Admin</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+  /* remove o padding-top do body */
+  body {
+    margin: 0;
+  }
+
+  /* aplica apenas no dashboard */
+  #dashboard {
+    padding-top: calc(56px + 48px); /* topbar + tabs */
+  }
+</style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 min-h-screen">
 
   <!-- Tela de Login -->
-  <div id="login-screen" class="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
-    <input id="username" type="text" placeholder="Usuário" 
-           class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
-    <input id="password" type="password" placeholder="Senha" 
-           class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
-    <button onclick="login()" 
-            class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
-      Entrar
-    </button>
-    <p id="login-error" class="text-red-500 text-sm mt-3 hidden text-center">Usuário ou senha incorretos!</p>
+  <div id="login-screen" class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+      <input id="username" type="text" placeholder="Usuário" 
+             class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <input id="password" type="password" placeholder="Senha" 
+             class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <button onclick="login()" 
+              class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
+        Entrar
+      </button>
+      <p id="login-error" class="text-red-500 text-sm mt-3 hidden text-center">Usuário ou senha incorretos!</p>
+    </div>
   </div>
 
   <!-- Dashboard -->
-  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto p-4">
-    <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-center sm:text-left">Painel de Administração</h1>
+  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto px-4">
 
-    <!-- Tabs -->
-    <div class="flex flex-col sm:flex-row gap-2 sm:gap-4 mb-6">
-      <button onclick="showTab('home')" class="tab-btn bg-blue-600 text-white px-4 py-2 rounded">Home</button>
-      <button onclick="showTab('addgame')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Adicionar Jogo</button>
-      <button onclick="showTab('times')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Times</button>
-      <button onclick="showTab('champions')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Campeonatos</button>
-      <button onclick="showTab('buttons')" class="tab-btn bg-gray-300 px-4 py-2 rounded">Botões</button>
-    </div>
+  <!-- Top bar -->
+  <div class="fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-50">
+    <div class="font-bold text-lg">Painel Futanium</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="fixed top-14 left-0 right-0 bg-gray-100 px-2 h-12 flex items-center gap-2 z-40 shadow overflow-x-auto whitespace-nowrap">
+    <button onclick="showTab('home')" id="btn-home"
+            class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">Home</button>
+    <button onclick="showTab('addgame')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('times')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Times</button>
+    <button onclick="showTab('champions')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Ligas</button>
+    <button onclick="showTab('buttons')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
+  </div>
+
+  <!-- Conteúdo (abaixo da barra + tabs) -->
+  <div class="mt-[104px]">
+    <!-- 56px (h-14 da topbar) + 48px (tabs) = 104px -->
+
+
 
     <!-- Home -->
     <div id="tab-home" class="tab-content">
@@ -43,7 +71,7 @@
 
     <!-- Adicionar Jogo -->
     <div id="tab-addgame" class="tab-content hidden">
-      <h2 class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
+      <h2 id="form-title" class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
       <form id="game-form" class="flex flex-col gap-2 mb-4">
         <select id="game-champ" 
                 class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
@@ -59,7 +87,26 @@
         </select>
         <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar Jogo</button>
+
+        <!-- Campos fixos para Canais -->
+        <label class="mt-2 font-semibold">Canal 1</label>
+        <select id="game-channel1" class="p-2 border rounded">
+          <option value="">Selecione um botão</option>
+        </select>
+        <label class="mt-2 font-semibold">Canal 2</label>
+        <select id="game-channel2" class="p-2 border rounded">
+          <option value="">Selecione um botão</option>
+        </select>
+        <label class="mt-2 font-semibold">Canal 3</label>
+        <select id="game-channel3" class="p-2 border rounded">
+          <option value="">Selecione um botão</option>
+        </select>
+        <label class="mt-2 font-semibold">Canal 4</label>
+        <select id="game-channel4" class="p-2 border rounded">
+          <option value="">Selecione um botão</option>
+        </select>
+
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
     </div>
 
@@ -139,7 +186,7 @@
 <!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
@@ -156,42 +203,86 @@ const db = getFirestore(app);
 
 const USER = "admin";
 const PASS = "12345";
+let currentEditId = null;
 
+// ===== Auth & Tabs =====
 window.login = function() {
   const u = document.getElementById("username").value;
   const p = document.getElementById("password").value;
   if (u === USER && p === PASS) {
     document.getElementById("login-screen").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
-    showTab('home'); // vai abrir Home direto
+    showTab('home', true); // abre Home direto e força ativo
     loadData();
   } else {
     document.getElementById("login-error").classList.remove("hidden");
   }
 };
 
-window.showTab = function(tab) {
+window.showTab = function(tab, forceActive = false) {
+  // Esconde todas as abas
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
-  document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("bg-blue-600","text-white"));
   document.getElementById("tab-" + tab).classList.remove("hidden");
-  event.target.classList.add("bg-blue-600","text-white");
+
+  // Reseta todos para cinza
+  document.querySelectorAll(".tab-btn").forEach(el => {
+    el.classList.remove("bg-blue-500","text-white");
+    el.classList.add("bg-gray-200","text-gray-700");
+  });
+
+  // Marca o botão clicado
+  if (forceActive) {
+    document.getElementById("btn-home").classList.remove("bg-gray-200","text-gray-700");
+    document.getElementById("btn-home").classList.add("bg-blue-500","text-white");
+  } else if (window.event && event.target) {
+    event.target.classList.remove("bg-gray-200","text-gray-700");
+    event.target.classList.add("bg-blue-500","text-white");
+  }
 };
+
+// ===== Helpers para selects =====
+function resetSelect(el, placeholder){
+  el.innerHTML = `<option value="">${placeholder}</option>`;
+}
+
+function populateChannelSelects(buttons){
+  const selects = [
+    {el: document.getElementById('game-channel1'), label:'Selecione um botão'},
+    {el: document.getElementById('game-channel2'), label:'Selecione um botão'},
+    {el: document.getElementById('game-channel3'), label:'Selecione um botão'},
+    {el: document.getElementById('game-channel4'), label:'Selecione um botão'},
+  ];
+  selects.forEach(s=>{
+    resetSelect(s.el, s.label);
+    buttons.forEach(b=>{
+      // valor = link, texto = nome do botão
+      s.el.appendChild(new Option(b.name, b.link));
+    });
+  });
+}
 
 // ===== Times =====
 document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
-  const name = document.getElementById("team-name").value;
-  const logo = document.getElementById("team-logo").value;
+  const name = document.getElementById("team-name").value.trim();
+  const logo = document.getElementById("team-logo").value.trim();
   if (!name || !logo) return;
   await addDoc(collection(db,"teams"),{name,logo});
   document.getElementById("team-form").reset();
-  loadTeams();
+  await loadTeams();
 });
 
 async function loadTeams(){
   const q = await getDocs(collection(db,"teams"));
   const tbody = document.getElementById("teams-list");
   tbody.innerHTML = "";
+
+  // reseta selects de times antes de repopular
+  const homeSel = document.getElementById("game-home-team");
+  const awaySel = document.getElementById("game-away-team");
+  resetSelect(homeSel, "Selecione o Time da Casa");
+  resetSelect(awaySel, "Selecione o Time Visitante");
+
   q.forEach(docSnap=>{
     const t = docSnap.data();
     const tr = document.createElement("tr");
@@ -200,33 +291,33 @@ async function loadTeams(){
                     <td class="p-2"><button onclick="deleteTeam('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
 
-    // adiciona no select
-    const opt1 = new Option(t.name, t.name);
-    const opt2 = new Option(t.name, t.name);
-    document.getElementById("game-home-team").appendChild(opt1);
-    document.getElementById("game-away-team").appendChild(opt2);
+    homeSel.appendChild(new Option(t.name, t.name));
+    awaySel.appendChild(new Option(t.name, t.name));
   });
 }
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
-  loadTeams();
+  await loadTeams();
 };
 
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const name = document.getElementById("champ-name").value;
-  const logo = document.getElementById("champ-logo").value;
+  const name = document.getElementById("champ-name").value.trim();
+  const logo = document.getElementById("champ-logo").value.trim();
   if(!name || !logo) return;
   await addDoc(collection(db,"championships"),{name,logo});
   document.getElementById("champ-form").reset();
-  loadChamps();
+  await loadChamps();
 });
 async function loadChamps(){
   const q = await getDocs(collection(db,"championships"));
   const tbody = document.getElementById("champions-list");
   tbody.innerHTML = "";
-  document.getElementById("game-champ").innerHTML = `<option value="">Selecione o Campeonato</option>`;
+
+  const champSel = document.getElementById("game-champ");
+  resetSelect(champSel, "Selecione o Campeonato");
+
   q.forEach(docSnap=>{
     const c = docSnap.data();
     const tr = document.createElement("tr");
@@ -235,55 +326,106 @@ async function loadChamps(){
                     <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
 
-    const opt = new Option(c.name, c.name);
-    document.getElementById("game-champ").appendChild(opt);
+    champSel.appendChild(new Option(c.name, c.name));
   });
 }
 window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
-  loadChamps();
+  await loadChamps();
 };
 
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
-  const name = document.getElementById("button-name").value;
-  const link = document.getElementById("button-link").value;
+  const name = document.getElementById("button-name").value.trim();
+  const link = document.getElementById("button-link").value.trim();
   if(!name || !link) return;
   await addDoc(collection(db,"buttons"),{name,link});
   document.getElementById("button-form").reset();
-  loadButtons();
+  await loadButtons();
 });
 async function loadButtons(){
   const q = await getDocs(collection(db,"buttons"));
   const tbody = document.getElementById("buttons-list");
   tbody.innerHTML = "";
+
+  const buttonsArr = [];
   q.forEach(docSnap=>{
     const b = docSnap.data();
+    buttonsArr.push({id: docSnap.id, ...b});
     const tr = document.createElement("tr");
     tr.innerHTML = `<td class="p-2">${b.name}</td>
-                    <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline">${b.link}</a></td>
+                    <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">${b.link}</a></td>
                     <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
     tbody.appendChild(tr);
   });
+
+  // repopula os selects dos 4 canais
+  populateChannelSelects(buttonsArr);
 }
 window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
-  loadButtons();
+  await loadButtons();
 };
 
-// ===== Jogos =====
+// ===== Jogos (Adicionar / Editar) =====
 document.getElementById("game-form").addEventListener("submit", async e=>{
   e.preventDefault();
   const champ = document.getElementById("game-champ").value;
-  const home = document.getElementById("game-home-team").value;
-  const away = document.getElementById("game-away-team").value;
-  const time = document.getElementById("game-time").value;
+  const home  = document.getElementById("game-home-team").value;
+  const away  = document.getElementById("game-away-team").value;
+  const time  = document.getElementById("game-time").value;
+
+  // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
+  const selected = [
+    {name:"Canal 1", url: document.getElementById("game-channel1").value},
+    {name:"Canal 2", url: document.getElementById("game-channel2").value},
+    {name:"Canal 3", url: document.getElementById("game-channel3").value},
+    {name:"Canal 4", url: document.getElementById("game-channel4").value},
+  ].filter(c => c.url && c.url.length);
+
   if(!champ || !home || !away || !time) return;
-  await addDoc(collection(db,"games"),{champ,home,away,time});
-  document.getElementById("game-form").reset();
-  loadGames();
+
+  // Buscar logo do campeonato
+let champLogo = "";
+const champsSnap = await getDocs(collection(db,"championships"));
+champsSnap.forEach(docSnap => {
+  if(docSnap.data().name === champ) champLogo = docSnap.data().logo;
 });
+
+// Buscar logo dos times
+let homeLogo = "";
+let awayLogo = "";
+const teamsSnap = await getDocs(collection(db,"teams"));
+teamsSnap.forEach(docSnap => {
+  if(docSnap.data().name === home) homeLogo = docSnap.data().logo;
+  if(docSnap.data().name === away) awayLogo = docSnap.data().logo;
+});
+
+const payload = {
+  champ,
+  champ_logo: champLogo,
+  home,
+  home_logo: homeLogo,
+  away,
+  away_logo: awayLogo,
+  time,
+  channels: selected
+};
+
+if(currentEditId){
+  await updateDoc(doc(db,"games",currentEditId), payload);
+  currentEditId = null;
+  document.getElementById("form-title").innerText = "Adicionar Jogo";
+}else{
+  await addDoc(collection(db,"games"), payload);
+}
+
+  document.getElementById("game-form").reset();
+  await loadGames();
+  showTab('home');
+});
+
 async function loadGames(){
   const q = await getDocs(collection(db,"games"));
   const ul = document.getElementById("games-list");
@@ -291,15 +433,54 @@ async function loadGames(){
   q.forEach(docSnap=>{
     const g = docSnap.data();
     const li = document.createElement("li");
-    li.className = "bg-white p-3 rounded shadow flex justify-between items-center";
-    li.innerHTML = `<span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
-                    <button onclick="deleteGame('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>`;
+    li.className = "bg-white p-3 rounded shadow flex flex-col gap-1";
+    const canaisLabel = (g.channels && g.channels.length)
+      ? `<div class="text-sm text-gray-600">Canais: ${g.channels.map(c=>c.name).join(", ")}</div>`
+      : "";
+    li.innerHTML = `
+      <div class="flex justify-between items-center">
+        <span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
+        <div class="flex gap-2">
+          <button onclick="editGame('${docSnap.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
+          <button onclick="deleteGame('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
+        </div>
+      </div>
+      ${canaisLabel}
+    `;
     ul.appendChild(li);
   });
 }
+
 window.deleteGame = async function(id){
   await deleteDoc(doc(db,"games",id));
-  loadGames();
+  await loadGames();
+};
+
+window.editGame = async function(id){
+  const snap = await getDoc(doc(db,"games",id));
+  if(!snap.exists()) return;
+  const g = snap.data();
+
+  // garante que selects estejam populados
+  await loadChamps();
+  await loadTeams();
+  await loadButtons();
+
+  document.getElementById("game-champ").value = g.champ || "";
+  document.getElementById("game-home-team").value = g.home || "";
+  document.getElementById("game-away-team").value = g.away || "";
+  document.getElementById("game-time").value = g.time || "";
+
+  // seta os 4 selects de canais pelo URL salvo
+  const ch = g.channels || [];
+  document.getElementById("game-channel1").value = ch[0]?.url || "";
+  document.getElementById("game-channel2").value = ch[1]?.url || "";
+  document.getElementById("game-channel3").value = ch[2]?.url || "";
+  document.getElementById("game-channel4").value = ch[3]?.url || "";
+
+  currentEditId = id;
+  document.getElementById("form-title").innerText = "Editar Jogo";
+  showTab('addgame');
 };
 
 // ===== Carregar tudo =====
