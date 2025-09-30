@@ -509,18 +509,18 @@ async function loadGames() {
     li.className = "bg-white p-4 rounded shadow flex flex-col gap-2";
 
     li.innerHTML = `
-      <div class="flex justify-between items-start">
-        <div>
-          <div class="text-lg font-semibold text-gray-900">${g.time} - ${g.home} x ${g.away}</div>
-          <div class="text-sm text-gray-500 font-medium mt-1">${g.champ}</div>
-        </div>
-        <div class="flex gap-2">
-          <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
-          <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
-        </div>
-      </div>
-      ${canaisLabel}
-    `;
+  <div class="flex justify-between items-start">
+    <div>
+      <div class="text-base font-semibold leading-tight">${g.time} - ${g.home} x ${g.away}</div>
+      <div class="text-sm text-gray-600 mt-0.5">${g.champ}</div>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
+      <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
+    </div>
+  </div>
+  ${canaisLabel}
+`;
     ul.appendChild(li);
   });
 }
