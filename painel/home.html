@@ -515,17 +515,23 @@ async function loadGames() {
 
     li.innerHTML = `
       <div class="flex flex-col">
-        <div class="text-base font-semibold leading-tight mb-0.5">${g.time} - ${g.home} x ${g.away}</div>
-
-        <!-- Campeonato e botões lado a lado -->
-        <div class="flex items-center justify-between">
-          <div class="text-sm text-gray-500">${g.champ}</div>
-          <div class="flex gap-2 flex-shrink-0">
-            <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
-            <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
-          </div>
+        <!-- Hora + Campeonato -->
+        <div class="text-sm text-gray-600 font-medium mb-[2px]">
+          ${g.time} - ${g.champ}
         </div>
 
+        <!-- Times -->
+        <div class="text-base font-semibold leading-tight mb-0.5">
+          ${g.home} x ${g.away}
+        </div>
+
+        <!-- Botões -->
+        <div class="flex justify-end gap-2 mt-[2px]">
+          <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
+          <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
+        </div>
+
+        <!-- Canais -->
         ${canaisLabel}
       </div>
     `;
