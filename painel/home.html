@@ -274,6 +274,11 @@ document.getElementById("team-form").addEventListener("submit", async e => {
 
 async function loadTeams(){
   const q = await getDocs(collection(db,"teams"));
+const teamsArr = [];
+q.forEach(docSnap => teamsArr.push({id: docSnap.id, ...docSnap.data()}));
+
+// ✅ Ordena em ordem alfabética
+teamsArr.sort((a, b) => a.name.localeCompare(b.name));
   const tbody = document.getElementById("teams-list");
   tbody.innerHTML = "";
 
