@@ -51,8 +51,8 @@
   <div class="fixed top-14 left-0 right-0 bg-gray-100 px-2 h-12 flex items-center gap-2 z-40 shadow overflow-x-auto whitespace-nowrap">
     <button onclick="showTab('home')" id="btn-home"
             class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">Home</button>
-    <button onclick="showTab('addgame')"
-            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('addgame', false, true)"
+        class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
     <button onclick="showTab('times')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Times</button>
     <button onclick="showTab('champions')"
@@ -223,12 +223,12 @@ window.login = function() {
   }
 };
 
-window.showTab = function(tab, forceActive = false) {
+window.showTab = function(tab, forceActive = false, resetForm = false) {
   // Esconde todas as abas
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
   document.getElementById("tab-" + tab).classList.remove("hidden");
 
-  // Reseta todos para cinza
+  // Reseta estilos dos botões
   document.querySelectorAll(".tab-btn").forEach(el => {
     el.classList.remove("bg-blue-500", "text-white");
     el.classList.add("bg-gray-200", "text-gray-700");
@@ -243,20 +243,20 @@ window.showTab = function(tab, forceActive = false) {
     event.target.classList.add("bg-blue-500", "text-white");
   }
 
-  // ✅ Se for a aba "Adicionar Jogo", limpa tudo ao abrir
-  if (tab === "addgame") {
+  // ✅ Só limpa os selects se resetForm for true (quando for novo jogo)
+  if (tab === "addgame" && resetForm) {
     currentEditId = null;
     document.getElementById("form-title").innerText = "Adicionar Jogo";
     document.getElementById("game-form").reset();
 
-    // Reseta selects e sincroniza com Select2
-    $('#game-champ').val("").trigger('change.select2');
-    $('#game-home-team').val("").trigger('change.select2');
-    $('#game-away-team').val("").trigger('change.select2');
-    $('#game-channel1').val("").trigger('change.select2');
-    $('#game-channel2').val("").trigger('change.select2');
-    $('#game-channel3').val("").trigger('change.select2');
-    $('#game-channel4').val("").trigger('change.select2');
+    // Reseta selects manualmente
+    $('#game-champ').val(null).trigger('change');
+    $('#game-home-team').val(null).trigger('change');
+    $('#game-away-team').val(null).trigger('change');
+    $('#game-channel1').val(null).trigger('change');
+    $('#game-channel2').val(null).trigger('change');
+    $('#game-channel3').val(null).trigger('change');
+    $('#game-channel4').val(null).trigger('change');
   }
 };
 
