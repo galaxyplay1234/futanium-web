@@ -230,17 +230,33 @@ window.showTab = function(tab, forceActive = false) {
 
   // Reseta todos para cinza
   document.querySelectorAll(".tab-btn").forEach(el => {
-    el.classList.remove("bg-blue-500","text-white");
-    el.classList.add("bg-gray-200","text-gray-700");
+    el.classList.remove("bg-blue-500", "text-white");
+    el.classList.add("bg-gray-200", "text-gray-700");
   });
 
   // Marca o botão clicado
   if (forceActive) {
-    document.getElementById("btn-home").classList.remove("bg-gray-200","text-gray-700");
-    document.getElementById("btn-home").classList.add("bg-blue-500","text-white");
+    document.getElementById("btn-home").classList.remove("bg-gray-200", "text-gray-700");
+    document.getElementById("btn-home").classList.add("bg-blue-500", "text-white");
   } else if (window.event && event.target) {
-    event.target.classList.remove("bg-gray-200","text-gray-700");
-    event.target.classList.add("bg-blue-500","text-white");
+    event.target.classList.remove("bg-gray-200", "text-gray-700");
+    event.target.classList.add("bg-blue-500", "text-white");
+  }
+
+  // ✅ Se for a aba "Adicionar Jogo", limpa tudo ao abrir
+  if (tab === "addgame") {
+    currentEditId = null;
+    document.getElementById("form-title").innerText = "Adicionar Jogo";
+    document.getElementById("game-form").reset();
+
+    // Reseta selects e sincroniza com Select2
+    $('#game-champ').val("").trigger('change.select2');
+    $('#game-home-team').val("").trigger('change.select2');
+    $('#game-away-team').val("").trigger('change.select2');
+    $('#game-channel1').val("").trigger('change.select2');
+    $('#game-channel2').val("").trigger('change.select2');
+    $('#game-channel3').val("").trigger('change.select2');
+    $('#game-channel4').val("").trigger('change.select2');
   }
 };
 
