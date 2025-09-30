@@ -51,8 +51,8 @@
   <div class="fixed top-14 left-0 right-0 bg-gray-100 px-2 h-12 flex items-center gap-2 z-40 shadow overflow-x-auto whitespace-nowrap">
     <button onclick="showTab('home')" id="btn-home"
             class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">Home</button>
-    <button onclick="showTab('addgame')"
-            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('addgame', false, true)"
+        class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
     <button onclick="showTab('times')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Times</button>
     <button onclick="showTab('champions')"
@@ -223,12 +223,12 @@ window.login = function() {
   }
 };
 
-window.showTab = function(tab, forceActive = false) {
+window.showTab = function(tab, forceActive = false, resetForm = false) {
   // Esconde todas as abas
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
   document.getElementById("tab-" + tab).classList.remove("hidden");
 
-  // Reseta todos para cinza
+  // Reseta estilos dos botões
   document.querySelectorAll(".tab-btn").forEach(el => {
     el.classList.remove("bg-blue-500", "text-white");
     el.classList.add("bg-gray-200", "text-gray-700");
@@ -243,20 +243,20 @@ window.showTab = function(tab, forceActive = false) {
     event.target.classList.add("bg-blue-500", "text-white");
   }
 
-  // ✅ Se for a aba "Adicionar Jogo", limpa tudo ao abrir
-  if (tab === "addgame") {
+  // ✅ Só limpa os selects se resetForm for true (quando for novo jogo)
+  if (tab === "addgame" && resetForm) {
     currentEditId = null;
     document.getElementById("form-title").innerText = "Adicionar Jogo";
     document.getElementById("game-form").reset();
 
-    // Reseta selects e sincroniza com Select2
-    $('#game-champ').val("").trigger('change.select2');
-    $('#game-home-team').val("").trigger('change.select2');
-    $('#game-away-team').val("").trigger('change.select2');
-    $('#game-channel1').val("").trigger('change.select2');
-    $('#game-channel2').val("").trigger('change.select2');
-    $('#game-channel3').val("").trigger('change.select2');
-    $('#game-channel4').val("").trigger('change.select2');
+    // Reseta selects manualmente
+    $('#game-champ').val(null).trigger('change');
+    $('#game-home-team').val(null).trigger('change');
+    $('#game-away-team').val(null).trigger('change');
+    $('#game-channel1').val(null).trigger('change');
+    $('#game-channel2').val(null).trigger('change');
+    $('#game-channel3').val(null).trigger('change');
+    $('#game-channel4').val(null).trigger('change');
   }
 };
 
@@ -265,18 +265,20 @@ function resetSelect(el, placeholder){
   el.innerHTML = `<option value="">${placeholder}</option>`;
 }
 
-function populateChannelSelects(buttons){
+function populateChannelSelects(buttons) {
   const selects = [
-    {el: document.getElementById('game-channel1'), label:'Selecione um botão'},
-    {el: document.getElementById('game-channel2'), label:'Selecione um botão'},
-    {el: document.getElementById('game-channel3'), label:'Selecione um botão'},
-    {el: document.getElementById('game-channel4'), label:'Selecione um botão'},
+    document.getElementById('game-channel1'),
+    document.getElementById('game-channel2'),
+    document.getElementById('game-channel3'),
+    document.getElementById('game-channel4'),
   ];
-  selects.forEach(s=>{
-    resetSelect(s.el, s.label);
-    buttons.forEach(b=>{
-      // valor = link, texto = nome do botão
-      s.el.appendChild(new Option(b.name, b.link));
+
+  selects.forEach(sel => {
+    sel.innerHTML = `<option value="">Selecione um botão</option>`;
+    buttons.forEach(btn => {
+      // Aqui o text = nome real do botão (Ex: ESPN 1)
+      const opt = new Option(btn.name, btn.link);
+      sel.appendChild(opt);
     });
   });
 }
@@ -433,12 +435,13 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
   const time  = document.getElementById("game-time").value;
 
   // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
-  const selected = [
-    {name:"Canal 1", url: document.getElementById("game-channel1").value},
-    {name:"Canal 2", url: document.getElementById("game-channel2").value},
-    {name:"Canal 3", url: document.getElementById("game-channel3").value},
-    {name:"Canal 4", url: document.getElementById("game-channel4").value},
-  ].filter(c => c.url && c.url.length);
+  // coleta canais selecionados (valor = link, nome = texto real do botão)
+const selected = [
+  { name: document.getElementById("game-channel1").selectedOptions[0]?.text || "", url: document.getElementById("game-channel1").value },
+  { name: document.getElementById("game-channel2").selectedOptions[0]?.text || "", url: document.getElementById("game-channel2").value },
+  { name: document.getElementById("game-channel3").selectedOptions[0]?.text || "", url: document.getElementById("game-channel3").value },
+  { name: document.getElementById("game-channel4").selectedOptions[0]?.text || "", url: document.getElementById("game-channel4").value },
+].filter(c => c.url && c.name && c.name.trim() !== "");
 
   if(!champ || !home || !away || !time) return;
 
@@ -489,7 +492,7 @@ async function loadGames() {
   // 📦 Coleta todos os jogos
   q.forEach(docSnap => gamesArr.push({ id: docSnap.id, ...docSnap.data() }));
 
-  // 🕐 Ordena do maior horário para o menor (ex.: 19:00 → 16:00 → 13:45)
+  // 🕐 Ordena do maior horário para o menor
   gamesArr.sort((a, b) => {
     const timeA = parseInt(a.time.replace(":", ""));
     const timeB = parseInt(b.time.replace(":", ""));
@@ -499,22 +502,32 @@ async function loadGames() {
   // 🧱 Renderiza lista ordenada
   const ul = document.getElementById("games-list");
   ul.innerHTML = "";
+
   gamesArr.forEach(g => {
     const canaisLabel = (g.channels && g.channels.length)
-      ? `<div class="text-sm text-gray-600">Canais: ${g.channels.map(c => c.name).join(", ")}</div>`
+      ? `<div class="text-[11px] font-semibold text-gray-400 mt-[2px] leading-snug">
+           ${g.channels.map(c => `${c.name}`).join("<br>")}
+         </div>`
       : "";
 
     const li = document.createElement("li");
-    li.className = "bg-white p-3 rounded shadow flex flex-col gap-1";
+    li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
+
     li.innerHTML = `
-      <div class="flex justify-between items-center">
-        <span>${g.time} - ${g.home} x ${g.away} (${g.champ})</span>
-        <div class="flex gap-2">
-          <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
-          <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
+      <div class="flex flex-col">
+        <div class="text-base font-semibold leading-tight mb-0.5">${g.time} - ${g.home} x ${g.away}</div>
+
+        <!-- Campeonato e botões lado a lado -->
+        <div class="flex items-center justify-between">
+          <div class="text-sm text-gray-500">${g.champ}</div>
+          <div class="flex gap-2 flex-shrink-0">
+            <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-1 rounded text-sm">Editar</button>
+            <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">Excluir</button>
+          </div>
         </div>
+
+        ${canaisLabel}
       </div>
-      ${canaisLabel}
     `;
     ul.appendChild(li);
   });
