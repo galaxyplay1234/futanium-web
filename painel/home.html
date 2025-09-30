@@ -520,6 +520,17 @@ async function loadData(){
   await loadButtons();
   await loadGames();
 }
+
+// Ativa busca nos selects
+$(document).ready(function() {
+  $('#game-champ').select2({ placeholder: "Selecione o Campeonato" });
+  $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa" });
+  $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante" });
+  $('#game-channel1').select2({ placeholder: "Selecione um botão" });
+  $('#game-channel2').select2({ placeholder: "Selecione um botão" });
+  $('#game-channel3').select2({ placeholder: "Selecione um botão" });
+  $('#game-channel4').select2({ placeholder: "Selecione um botão" });
+});
 </script>
 </body>
 </html>
