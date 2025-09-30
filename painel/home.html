@@ -433,12 +433,13 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
   const time  = document.getElementById("game-time").value;
 
   // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
-  const selected = [
+  // coleta canais selecionados (valor = link, nome = texto real do botão)
+const selected = [
   { name: document.getElementById("game-channel1").selectedOptions[0]?.text || "", url: document.getElementById("game-channel1").value },
   { name: document.getElementById("game-channel2").selectedOptions[0]?.text || "", url: document.getElementById("game-channel2").value },
   { name: document.getElementById("game-channel3").selectedOptions[0]?.text || "", url: document.getElementById("game-channel3").value },
   { name: document.getElementById("game-channel4").selectedOptions[0]?.text || "", url: document.getElementById("game-channel4").value },
-].filter(c => c.url && c.url.length);
+].filter(c => c.url && c.name && c.name.trim() !== "");
 
   if(!champ || !home || !away || !time) return;
 
