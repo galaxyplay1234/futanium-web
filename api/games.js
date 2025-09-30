@@ -26,10 +26,10 @@ export default async function handler(req, res) {
         end_time: null,        // vamos calcular depois
         is_live: null,         // vamos calcular depois
         is_finished: null,     // vamos calcular depois
-        buttons: (f.channels?.arrayValue?.values || []).map(c => ({
-          url: c.mapValue.fields.url.stringValue,
-          name: c.mapValue.fields.name.stringValue
-        }))
+        buttons: (f.channels?.arrayValue?.values || []).map((c, i) => ({
+  url: c.mapValue.fields.url.stringValue,
+  name: `Canal ${i + 1}`
+}))
       };
     });
 
