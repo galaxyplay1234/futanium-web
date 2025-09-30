@@ -551,10 +551,11 @@ window.editGame = async function(id){
   $('#game-away-team').val(g.away || "").trigger('change.select2');
 
   const ch = g.channels || [];
-  $('#game-channel1').val(ch[0]?.url || null).trigger('change.select2');
-$('#game-channel2').val(ch[1]?.url || null).trigger('change.select2');
-$('#game-channel3').val(ch[2]?.url || null).trigger('change.select2');
-$('#game-channel4').val(ch[3]?.url || null).trigger('change.select2');
+  $('#game-channel1').val(ch[0]?.url || "").trigger('change.select2');
+  $('#game-channel2').val(ch[1]?.url || "").trigger('change.select2');
+  $('#game-channel3').val(ch[2]?.url || "").trigger('change.select2');
+  $('#game-channel4').val(ch[3]?.url || "").trigger('change.select2');
+
   document.getElementById("game-time").value = g.time || "";
 
   currentEditId = id;
