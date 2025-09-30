@@ -401,6 +401,16 @@ window.deleteButton = async function(id){
 // ===== Jogos (Adicionar / Editar) =====
 document.getElementById("game-form").addEventListener("submit", async e=>{
   e.preventDefault();
+
+  // 👇 força atualização dos selects Select2 antes de coletar valores
+  $('#game-champ').trigger('change.select2');
+  $('#game-home-team').trigger('change.select2');
+  $('#game-away-team').trigger('change.select2');
+  $('#game-channel1').trigger('change.select2');
+  $('#game-channel2').trigger('change.select2');
+  $('#game-channel3').trigger('change.select2');
+  $('#game-channel4').trigger('change.select2');
+
   const champ = document.getElementById("game-champ").value;
   const home  = document.getElementById("game-home-team").value;
   const away  = document.getElementById("game-away-team").value;
@@ -417,39 +427,39 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
   if(!champ || !home || !away || !time) return;
 
   // Buscar logo do campeonato
-let champLogo = "";
-const champsSnap = await getDocs(collection(db,"championships"));
-champsSnap.forEach(docSnap => {
-  if(docSnap.data().name === champ) champLogo = docSnap.data().logo;
-});
+  let champLogo = "";
+  const champsSnap = await getDocs(collection(db,"championships"));
+  champsSnap.forEach(docSnap => {
+    if(docSnap.data().name === champ) champLogo = docSnap.data().logo;
+  });
 
-// Buscar logo dos times
-let homeLogo = "";
-let awayLogo = "";
-const teamsSnap = await getDocs(collection(db,"teams"));
-teamsSnap.forEach(docSnap => {
-  if(docSnap.data().name === home) homeLogo = docSnap.data().logo;
-  if(docSnap.data().name === away) awayLogo = docSnap.data().logo;
-});
+  // Buscar logo dos times
+  let homeLogo = "";
+  let awayLogo = "";
+  const teamsSnap = await getDocs(collection(db,"teams"));
+  teamsSnap.forEach(docSnap => {
+    if(docSnap.data().name === home) homeLogo = docSnap.data().logo;
+    if(docSnap.data().name === away) awayLogo = docSnap.data().logo;
+  });
 
-const payload = {
-  champ,
-  champ_logo: champLogo,
-  home,
-  home_logo: homeLogo,
-  away,
-  away_logo: awayLogo,
-  time,
-  channels: selected
-};
+  const payload = {
+    champ,
+    champ_logo: champLogo,
+    home,
+    home_logo: homeLogo,
+    away,
+    away_logo: awayLogo,
+    time,
+    channels: selected
+  };
 
-if(currentEditId){
-  await updateDoc(doc(db,"games",currentEditId), payload);
-  currentEditId = null;
-  document.getElementById("form-title").innerText = "Adicionar Jogo";
-}else{
-  await addDoc(collection(db,"games"), payload);
-}
+  if(currentEditId){
+    await updateDoc(doc(db,"games",currentEditId), payload);
+    currentEditId = null;
+    document.getElementById("form-title").innerText = "Adicionar Jogo";
+  } else {
+    await addDoc(collection(db,"games"), payload);
+  }
 
   document.getElementById("game-form").reset();
   await loadGames();
@@ -496,17 +506,18 @@ window.editGame = async function(id){
   await loadTeams();
   await loadButtons();
 
-  document.getElementById("game-champ").value = g.champ || "";
-  document.getElementById("game-home-team").value = g.home || "";
-  document.getElementById("game-away-team").value = g.away || "";
-  document.getElementById("game-time").value = g.time || "";
+  // 👇 força sincronização do Select2 depois de preencher os selects
+  $('#game-champ').val(g.champ || "").trigger('change.select2');
+  $('#game-home-team').val(g.home || "").trigger('change.select2');
+  $('#game-away-team').val(g.away || "").trigger('change.select2');
 
-  // seta os 4 selects de canais pelo URL salvo
   const ch = g.channels || [];
-  document.getElementById("game-channel1").value = ch[0]?.url || "";
-  document.getElementById("game-channel2").value = ch[1]?.url || "";
-  document.getElementById("game-channel3").value = ch[2]?.url || "";
-  document.getElementById("game-channel4").value = ch[3]?.url || "";
+  $('#game-channel1').val(ch[0]?.url || "").trigger('change.select2');
+  $('#game-channel2').val(ch[1]?.url || "").trigger('change.select2');
+  $('#game-channel3').val(ch[2]?.url || "").trigger('change.select2');
+  $('#game-channel4').val(ch[3]?.url || "").trigger('change.select2');
+
+  document.getElementById("game-time").value = g.time || "";
 
   currentEditId = id;
   document.getElementById("form-title").innerText = "Editar Jogo";
