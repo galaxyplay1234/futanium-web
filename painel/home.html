@@ -366,21 +366,27 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
 });
 async function loadButtons(){
   const q = await getDocs(collection(db,"buttons"));
+  const buttonsArr = [];
+  q.forEach(docSnap => buttonsArr.push({ id: docSnap.id, ...docSnap.data() }));
+
+  // ✅ Ordena em ordem alfabética pelo nome do botão
+  buttonsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+
   const tbody = document.getElementById("buttons-list");
   tbody.innerHTML = "";
 
-  const buttonsArr = [];
-  q.forEach(docSnap=>{
-    const b = docSnap.data();
-    buttonsArr.push({id: docSnap.id, ...b});
+  // ✅ Monta a tabela ordenada
+  buttonsArr.forEach(b => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${b.name}</td>
-                    <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">${b.link}</a></td>
-                    <td class="p-2"><button onclick="deleteButton('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    tr.innerHTML = `
+      <td class="p-2">${b.name}</td>
+      <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">${b.link}</a></td>
+      <td class="p-2"><button onclick="deleteButton('${b.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>
+    `;
     tbody.appendChild(tr);
   });
 
-  // repopula os selects dos 4 canais
+  // ✅ Repopula os selects dos canais em ordem alfabética
   populateChannelSelects(buttonsArr);
 }
 window.deleteButton = async function(id){
