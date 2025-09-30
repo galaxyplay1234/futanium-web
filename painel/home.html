@@ -322,18 +322,28 @@ document.getElementById("champ-form").addEventListener("submit", async e=>{
 });
 async function loadChamps(){
   const q = await getDocs(collection(db,"championships"));
+  const champsArr = [];
+  q.forEach(docSnap => champsArr.push({ id: docSnap.id, ...docSnap.data() }));
+
+  // ✅ Ordena em ordem alfabética pelo nome
+  champsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+
   const tbody = document.getElementById("champions-list");
   tbody.innerHTML = "";
 
   const champSel = document.getElementById("game-champ");
   resetSelect(champSel, "Selecione o Campeonato");
 
-  q.forEach(docSnap=>{
-    const c = docSnap.data();
+  // ✅ Agora renderiza usando a lista ordenada
+  champsArr.forEach(c => {
     const tr = document.createElement("tr");
-    tr.innerHTML = `<td class="p-2">${c.name}</td>
-                    <td class="p-2"><img src="${c.logo}" class="h-6"></td>
-                    <td class="p-2"><button onclick="deleteChamp('${docSnap.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>`;
+    tr.innerHTML = `
+      <td class="p-2">${c.name}</td>
+      <td class="p-2"><img src="${c.logo}" class="h-6"></td>
+      <td class="p-2">
+        <button onclick="deleteChamp('${c.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+      </td>
+    `;
     tbody.appendChild(tr);
 
     champSel.appendChild(new Option(c.name, c.name));
