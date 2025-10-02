@@ -15,6 +15,12 @@
     margin: 0;
   }
 
+  /* remove o "x" padrão do Select2 */
+.select2-selection__clear {
+  display: none !important;
+}
+
+
   /* aplica apenas no dashboard */
   #dashboard {
     padding-top: calc(56px + 48px); /* topbar + tabs */
@@ -94,36 +100,39 @@
 
         <!-- Campos fixos para Canais -->
         <label class="mt-2 font-semibold">Canal 1</label>
-<div class="relative">
-  <select id="game-channel1" class="p-2 border rounded w-full pr-8">
+<div class="flex items-center gap-2 relative">
+  <select id="game-channel1" class="p-2 border rounded w-full">
     <option value="">Selecione um botão</option>
   </select>
   <button type="button" onclick="clearSelect('game-channel1')" 
-    class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-400 hover:text-red-500 text-lg">✕</button>
+          class="absolute right-2 text-gray-500 hover:text-red-500 text-lg">✕</button>
 </div>
-        <label class="mt-2 font-semibold">Canal 2</label>
-<div class="relative">
-  <select id="game-channel2" class="p-2 border rounded w-full pr-8">
+
+<label class="mt-2 font-semibold">Canal 2</label>
+<div class="flex items-center gap-2 relative">
+  <select id="game-channel2" class="p-2 border rounded w-full">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel1')" 
-    class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-400 hover:text-red-500 text-lg">✕</button>
+  <button type="button" onclick="clearSelect('game-channel2')" 
+          class="absolute right-2 text-gray-500 hover:text-red-500 text-lg">✕</button>
 </div>
-        <label class="mt-2 font-semibold">Canal 3</label>
-<div class="relative">
-  <select id="game-channel3" class="p-2 border rounded w-full pr-8">
+
+<label class="mt-2 font-semibold">Canal 3</label>
+<div class="flex items-center gap-2 relative">
+  <select id="game-channel3" class="p-2 border rounded w-full">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel1')" 
-    class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-400 hover:text-red-500 text-lg">✕</button>
+  <button type="button" onclick="clearSelect('game-channel3')" 
+          class="absolute right-2 text-gray-500 hover:text-red-500 text-lg">✕</button>
 </div>
-        <label class="mt-2 font-semibold">Canal 4</label>
-<div class="relative">
-  <select id="game-channel4" class="p-2 border rounded w-full pr-8">
+
+<label class="mt-2 font-semibold">Canal 4</label>
+<div class="flex items-center gap-2 relative">
+  <select id="game-channel4" class="p-2 border rounded w-full">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel1')" 
-    class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-400 hover:text-red-500 text-lg">✕</button>
+  <button type="button" onclick="clearSelect('game-channel4')" 
+          class="absolute right-2 text-gray-500 hover:text-red-500 text-lg">✕</button>
 </div>
 
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
