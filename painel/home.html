@@ -94,21 +94,37 @@
 
         <!-- Campos fixos para Canais -->
         <label class="mt-2 font-semibold">Canal 1</label>
-        <select id="game-channel1" class="p-2 border rounded">
-          <option value="">Selecione um botão</option>
-        </select>
+<div class="relative">
+  <select id="game-channel1" class="p-2 border rounded w-full pr-8">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel1')" 
+    class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-400 hover:text-red-500 text-lg">✕</button>
+</div>
         <label class="mt-2 font-semibold">Canal 2</label>
-        <select id="game-channel2" class="p-2 border rounded">
-          <option value="">Selecione um botão</option>
-        </select>
+<div class="relative">
+  <select id="game-channel2" class="p-2 border rounded w-full pr-8">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel1')" 
+    class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-400 hover:text-red-500 text-lg">✕</button>
+</div>
         <label class="mt-2 font-semibold">Canal 3</label>
-        <select id="game-channel3" class="p-2 border rounded">
-          <option value="">Selecione um botão</option>
-        </select>
+<div class="relative">
+  <select id="game-channel3" class="p-2 border rounded w-full pr-8">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel1')" 
+    class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-400 hover:text-red-500 text-lg">✕</button>
+</div>
         <label class="mt-2 font-semibold">Canal 4</label>
-        <select id="game-channel4" class="p-2 border rounded">
-          <option value="">Selecione um botão</option>
-        </select>
+<div class="relative">
+  <select id="game-channel4" class="p-2 border rounded w-full pr-8">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel1')" 
+    class="absolute top-1/2 -translate-y-1/2 right-2 text-gray-400 hover:text-red-500 text-lg">✕</button>
+</div>
 
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
@@ -570,6 +586,12 @@ async function loadData(){
   await loadButtons();
   await loadGames();
 }
+
+// ✅ Limpa qualquer select individualmente ao clicar no "✕"
+window.clearSelect = function(id) {
+  $('#' + id).val(null).trigger('change');
+};
+
 
 // Ativa busca nos selects
 $(document).ready(function () {
