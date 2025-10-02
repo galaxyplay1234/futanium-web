@@ -572,14 +572,17 @@ async function loadData(){
 }
 
 // Ativa busca nos selects
-$(document).ready(function() {
-  $('#game-champ').select2({ placeholder: "Selecione o Campeonato" });
-  $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa" });
-  $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante" });
-  $('#game-channel1').select2({ placeholder: "Selecione um botão" });
-  $('#game-channel2').select2({ placeholder: "Selecione um botão" });
-  $('#game-channel3').select2({ placeholder: "Selecione um botão" });
-  $('#game-channel4').select2({ placeholder: "Selecione um botão" });
+$(document).ready(function () {
+  $('#game-champ').select2({ placeholder: "Selecione o Campeonato", allowClear: true, width: '100%' });
+  $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa", allowClear: true, width: '100%' });
+  $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante", allowClear: true, width: '100%' });
+
+  // ✅ habilita limpar nos canais
+  $('#game-channel1, #game-channel2, #game-channel3, #game-channel4').select2({
+    placeholder: "Selecione um botão",
+    allowClear: true,     // <- mostra o “x” para limpar
+    width: '100%'
+  });
 });
 </script>
 </body>
