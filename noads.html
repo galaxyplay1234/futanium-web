@@ -205,35 +205,36 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .team {
   display: flex;
   align-items: center;
-  gap: 6px;
-  max-width: 40%;
+  gap: 6px; /* distância pequena entre escudo e nome */
+  font-size: 14px;
+  font-weight: 400; /* nomes sem negrito */
+  white-space: normal;
 }
 
 .tlogo {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
-}
-
-.tname {
-  font-size: 14px;
-  font-weight: 400;
-  white-space: normal;
-  word-break: break-word;
 }
 
 .timeBox {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  font-weight: 700;
-  width: 60px;
+  font-size: 18px;
+  font-weight: 700; /* hora em negrito */
+  min-width: 60px;
+}
+
+.card .row {
+  justify-content: center; /* centraliza tudo no meio */
+  gap: 18px; /* espaço total entre os blocos */
 }
 
 .ttxt {
@@ -363,18 +364,16 @@ card.innerHTML = `
   </div>
 
   <div class="row">
-    <div class="team">
-      <img class="tlogo" src="${it.home_team_image_url || ''}">
-      <div class="tname">${it.home_team || ''}</div>
-    </div>
-
-    <div class="timeBox">${it.start_time || ''}</div>
-
-    <div class="team" style="justify-content: flex-end; text-align: right;">
-      <div class="tname">${it.visiting_team || ''}</div>
-      <img class="tlogo" src="${it.visiting_team_image_url || ''}">
-    </div>
+  <div class="team">
+    <img class="tlogo" src="${it.home_team_image_url || ''}">
+    <div>${it.home_team || ''}</div>
   </div>
+  <div class="timeBox">${it.start_time || ''}</div>
+  <div class="team">
+    <img class="tlogo" src="${it.visiting_team_image_url || ''}">
+    <div>${it.visiting_team || ''}</div>
+  </div>
+</div>
 `;
     card.onclick = () => {
       window.open(MONETAG_URL, "_blank");
