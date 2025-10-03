@@ -176,59 +176,64 @@
 
 
   /* === NOVO DESIGN DOS CARDS (apenas visual) === */
-.card{
+.card {
   background: var(--card);
   border-radius: 14px;
   padding: 10px 14px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   box-shadow: var(--shadow);
   cursor: pointer;
 }
 
-.champ{
-  display:flex; align-items:center; gap:8px;
-  color:var(--muted); font-weight:600; margin-bottom:6px;
+.champ {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 13px;
 }
-.clogo{ width:20px; height:20px; object-fit:contain; }
 
-/* linha do confronto */
+.clogo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 .row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  padding: 4px 0;
 }
 
 .team {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 1;
-  min-width: 0;
+  max-width: 40%;
 }
 
 .tlogo {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
-  flex-shrink: 0;
 }
 
 .tname {
   font-size: 14px;
   font-weight: 400;
-  color: #111;
   white-space: normal;
   word-break: break-word;
-  line-height: 1.2;
 }
 
 .timeBox {
-  min-width: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  width: 60px;
 }
 
 .ttxt {
@@ -354,14 +359,17 @@ function renderList(items){
 card.innerHTML = `
   <div class="champ">
     <img class="clogo" src="${it.championship_image_url || ''}">
-    <div>${it.championship||''}</div>
+    <div>${it.championship || ''}</div>
   </div>
+
   <div class="row">
     <div class="team">
       <img class="tlogo" src="${it.home_team_image_url || ''}">
       <div class="tname">${it.home_team || ''}</div>
     </div>
-    <div class="timeBox"><div class="ttxt">${it.start_time || ''}</div></div>
+
+    <div class="timeBox">${it.start_time || ''}</div>
+
     <div class="team" style="justify-content: flex-end; text-align: right;">
       <div class="tname">${it.visiting_team || ''}</div>
       <img class="tlogo" src="${it.visiting_team_image_url || ''}">
