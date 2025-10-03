@@ -192,30 +192,52 @@
 .clogo{ width:20px; height:20px; object-fit:contain; }
 
 /* linha do confronto */
-.row{
-  display:flex; align-items:center; justify-content:space-between;
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-/* times ficam mais “finos”, com nome para fora e logo mais perto da hora */
-.team{
-  display:flex; align-items:center; gap:8px; width:40%;
-}
-.team-left{ justify-content:flex-start; }
-.team-right{ justify-content:flex-end; }
-
-.tlogo{ width:40px; height:40px; object-fit:contain; }   /* escudo maior */
-.tname{
-  font-size:14px; font-weight:400;                      /* sem negrito */
-  line-height:1.15;
-  white-space:normal;                                    /* pode quebrar */
-  overflow:visible; text-overflow:unset;
-  flex:1;                                                /* usa o espaço */
-  min-width:0;
+.team {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  min-width: 120px;
+  max-width: 40%;
+  text-align: left;
 }
 
-/* hora central, em negrito */
-.timeBox{ width:20%; text-align:center; }
-.ttxt{ font-size:18px; font-weight:700; color:#000; }
+.tlogo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.tname {
+  font-size: 14px;
+  font-weight: 400;
+  color: #000;
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.timeBox {
+  min-width: 55px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ttxt {
+  font-size: 20px;
+  font-weight: 700;
+  color: #000;
+}
 </style>
 </head>
 <body>
@@ -334,24 +356,17 @@ function renderList(items){
 card.innerHTML = `
   <div class="champ">
     <img class="clogo" src="${it.championship_image_url || ''}">
-    <div>${it.championship || ''}</div>
+    <div>${it.championship||''}</div>
   </div>
-
   <div class="row">
-    <!-- Nome do mandante para fora (esquerda) e logo perto da hora -->
-    <div class="team team-left">
-      <div class="tname">${it.home_team || ''}</div>
+    <div class="team">
       <img class="tlogo" src="${it.home_team_image_url || ''}">
+      <div class="tname">${it.home_team || ''}</div>
     </div>
-
-    <div class="timeBox">
-      <div class="ttxt">${it.start_time || ''}</div>
-    </div>
-
-    <!-- Logo do visitante perto da hora e nome para fora (direita) -->
-    <div class="team team-right">
+    <div class="timeBox"><div class="ttxt">${it.start_time || ''}</div></div>
+    <div class="team" style="justify-content: flex-end; text-align: right;">
+      <div class="tname">${it.visiting_team || ''}</div>
       <img class="tlogo" src="${it.visiting_team_image_url || ''}">
-      <div class="tname" style="text-align:right">${it.visiting_team || ''}</div>
     </div>
   </div>
 `;
