@@ -12,9 +12,8 @@ export default async function handler(req, res) {
     }
 
     // Transforma os documentos do Firestore no formato desejado
-    const games = data.documents.map(doc => {
+    let games = data.documents.map(doc => {
       const f = doc.fields;
-
       return {
         championship: f.champ?.stringValue || "",
         championship_image_url: f.champ_logo?.stringValue || null,
@@ -23,14 +22,21 @@ export default async function handler(req, res) {
         home_team_image_url: f.home_logo?.stringValue || null,
         visiting_team_image_url: f.away_logo?.stringValue || null,
         start_time: f.time?.stringValue || "",
-        end_time: null,        // vamos calcular depois
-        is_live: null,         // vamos calcular depois
-        is_finished: null,     // vamos calcular depois
+        end_time: null,
+        is_live: null,
+        is_finished: null,
         buttons: (f.channels?.arrayValue?.values || []).map((c, i) => ({
-  url: c.mapValue.fields.url.stringValue,
-  name: `Canal ${i + 1}`
-}))
+          url: c.mapValue.fields.url.stringValue,
+          name: `Canal ${i + 1}`
+        }))
       };
+    });
+
+    // ✅ Ordena do mais cedo pro mais tarde (08h30 → 21h40)
+    games.sort((a, b) => {
+      const timeA = parseInt(a.start_time.replace(":", "").replace("h", ""));
+      const timeB = parseInt(b.start_time.replace(":", "").replace("h", ""));
+      return timeA - timeB;
     });
 
     res.status(200).json(games);
