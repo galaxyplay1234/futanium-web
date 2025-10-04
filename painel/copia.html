@@ -15,6 +15,12 @@
     margin: 0;
   }
 
+  /* remove o "x" padrão do Select2 */
+.select2-selection__clear {
+  display: none !important;
+}
+
+
   /* aplica apenas no dashboard */
   #dashboard {
     padding-top: calc(56px + 48px); /* topbar + tabs */
@@ -93,22 +99,49 @@
                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
 
         <!-- Campos fixos para Canais -->
-        <label class="mt-2 font-semibold">Canal 1</label>
-        <select id="game-channel1" class="p-2 border rounded">
-          <option value="">Selecione um botão</option>
-        </select>
-        <label class="mt-2 font-semibold">Canal 2</label>
-        <select id="game-channel2" class="p-2 border rounded">
-          <option value="">Selecione um botão</option>
-        </select>
-        <label class="mt-2 font-semibold">Canal 3</label>
-        <select id="game-channel3" class="p-2 border rounded">
-          <option value="">Selecione um botão</option>
-        </select>
-        <label class="mt-2 font-semibold">Canal 4</label>
-        <select id="game-channel4" class="p-2 border rounded">
-          <option value="">Selecione um botão</option>
-        </select>
+        <label for="game-channel1" class="block text-sm font-semibold mt-2">Canal 1</label>
+<div class="flex items-center gap-2">
+  <select id="game-channel1" class="p-2 border rounded w-[85%]">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel1')" 
+    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+    ✕
+  </button>
+</div>
+
+<label for="game-channel2" class="block text-sm font-semibold mt-2">Canal 2</label>
+<div class="flex items-center gap-2">
+  <select id="game-channel2" class="p-2 border rounded w-[85%]">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel2')" 
+    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+    ✕
+  </button>
+</div>
+
+<label for="game-channel3" class="block text-sm font-semibold mt-2">Canal 3</label>
+<div class="flex items-center gap-2">
+  <select id="game-channel3" class="p-2 border rounded w-[85%]">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel3')" 
+    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+    ✕
+  </button>
+</div>
+
+<label for="game-channel4" class="block text-sm font-semibold mt-2">Canal 4</label>
+<div class="flex items-center gap-2">
+  <select id="game-channel4" class="p-2 border rounded w-[85%]">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel4')" 
+    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+    ✕
+  </button>
+</div>
 
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
@@ -551,10 +584,10 @@ window.editGame = async function(id){
   $('#game-away-team').val(g.away || "").trigger('change.select2');
 
   const ch = g.channels || [];
-  $('#game-channel1').val(ch[0]?.url || "").trigger('change.select2');
-  $('#game-channel2').val(ch[1]?.url || "").trigger('change.select2');
-  $('#game-channel3').val(ch[2]?.url || "").trigger('change.select2');
-  $('#game-channel4').val(ch[3]?.url || "").trigger('change.select2');
+  $('#game-channel1').val(ch[0]?.url || null).trigger('change.select2');
+$('#game-channel2').val(ch[1]?.url || null).trigger('change.select2');
+$('#game-channel3').val(ch[2]?.url || null).trigger('change.select2');
+$('#game-channel4').val(ch[3]?.url || null).trigger('change.select2');
 
   document.getElementById("game-time").value = g.time || "";
 
@@ -571,15 +604,24 @@ async function loadData(){
   await loadGames();
 }
 
+// ✅ Limpa qualquer select individualmente ao clicar no "✕"
+window.clearSelect = function(id) {
+  $('#' + id).val(null).trigger('change');
+};
+
+
 // Ativa busca nos selects
-$(document).ready(function() {
-  $('#game-champ').select2({ placeholder: "Selecione o Campeonato" });
-  $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa" });
-  $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante" });
-  $('#game-channel1').select2({ placeholder: "Selecione um botão" });
-  $('#game-channel2').select2({ placeholder: "Selecione um botão" });
-  $('#game-channel3').select2({ placeholder: "Selecione um botão" });
-  $('#game-channel4').select2({ placeholder: "Selecione um botão" });
+$(document).ready(function () {
+  $('#game-champ').select2({ placeholder: "Selecione o Campeonato", allowClear: true, width: '100%' });
+  $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa", allowClear: true, width: '100%' });
+  $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante", allowClear: true, width: '100%' });
+
+  // ✅ habilita limpar nos canais
+  $('#game-channel1, #game-channel2, #game-channel3, #game-channel4').select2({
+    placeholder: "Selecione um botão",
+    allowClear: true,     // <- mostra o “x” para limpar
+    width: '100%'
+  });
 });
 </script>
 </body>
