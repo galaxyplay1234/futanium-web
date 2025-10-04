@@ -357,21 +357,23 @@ function renderList(items){
     const card = document.createElement('div');
     card.className = 'card';
     card.innerHTML = `
-      <div class="champ">
-        <img class="clogo" src="${it.championship_image_url || ''}">
-        <div>${it.championship||''}</div>
-      </div>
-      <div class="row">
-        <div class="team">
-          <img class="tlogo" src="${it.home_team_image_url || ''}">
-          <div class="tname">${it.home_team||''}</div>
-        </div>
-        <div class="timeBox"><div class="ttxt">${it.start_time||''}</div></div>
-        <div class="team">
-          <img class="tlogo" src="${it.visiting_team_image_url || ''}">
-          <div class="tname">${it.visiting_team||''}</div>
-        </div>
-      </div>`;
+  <div class="champ">
+    <img class="clogo" src="${it.championship_image_url || ''}">
+    <div>${it.championship || ''}</div>
+  </div>
+
+  <div class="row">
+  <div class="team">
+    <div>${it.home_team || ''}</div>
+    <img class="tlogo" src="${it.home_team_image_url || ''}">
+  </div>
+  <div class="timeBox">${it.start_time || ''}</div>
+  <div class="team">
+    <img class="tlogo" src="${it.visiting_team_image_url || ''}">
+    <div>${it.visiting_team || ''}</div>
+  </div>
+</div>
+`;
     card.onclick = ()=>{
       window.open(MONETAG_URL, "_blank"); // ✅ abre anúncio
       selectMatch(it);
