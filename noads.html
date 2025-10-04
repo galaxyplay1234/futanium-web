@@ -378,9 +378,8 @@ card.innerHTML = `
 </div>
 `;
     card.onclick = () => {
-      window.open(MONETAG_URL, "_blank");
-      selectMatch(it);
-    };
+  selectMatch(it); // ✅ mantém só a função de selecionar o jogo
+};
     listEl.appendChild(card);
   });
 }
