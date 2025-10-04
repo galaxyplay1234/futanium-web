@@ -375,7 +375,7 @@ function renderList(items){
 </div>
 `;
     card.onclick = ()=>{
-      //window.open(MONETAG_URL, "_blank"); // ✅ abre anúncio
+      window.open(MONETAG_URL, "_blank"); // ✅ abre anúncio
       selectMatch(it);
     };
     listEl.appendChild(card);
@@ -398,7 +398,7 @@ function selectMatch(match){
       const b = document.createElement("button");
       b.textContent = btn.name || `Canal ${i+1}`;
       b.onclick = ()=>{
-       // window.open(MONETAG_URL, "_blank");
+       window.open(MONETAG_URL, "_blank");
         loadChannel(btn.url);
       };
       channelButtons.appendChild(b);
