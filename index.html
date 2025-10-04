@@ -174,18 +174,73 @@
 }
 
 
-  .card{
-    background:var(--card); border-radius:14px; padding:12px; margin-bottom:12px;
-    box-shadow:var(--shadow); cursor:pointer;
-  }
-  .champ{ display:flex; align-items:center; gap:8px; color:var(--muted); font-weight:600; margin-bottom:8px }
-  .clogo{ width:24px; height:24px; object-fit:contain }
-  .row{ display:flex; align-items:center; justify-content:space-between; gap:8px }
-  .team{ width:150px; text-align:center }
-  .tlogo{ width:50px; height:50px; object-fit:contain }
-  .tname{ margin-top:6px; font-size:12px; min-height:32px }
-  .timeBox{ height:50px; display:flex; flex-direction:column; align-items:center; justify-content:center }
-  .ttxt{ font-size:20px; font-weight:700; color:#000 }
+  /* === NOVO DESIGN DOS CARDS (apenas visual) === */
+.card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.champ {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.clogo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 400;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.tlogo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.timeBox {
+  min-width: 68px;
+  text-align: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #000;
+}
+
+.team:first-child {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.team:last-child {
+  justify-content: flex-start;
+  text-align: left;
+}
 </style>
 </head>
 <body>
