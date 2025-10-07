@@ -14,11 +14,17 @@ export default async function handler(req, res) {
     // Transforma os documentos do Firestore no formato desejado
     let games = data.documents.map(doc => {
       const f = doc.fields;
+      const home = f.home?.stringValue || "";
+      const away = f.away?.stringValue || "";
+
+      // detecta se é um aviso
+      const isAviso = home.toLowerCase() === "aviso" && away.toLowerCase() === "aviso";
+
       return {
         championship: f.champ?.stringValue || "",
         championship_image_url: f.champ_logo?.stringValue || null,
-        home_team: f.home?.stringValue || "",
-        visiting_team: f.away?.stringValue || "",
+        home_team: home,
+        visiting_team: away,
         home_team_image_url: f.home_logo?.stringValue || null,
         visiting_team_image_url: f.away_logo?.stringValue || null,
         start_time: f.time?.stringValue || "",
@@ -27,7 +33,10 @@ export default async function handler(req, res) {
         is_finished: null,
         buttons: (f.channels?.arrayValue?.values || []).map((c, i) => ({
           url: c.mapValue.fields.url.stringValue,
-          name: `Canal ${i + 1}`
+          // ✅ usa nome original do painel se for aviso
+          name: isAviso 
+            ? c.mapValue.fields.name?.stringValue || `Canal ${i + 1}`
+            : `Canal ${i + 1}`
         }))
       };
     });
