@@ -75,6 +75,13 @@
 
     <!-- Home -->
     <div id="tab-home" class="tab-content">
+      <!-- 📊 Contadores em tempo real -->
+<div id="realtime-stats" class="flex justify-between items-center bg-white p-4 rounded shadow mb-4 text-2xl font-bold">
+  <div id="onlineCount">🟢 0</div>
+  <div id="webviewCount">🟡 0</div>
+  <div id="m3u8Count">🔴 0</div>
+  <div id="instaladosCount">📥 0</div>
+</div>
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
       <ul id="games-list" class="space-y-2"></ul>
     </div>
@@ -623,6 +630,41 @@ $(document).ready(function () {
     width: '100%'
   });
 });
+
+// ===== Contadores em tempo real (Realtime Database) =====
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+
+const rtdb = getDatabase(app);
+
+function listenRealtimeCounters() {
+  const nodes = ["online", "webview", "m3u8", "instalados"];
+  const elements = {
+    online: document.getElementById("onlineCount"),
+    webview: document.getElementById("webviewCount"),
+    m3u8: document.getElementById("m3u8Count"),
+    instalados: document.getElementById("instaladosCount"),
+  };
+
+  nodes.forEach(node => {
+    const nodeRef = ref(rtdb, node);
+    onValue(nodeRef, snap => {
+      const data = snap.val();
+      const total = data ? Object.keys(data).length : 0;
+
+      if (elements[node]) {
+        if (node === "online") elements[node].textContent = `🟢 ${total}`;
+        if (node === "webview") elements[node].textContent = `🟡 ${total}`;
+        if (node === "m3u8") elements[node].textContent = `🔴 ${total}`;
+        if (node === "instalados") elements[node].textContent = `📥 ${total}`;
+      }
+    });
+  });
+}
+
+// ⏱️ Inicia a escuta assim que o painel carregar
+listenRealtimeCounters();
+
+
 </script>
 </body>
 </html>
