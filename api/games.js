@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       const cleanTime = matchTimeStr.replace("h", ":");
       const [h, m] = cleanTime.split(":").map(v => parseInt(v) || 0);
       const matchMinutes = h * 60 + m;
-      const endMinutes = matchMinutes + 130; // +2 horas
+      const endMinutes = matchMinutes + 120; // +2 horas
 
       // Define status automático
       const isLive = nowMinutes >= matchMinutes && nowMinutes < endMinutes;
@@ -45,6 +45,7 @@ export default async function handler(req, res) {
         end_time: null,
         is_live: isLive,
         is_finished: isFinished,
+        start_minutes: matchMinutes, // guardamos pra ordenar com precisão
         buttons: (f.channels?.arrayValue?.values || []).map((c, i) => ({
           url: c.mapValue.fields.url.stringValue,
           name: isAviso
@@ -54,22 +55,22 @@ export default async function handler(req, res) {
       };
     });
 
-    // 🕐 Ordena os jogos dinamicamente:
-    // 1️⃣ Ao vivo primeiro
-    // 2️⃣ Depois os que ainda vão começar
-    // 3️⃣ Encerrados por último
+    // 🕐 Ordena por status e horário:
     games.sort((a, b) => {
-      // prioridade por status
-      if (a.is_live && !b.is_live) return -1;  // ao vivo vem antes
+      // 1️⃣ Ao vivo primeiro (mais recente primeiro)
+      if (a.is_live && !b.is_live) return -1;
       if (!a.is_live && b.is_live) return 1;
+      if (a.is_live && b.is_live) return b.start_minutes - a.start_minutes;
 
-      if (!a.is_finished && b.is_finished) return -1; // não finalizado vem antes
-      if (a.is_finished && !b.is_finished) return 1;  // finalizado vai pro final
+      // 2️⃣ Jogos futuros (não live e não finished) → ordem crescente
+      if (!a.is_finished && !b.is_finished) return a.start_minutes - b.start_minutes;
 
-      // se o status for igual, ordena por horário
-      const timeA = parseInt(a.start_time.replace(":", "").replace("h", ""));
-      const timeB = parseInt(b.start_time.replace(":", "").replace("h", ""));
-      return timeA - timeB;
+      // 3️⃣ Encerrados no final (ordem crescente)
+      if (a.is_finished && !b.is_finished) return 1;
+      if (!a.is_finished && b.is_finished) return -1;
+      if (a.is_finished && b.is_finished) return a.start_minutes - b.start_minutes;
+
+      return 0;
     });
 
     res.status(200).json(games);
