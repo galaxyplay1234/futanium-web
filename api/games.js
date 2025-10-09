@@ -54,8 +54,19 @@ export default async function handler(req, res) {
       };
     });
 
-    // Ordena por horário (mais cedo → mais tarde)
+    // 🕐 Ordena os jogos dinamicamente:
+    // 1️⃣ Ao vivo primeiro
+    // 2️⃣ Depois os que ainda vão começar
+    // 3️⃣ Encerrados por último
     games.sort((a, b) => {
+      // prioridade por status
+      if (a.is_live && !b.is_live) return -1;  // ao vivo vem antes
+      if (!a.is_live && b.is_live) return 1;
+
+      if (!a.is_finished && b.is_finished) return -1; // não finalizado vem antes
+      if (a.is_finished && !b.is_finished) return 1;  // finalizado vai pro final
+
+      // se o status for igual, ordena por horário
       const timeA = parseInt(a.start_time.replace(":", "").replace("h", ""));
       const timeB = parseInt(b.start_time.replace(":", "").replace("h", ""));
       return timeA - timeB;
