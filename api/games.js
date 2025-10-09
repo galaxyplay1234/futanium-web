@@ -28,7 +28,7 @@ export default async function handler(req, res) {
       const cleanTime = matchTimeStr.replace("h", ":");
       const [h, m] = cleanTime.split(":").map(v => parseInt(v) || 0);
       const matchMinutes = h * 60 + m;
-      const endMinutes = matchMinutes + 120; // +2 horas
+      const endMinutes = matchMinutes + 80; // +2 horas
 
       // Define status automático
       const isLive = nowMinutes >= matchMinutes && nowMinutes < endMinutes;
