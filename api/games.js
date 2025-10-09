@@ -1,17 +1,12 @@
 export default async function handler(req, res) {
   try {
-    // URL da coleção "games" no Firestore
     const url = "https://firestore.googleapis.com/v1/projects/futanium-web/databases/(default)/documents/games";
-
-    // Pega os documentos direto do Firestore
     const response = await fetch(url);
     const data = await response.json();
 
-    if (!data.documents) {
-      return res.status(200).json([]);
-    }
+    if (!data.documents) return res.status(200).json([]);
 
-    // Hora atual em minutos (Brasil)
+    // Hora atual (Brasil)
     const now = new Date();
     const brasilOffset = -3 * 60; // UTC-3
     const nowMinutes = now.getUTCHours() * 60 + now.getUTCMinutes() + brasilOffset;
@@ -33,6 +28,17 @@ export default async function handler(req, res) {
       // Define status automático
       const isLive = nowMinutes >= matchMinutes && nowMinutes < endMinutes;
       const isFinished = nowMinutes >= endMinutes;
+      const minutesToStart = matchMinutes - nowMinutes;
+
+      // 🔒 Libera canais só 15 minutos antes do jogo
+      const canShowButtons = minutesToStart <= 15;
+
+      const allButtons = (f.channels?.arrayValue?.values || []).map((c, i) => ({
+        url: c.mapValue.fields.url.stringValue,
+        name: isAviso
+          ? c.mapValue.fields.name?.stringValue || `Canal ${i + 1}`
+          : `Canal ${i + 1}`
+      }));
 
       return {
         championship: f.champ?.stringValue || "",
@@ -45,27 +51,22 @@ export default async function handler(req, res) {
         end_time: null,
         is_live: isLive,
         is_finished: isFinished,
-        start_minutes: matchMinutes, // guardamos pra ordenar com precisão
-        buttons: (f.channels?.arrayValue?.values || []).map((c, i) => ({
-          url: c.mapValue.fields.url.stringValue,
-          name: isAviso
-            ? c.mapValue.fields.name?.stringValue || `Canal ${i + 1}`
-            : `Canal ${i + 1}`
-        }))
+        start_minutes: matchMinutes,
+        buttons: canShowButtons || isLive || isFinished ? allButtons : [] // ✅ libera 15 min antes
       };
     });
 
-    // 🕐 Ordena por status e horário:
+    // 🕐 Ordena os jogos
     games.sort((a, b) => {
       // 1️⃣ Ao vivo primeiro (mais recente primeiro)
       if (a.is_live && !b.is_live) return -1;
       if (!a.is_live && b.is_live) return 1;
       if (a.is_live && b.is_live) return b.start_minutes - a.start_minutes;
 
-      // 2️⃣ Jogos futuros (não live e não finished) → ordem crescente
+      // 2️⃣ Jogos futuros (ordem crescente)
       if (!a.is_finished && !b.is_finished) return a.start_minutes - b.start_minutes;
 
-      // 3️⃣ Encerrados no final (ordem crescente)
+      // 3️⃣ Encerrados por último
       if (a.is_finished && !b.is_finished) return 1;
       if (!a.is_finished && b.is_finished) return -1;
       if (a.is_finished && b.is_finished) return a.start_minutes - b.start_minutes;
