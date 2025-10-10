@@ -6,11 +6,16 @@ export default async function handler(req, res) {
 
     if (!data.documents) return res.status(200).json([]);
 
-    // Hora atual no horário de Brasília (sem risco de offset errado)
-    const now = new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" });
-    const [datePart, timePart] = now.split(", ");
-    const [hour, minute, second] = timePart.split(":").map(v => parseInt(v));
-    const nowMinutes = hour * 60 + minute;
+    // ✅ Hora local (São Paulo) calculada corretamente em 24h
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+    const [hourStr, minuteStr] = formatter.format(now).split(":");
+    const nowMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
 
     let games = data.documents.map(doc => {
       const f = doc.fields;
@@ -19,19 +24,18 @@ export default async function handler(req, res) {
 
       const isAviso = home.toLowerCase() === "aviso" && away.toLowerCase() === "aviso";
 
-      // Converte hora tipo "13h00" ou "13:00" para minutos
+      // Converte hora tipo "13h00" ou "13:00" → minutos
       const matchTimeStr = f.time?.stringValue || "";
       const cleanTime = matchTimeStr.replace("h", ":");
       const [h, m] = cleanTime.split(":").map(v => parseInt(v) || 0);
       const matchMinutes = h * 60 + m;
-      const endMinutes = matchMinutes + 130; // +2h10min
+      const endMinutes = matchMinutes + 130; // +2h10
 
-      // Define status automático
       const isLive = nowMinutes >= matchMinutes && nowMinutes < endMinutes;
       const isFinished = nowMinutes >= endMinutes;
       const minutesToStart = matchMinutes - nowMinutes;
 
-      // 🔒 Libera canais 15 min antes
+      // 🔓 Libera 15 minutos antes do início
       const canShowButtons = minutesToStart <= 15;
 
       const allButtons = (f.channels?.arrayValue?.values || []).map((c, i) => ({
@@ -53,11 +57,11 @@ export default async function handler(req, res) {
         is_live: isLive,
         is_finished: isFinished,
         start_minutes: matchMinutes,
-        buttons: canShowButtons || isLive || isFinished ? allButtons : []
+        buttons: (canShowButtons || isLive || isFinished) ? allButtons : []
       };
     });
 
-    // Ordenação inteligente
+    // 🕐 Ordenação de prioridade
     games.sort((a, b) => {
       if (a.is_live && !b.is_live) return -1;
       if (!a.is_live && b.is_live) return 1;
@@ -73,7 +77,6 @@ export default async function handler(req, res) {
     });
 
     res.status(200).json(games);
-
   } catch (err) {
     console.error("Erro na API:", err);
     res.status(500).json({ error: "Erro ao buscar jogos" });
