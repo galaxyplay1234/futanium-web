@@ -719,130 +719,160 @@ listenRealtimeCounters();
 
 
 
-// ================== IMPORTAR POR IMAGEM (OCR) ==================
-const fileInput  = document.getElementById('img-file');
-const btnOCR     = document.getElementById('btn-ocr');
-const ocrStatus  = document.getElementById('ocr-status');
-const preview    = document.getElementById('import-preview');
-const tbody      = document.getElementById('import-tbody');
-const countEl    = document.getElementById('import-count');
-const btnSaveAll = document.getElementById('btn-save-all');
+<!-- ================== IMPORTAR POR IMAGEM (OCR) ================== -->
+<script>
+// refs da UI
+const fileInput = document.getElementById('img-file');
+const btnOCR    = document.getElementById('btn-ocr');
+const ocrStatus = document.getElementById('ocr-status');
+const preview   = document.getElementById('import-preview');
+const tbody     = document.getElementById('import-tbody');
+const countEl   = document.getElementById('import-count');
+const btnSaveAll= document.getElementById('btn-save-all');
 
 let importedRows = [];
 
-// aliases de campeonatos -> como está no seu painel
+/* ===== aliases de campeonatos -> como está no seu painel ===== */
 const CHAMP_ALIASES = {
-  // Itália
   "itália: serie a": "Campeonato Italiano",
   "italia: serie a": "Campeonato Italiano",
-  // Espanha
   "espanha: laliga": "Campeonato Espanhol",
   "espanha: la liga": "Campeonato Espanhol",
-  // Inglaterra
   "inglaterra: premier league": "Premier League",
-  // França
   "frança: ligue 1": "Campeonato Francês",
   "franca: ligue 1": "Campeonato Francês",
-  // Alemanha
   "alemanha: bundesliga": "Campeonato Alemão",
 };
 
-// ---------- helpers ----------
-function normalizeTime(str) {
-  // aceita "07:30", "07h30", "7 30", "7:30" → "07h30"
-  const only = String(str || '').replace(/[^0-9]/g, '');
-  if (only.length < 3) return '';
-  const hh = only.slice(0, only.length - 2).padStart(2, '0');
-  const mm = only.slice(-2);
-  return `${hh}h${mm}`;
-}
-function norm(s){ return (s || '').trim().replace(/\s+/g, ' '); }
+function norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
 function key(s){ return norm(s).toLowerCase(); }
-
-// limpa ruídos que o OCR costuma gerar
-function cleanLine(raw) {
-  let s = String(raw || '');
-
-  // Correções comuns de OCR (O↔0, l↔1)
-  s = s.replace(/\bO(?=\d)/g, '0').replace(/(?<=\d)O\b/g, '0');
-  s = s.replace(/\bl(?=\d)/g, '1').replace(/(?<=\d)l\b/g, '1');
-
-  // remove emojis/símbolos isolados
-  s = s.replace(/[^\wÀ-ÿ:\.\-\s]/g, ' ');
-
-  // remove rótulos da UI
-  s = s.replace(/\b(HOJE|PREVIEW|AO\s*VIVO|FAVORITOS?)\b/gi, ' ');
-
-  // normaliza espaços
-  return s.replace(/\s+/g, ' ').trim();
+function onlyLettersSpaces(s){
+  return norm(s.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\.\-']/g,''));
 }
-
-// mapeia “ITÁLIA: SERIE A” → “Campeonato Italiano”
 function mapChamp(raw){
   const k = key(raw);
-  return CHAMP_ALIASES[k] || raw.replace(/\s+/g, ' ').trim();
+  return CHAMP_ALIASES[k] || norm(raw);
+}
+function normalizeTime(str){
+  // aceita "07:30", "07h30", "7.30", "7 30"
+  const digits = (str||'').replace(/[^\d]/g,'');
+  if (digits.length < 3) return '';
+  const hh = digits.slice(0, digits.length - 2).padStart(2,'0');
+  const mm = digits.slice(-2);
+  return `${hh}h${mm}`;
 }
 
-// hora: “07:30”, “07h30”, “07.30”
-const TIME_RE = /(?:^|\s)(\d{1,2})\s*[:h\.]\s*(\d{2})(?=\s|$)/;
+// Hora isolada (linha só com hora) OU hora dentro da linha
+const TIME_LINE_RE = /^\s*(\d{1,2})\s*[:h\. ]\s*(\d{2})\s*$/;
+const TIME_INLINE_RE = /(\d{1,2}\s*[:h\. ]\s*\d{2})/i;
+// linhas que devemos ignorar
+const JUNK_RE = /^(hoje\b|preview\b|\d{1,2}\.\d{2}\.|[\d,]+\s*(\.\d+)?$)/i;
 
-// remove cotações/odds no fim da linha (ex: " 2.88 3.20 2.15")
-function stripOdds(s){
-  return String(s || '').replace(/(\s\d+(?:[.,]\d+){1,2}\s*)+$/,'').trim();
+// Heurística para “parece nome de time”: letras, espaços, poucos sinais
+function looksLikeTeam(s){
+  const t = onlyLettersSpaces(s);
+  return t.length >= 2 && !/^\s*$/.test(t);
 }
 
-// converte texto OCR → linhas {time, champ, home, away}
-function parseTextToRows(text) {
-  const lines = String(text || '')
-    .split('\n')
-    .map(cleanLine)
-    .filter(Boolean);
+// Parser principal
+function parseTextToRows(text){
+  // pré-normalização: corrigir confusões comuns do OCR
+  text = text
+    .replace(/[|]/g,'l')
+    .replace(/O(?=\d)/g,'0')
+    .replace(/\u200B/g,''); // zero-width
+
+  const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
+
+  // limpa ruídos (odds, "Hoje 19.10.", "PREVIEW" etc)
+  const lines = rawLines
+    .map(l => l.replace(/\t/g,' ').replace(/\s+/g,' ').trim())
+    .filter(l => l && !JUNK_RE.test(l));
 
   let currentChamp = '';
   const rows = [];
 
-  for (const line of lines) {
-    // título de campeonato (tem “: ” e NÃO tem hora)
-    if (/[A-Za-zÀ-ÿ]+:\s*[A-Za-z0-9À-ÿ]/.test(line) && !TIME_RE.test(line)) {
+  for (let i=0; i<lines.length; i++){
+    const line = lines[i];
+
+    // 1) Cabeçalho de competição
+    const maybeChamp = /:/.test(line) && !TIME_INLINE_RE.test(line);
+    const hasLeagueWord = /(liga|league|serie|bundesliga|laliga)/i.test(line);
+    if ( (maybeChamp || hasLeagueWord) && looksLikeTeam(line) ){
       currentChamp = mapChamp(line);
       continue;
     }
 
-    // linha de jogo: precisa ter hora
-    const m = line.match(TIME_RE);
-    if (!m) continue;
+    // 2) Padrão 3-linhas: Casa / HORA / Fora
+    //    (a captura funciona quando a hora está isolada na linha do meio)
+    if (TIME_LINE_RE.test(line)) {
+      const prev = lines[i-1] || '';
+      const next = lines[i+1] || '';
+      const home = norm(prev);
+      const away = norm(next);
 
-    const hh = m[1], mm = m[2];
-    const timeRaw = `${hh}:${mm}`;
+      if (looksLikeTeam(home) && looksLikeTeam(away)) {
+        const [,hh,mm] = line.match(TIME_LINE_RE);
+        rows.push({
+          time: normalizeTime(`${hh}:${mm}`),
+          champ: currentChamp || 'Amistoso',
+          home, away
+        });
+        i++; // pula a linha de baixo já consumida
+        continue;
+      }
+    }
 
-    // antes da hora = casa ; depois da hora = fora
-    let left  = line.slice(0, m.index).trim();
-    let right = line.slice(m.index + m[0].length).trim();
+    // 3) Padrão 1-linha: "Casa HH:MM Fora"
+    if (TIME_INLINE_RE.test(line)) {
+      const m = line.match(TIME_INLINE_RE);
+      const timeRaw = m[1];
+      const left = norm(line.slice(0, m.index));
+      const right = norm(line.slice(m.index + timeRaw.length));
 
-    left  = stripOdds(left);
-    right = stripOdds(right);
+      if (looksLikeTeam(left) && looksLikeTeam(right)) {
+        rows.push({
+          time: normalizeTime(timeRaw),
+          champ: currentChamp || 'Amistoso',
+          home: left,
+          away: right
+        });
+        continue;
+      }
+    }
 
-    // descarta ruído óbvio
-    if (!left || !right) continue;
-    if (/^(hoje|preview)$/i.test(left) || /^(hoje|preview)$/i.test(right)) continue;
-
-    rows.push({
-      time : normalizeTime(timeRaw),
-      champ: currentChamp || 'Amistoso',
-      home : norm(left),
-      away : norm(right)
-    });
+    // 4) Padrão 2 linhas com hora pendurada no fim/início:
+    //    "Casa HH:MM" na linha i  e "Fora" na i+1
+    if (TIME_INLINE_RE.test(line) && looksLikeTeam(lines[i+1]||'')) {
+      const m = line.match(TIME_INLINE_RE);
+      const timeRaw = m[1];
+      const left = norm(line.replace(TIME_INLINE_RE,'').trim());
+      const right = norm(lines[i+1]);
+      if (looksLikeTeam(left) && looksLikeTeam(right)) {
+        rows.push({
+          time: normalizeTime(timeRaw),
+          champ: currentChamp || 'Amistoso',
+          home: left,
+          away: right
+        });
+        i++; // consumiu a de baixo
+        continue;
+      }
+    }
   }
 
-  // remove entradas fracas (ex.: ".", "ED")
-  return rows.filter(r =>
-    r.time &&
-    r.home.replace(/[^\wÀ-ÿ]/g,'').length >= 3 &&
-    r.away.replace(/[^\wÀ-ÿ]/g,'').length >= 3
-  );
+  // saneamento final
+  return rows
+    .filter(r => r.time && r.home && r.away)
+    .map(r => ({
+      time: r.time,
+      champ: mapChamp(r.champ),
+      home: r.home,
+      away: r.away
+    }));
 }
 
-// ---------- UI ----------
+/* ===== UI ===== */
 fileInput.addEventListener('change', () => {
   btnOCR.disabled = !fileInput.files?.length;
   ocrStatus.textContent = '';
@@ -856,19 +886,17 @@ btnOCR.addEventListener('click', async () => {
   try {
     const img = fileInput.files[0];
     const { data: { text } } = await Tesseract.recognize(img, 'por+eng', {
+      // o logger ajuda a mostrar progresso
       logger: m => {
         if (m.status === 'recognizing text') {
-          ocrStatus.textContent = `OCR ${Math.round(m.progress * 100)}%`;
+          ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
         }
-      },
-      // ⬇️ configs que limpam bastante o ruído
-      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïñòóôõöùúûüÿ 0123456789:.-h",
-      user_defined_dpi: "300"
+      }
     });
 
     importedRows = parseTextToRows(text);
 
-    // monta preview
+    // preview
     tbody.innerHTML = '';
     importedRows.forEach(r => {
       const tr = document.createElement('tr');
@@ -881,8 +909,8 @@ btnOCR.addEventListener('click', async () => {
       tbody.appendChild(tr);
     });
     countEl.textContent = `${importedRows.length} jogo(s) detectado(s)`;
-    preview.classList.remove('hidden');
-    ocrStatus.textContent = 'Pronto';
+    preview.classList.toggle('hidden', importedRows.length === 0);
+    ocrStatus.textContent = importedRows.length ? 'Pronto' : 'Nada detectado';
 
   } catch (e) {
     console.error(e);
@@ -895,7 +923,7 @@ btnOCR.addEventListener('click', async () => {
 btnSaveAll.addEventListener('click', async () => {
   if (!importedRows.length) return;
 
-  // garante caches
+  // caches vindos do painel (se existirem)
   window.teamsCache  = window.teamsCache  || {};
   window.champsCache = window.champsCache || {};
 
@@ -912,13 +940,13 @@ btnSaveAll.addEventListener('click', async () => {
         away: r.away,
         away_logo: window.teamsCache[r.away] || '',
         time: r.time,
-        channels: [] // começa sem canais; edita depois se quiser
+        channels: []
       };
       await addDoc(collection(db,'games'), payload);
     }
     await loadGames();
 
-    // limpa preview
+    // limpa
     importedRows = [];
     preview.classList.add('hidden');
     tbody.innerHTML = '';
@@ -934,6 +962,7 @@ btnSaveAll.addEventListener('click', async () => {
     btnSaveAll.textContent = 'Salvar todos';
   }
 });
+</script>
 
 
 </script>
