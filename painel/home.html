@@ -722,7 +722,8 @@ listenRealtimeCounters();
 
 
 
-// ====== refs da UI ======
+
+// refs da UI
 const fileInput = document.getElementById('img-file');
 const btnOCR    = document.getElementById('btn-ocr');
 const ocrStatus = document.getElementById('ocr-status');
@@ -733,15 +734,12 @@ const btnSaveAll= document.getElementById('btn-save-all');
 
 let importedRows = [];
 
-// ====== Aliases de campeonatos (ajuste livre) ======
+/* ===== aliases de campeonatos -> como está no seu painel ===== */
 const CHAMP_ALIASES = {
   "itália: serie a": "Campeonato Italiano",
-  "italia: serie a": "Campeonato Italiano",
   "espanha: laliga": "Campeonato Espanhol",
-  "espanha: la liga": "Campeonato Espanhol",
   "inglaterra: premier league": "Campeonato Inglês",
   "frança: ligue 1": "Campeonato Francês",
-  "franca: ligue 1": "Campeonato Francês",
   "alemanha: bundesliga": "Campeonato Alemão",
   "arábia saudita: liga profissional saudita": "Campeonato Saudita",
   "argentina: torneo betano": "Campeonato Argentino",
@@ -750,26 +748,15 @@ const CHAMP_ALIASES = {
   "mundo: copa do mundo sub-20": "Copa do Mundo Sub-20",
 };
 
-// ====== utilidades básicas ======
 function norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
-function stripAccents(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-function baseKey(s){
-  return stripAccents(s||'')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s\.']/g,'')
-    .replace(/\s+/g,' ')
-    .trim();
-}
-function onlyLettersSpaces(s){ return norm((s||'').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\.\-']/g,'')); }
-function cutAfterDash(s){
-  if (!s) return s;
-  const parts = s.split(/[-–—]/);
-  return (parts[0] || s).trim();
+function key(s){ return norm(s).toLowerCase(); }
+function onlyLettersSpaces(s){
+  return norm((s||'').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\.\-']/g,''));
 }
 function mapChamp(raw){
+  // limpa lixos de começo tipo "==", "—", etc
   raw = (raw||'').replace(/^[=\-\*\.\s]+/,'');
-  raw = cutAfterDash(raw);
-  const k = baseKey(raw);
+  const k = key(raw);
   return CHAMP_ALIASES[k] || norm(raw);
 }
 function normalizeTime(str){
@@ -780,168 +767,134 @@ function normalizeTime(str){
   return `${hh}h${mm}`;
 }
 
-// ====== limpeza forte de nomes ======
-const VALID_PREFIX = /^(AC|AS|FC|SC|UD|CD|RB|RC|St\.?|Atl\.?|Ath\.?|Utd\.?|Dep\.?|CA|CR|EC|AA|CF|UE)(\s|$)/i;
-const STOP_TOKENS  = /^(preview|live|ao|uit|ui|all|prevew|prev|headphones)$/i;
-
+/* ===== helpers de normalização e fuzzy match ===== */
+function stripAccents(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function normSpaces(s){ return (s||'').replace(/\s+/g,' ').trim(); }
+function baseKey(s){
+  return stripAccents(s).toLowerCase()
+    .replace(/[^a-z0-9\s\.']/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+// remove ruídos comuns do OCR nos nomes dos times (A, &, números, parênteses soltos, etc.)
 function cleanTeamRaw(s){
-  if (!s) return '';
-  // normaliza e remove lixos óbvios
-  let t = s
-    .replace(/[\u200B-\u200D\uFEFF]/g,'')
-    .replace(/[|]/g,'l')
+  let t = (s||'')
+    .replace(/[|]/g,'l')                // OCR: | -> l
     .replace(/[“”„]/g,'"')
     .replace(/[’‘´`]/g,"'")
-    .replace(/^[^A-Za-zÀ-ÖØ-öø-ÿ]+/,'')
-    .replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\.']+$/,'');
-  t = norm(t);
-
-  // explode em tokens e filtra ruídos
-  let tokens = t.split(' ').filter(Boolean).map(x => x.trim());
-
-  // remove tokens lixo curtos/soltos e sobras de "preview"
-  tokens = tokens.filter(tok => {
-    if (STOP_TOKENS.test(tok)) return false;
-    // mantém siglas comuns e abreviações com ponto
-    if (VALID_PREFIX.test(tok) || /\.$/.test(tok)) return true;
-    // remove tokens de 1 caractere
-    if (tok.length === 1) return false;
-    // remove números puros
-    if (/^\d+$/.test(tok)) return false;
-    return true;
-  });
-
-  // se ficou tipo "A Elche" (1 letra inicial sem ser prefixo válido), remove
-  if (tokens.length >= 2 && tokens[0].length === 1 && !VALID_PREFIX.test(tokens[0])) {
-    tokens.shift();
-  }
-
-  return norm(tokens.join(' '));
+    .replace(/^[^A-Za-zÀ-ÖØ-öø-ÿ]+/,'') // lixo no começo
+    .replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\.']+$/,''); // lixo no fim (mantém ponto/apóstrofo)
+  t = normSpaces(t);
+  // alguns artefatos típicos
+  t = t.replace(/^J\)\s*/,'J ')
+       .replace(/^&\s*/,'')
+       .replace(/^\*\s*/,'')
+       .replace(/^\d+\s*/,'');
+  return t;
 }
-
-// ====== Levenshtein / fuzzy ======
+// Levenshtein simples p/ similaridade
 function levenshtein(a,b){
   a = baseKey(a); b = baseKey(b);
-  const m=a.length, n=b.length;
+  const m = a.length, n = b.length;
   if (!m) return n; if (!n) return m;
   const dp = Array(n+1).fill(0);
   for (let j=0;j<=n;j++) dp[j]=j;
   for (let i=1;i<=m;i++){
-    let prev=dp[0]; dp[0]=i;
+    let prev = dp[0]; dp[0]=i;
     for (let j=1;j<=n;j++){
-      const tmp=dp[j];
-      dp[j] = Math.min(dp[j]+1, dp[j-1]+1, prev + (a[i-1]===b[j-1]?0:1));
-      prev=tmp;
+      const tmp = dp[j];
+      dp[j] = Math.min(
+        dp[j]+1,
+        dp[j-1]+1,
+        prev + (a[i-1]===b[j-1] ? 0 : 1)
+      );
+      prev = tmp;
     }
   }
   return dp[n];
 }
 function sim(a,b){
-  const L = Math.max(baseKey(a).length, baseKey(b).length) || 1;
-  return 1 - (levenshtein(a,b)/L);
+  const maxLen = Math.max(baseKey(a).length, baseKey(b).length) || 1;
+  return 1 - (levenshtein(a,b) / maxLen); // 0..1
 }
-function fuzzyFindName(raw, dict, minScore=0.58){
+// procura o melhor nome dentro de um dicionário (ex.: teamsCache/champsCache)
+function fuzzyFindName(raw, dict){
   const keys = Object.keys(dict||{});
   if (!keys.length) return null;
-  const rawB = baseKey(raw);
 
+  const rawB = baseKey(raw);
+  // tentativas fortes
   for (const k of keys){ if (baseKey(k) === rawB) return k; }
   for (const k of keys){ if (baseKey(k).startsWith(rawB) || rawB.startsWith(baseKey(k))) return k; }
   for (const k of keys){ if (baseKey(k).includes(rawB) || rawB.includes(baseKey(k))) return k; }
 
-  let best=null, bestScore=0;
+  // fuzzy
+  let best = null, bestScore = 0;
   for (const k of keys){
     const s = sim(raw, k);
     if (s > bestScore){ bestScore = s; best = k; }
   }
-  return bestScore >= minScore ? best : null;
+  return bestScore >= 0.62 ? best : null; // limiar calibrado
 }
 function resolveChampName(raw){
   const byAlias = mapChamp(raw);
-  const inCache = fuzzyFindName(byAlias, window.champsCache, 0.60);
+  const inCache = fuzzyFindName(byAlias, window.champsCache);
   return inCache || byAlias;
 }
+function resolveRowNames(r){
+  const homeClean = cleanTeamRaw(r.home);
+  const awayClean = cleanTeamRaw(r.away);
+  const homeMatch = fuzzyFindName(homeClean, window.teamsCache);
+  const awayMatch = fuzzyFindName(awayClean, window.teamsCache);
+  return {
+    ...r,
+    champ: resolveChampName(r.champ),
+    home: homeMatch || homeClean,
+    away: awayMatch || awayClean,
+  };
+}
 
-// ====== regex e filtros de linhas ======
+/* ===== regex e filtros ===== */
+// hora sozinha (linha) OU hora embutida
 const TIME_LINE_RE   = /^\s*(\d{1,2})\s*[:h\. ]\s*(\d{2})\s*$/;
 const TIME_INLINE_RE = /(\d{1,2}\s*[:h\. ]\s*\d{2})/i;
-const JUNK_RE        = /^(hoje\b.*|\d{1,2}\.\d{2}\.|preview\b|[\d,]+\s*(\.\d+)?$)/i;
-
+// linhas para ignorar (preview, data, odds, etc)
+const JUNK_RE = /^(hoje\b.*|\d{1,2}\.\d{2}\.|preview\b|[\d,]+\s*(\.\d+)?$)/i;
 function looksLikeTeam(s){
   const t = onlyLettersSpaces(s.replace(/^[\*\-•⭐]+/,''));
   return t.length >= 2;
 }
 
-// ====== Pré-processamento + FATIAMENTO ======
-async function preprocessAndSlice(file){
-  // carrega imagem
+/* ===== pré-processamento da imagem (ajuda o OCR) ===== */
+async function preprocessImage(file){
   const img = await new Promise(res=>{
     const i = new Image();
     i.onload = ()=>res(i);
     i.src = URL.createObjectURL(file);
   });
-
-  // upscaling + binarização
-  const scale = 3;
+  const scale = 2;
   const canvas = document.createElement('canvas');
   canvas.width  = img.width * scale;
   canvas.height = img.height * scale;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
   const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
   const d = imgData.data;
   for (let p=0; p<d.length; p+=4){
     const g = (d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114);
-    const v = g > 170 ? 255 : 0;
+    const v = g > 180 ? 255 : 0; // binarização simples
     d[p]=d[p+1]=d[p+2]=v;
   }
   ctx.putImageData(imgData,0,0);
-
-  // fatia verticalmente (tiras) com sobreposição para não cortar linhas
-  const sliceH = 900;       // altura de cada tira
-  const overlap = 120;      // sobreposição
-  const slices = [];
-  for (let y=0; y<canvas.height; y += (sliceH - overlap)){
-    const h = Math.min(sliceH, canvas.height - y);
-    const tmp = document.createElement('canvas');
-    tmp.width = canvas.width;
-    tmp.height = h;
-    const tctx = tmp.getContext('2d');
-    tctx.drawImage(canvas, 0, y, canvas.width, h, 0, 0, canvas.width, h);
-    slices.push(tmp);
-    if (y + h >= canvas.height) break;
-  }
-  return slices;
+  return new Promise(res=>canvas.toBlob(res, 'image/png'));
 }
 
-// ====== OCR em todas as tiras ======
-async function runOCR(file){
-  const slices = await preprocessAndSlice(file);
-  let fullText = '';
-  for (let i=0;i<slices.length;i++){
-    ocrStatus.textContent = `Lendo parte ${i+1}/${slices.length}…`;
-    const blob = await new Promise(res => slices[i].toBlob(res, 'image/png'));
-    const { data: { text } } = await Tesseract.recognize(blob, 'por+eng', {
-      psm: 4, // uma coluna de texto
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐\'',
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          ocrStatus.textContent = `Parte ${i+1}/${slices.length} • ${Math.round(m.progress*100)}%`;
-        }
-      }
-    });
-    fullText += '\n' + text;
-  }
-  return fullText;
-}
-
-// ====== Parser OCR → linhas ======
+/* ===== parser do texto OCR → linhas (hora/champ/casa/fora) ===== */
 function parseTextToRows(text){
   text = text
-    .replace(/[\u200B-\u200D\uFEFF]/g,'')
-    .replace(/[|]/g,'l')
-    .replace(/O(?=\d)/g,'0');
+    .replace(/[\u200B-\u200D\uFEFF]/g,'') // zero-width
+    .replace(/[|]/g,'l')                  // pipe → l
+    .replace(/O(?=\d)/g,'0');             // O antes de número → 0
 
   const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
 
@@ -955,15 +908,15 @@ function parseTextToRows(text){
   for (let i=0; i<lines.length; i++){
     const line = lines[i];
 
-    // Cabeçalho de competição
-    const looksHeader   = /:/.test(line) && !TIME_INLINE_RE.test(line);
-    const hasLeagueWord = /(liga|league|serie|bundesliga|laliga|brasileir|torneo|cup|copa)/i.test(line);
+    // 1) Cabeçalho de competição
+    const looksHeader = /:/.test(line) && !TIME_INLINE_RE.test(line);
+    const hasLeagueWord = /(liga|league|serie|bundesliga|laliga)/i.test(line);
     if ((looksHeader || hasLeagueWord) && !/\d/.test(line)){
-      currentChamp = mapChamp(line); // corta no traço
+      currentChamp = mapChamp(line);
       continue;
     }
 
-    // Casa / HORA / Fora
+    // 2) Casa / HORA / Fora (hora isolada no meio)
     if (TIME_LINE_RE.test(line)) {
       const prev = norm(lines[i-1] || '');
       const next = norm(lines[i+1] || '');
@@ -971,63 +924,44 @@ function parseTextToRows(text){
       const away = next.replace(/^[\*\-•⭐]+/,'');
       if (looksLikeTeam(home) && looksLikeTeam(away)) {
         const [,hh,mm] = line.match(TIME_LINE_RE);
-        rows.push({
-          time: normalizeTime(`${hh}:${mm}`),
-          champ_raw: currentChamp || 'Amistoso',
-          home_raw: cleanTeamRaw(home),
-          away_raw: cleanTeamRaw(away)
-        });
-        i++;
+        rows.push({ time: normalizeTime(`${hh}:${mm}`), champ: currentChamp || 'Amistoso', home, away });
+        i++; // consome a de baixo
         continue;
       }
     }
 
-    // "Casa HH:MM Fora" na mesma linha
+    // 3) Tudo em uma linha: "Casa HH:MM Fora"
     if (TIME_INLINE_RE.test(line)) {
       const m = line.match(TIME_INLINE_RE);
       const timeRaw = m[1];
       const left  = norm(line.slice(0, m.index)).replace(/^[\*\-•⭐]+/,'');
       const right = norm(line.slice(m.index + timeRaw.length)).replace(/^[\*\-•⭐]+/,'');
       if (looksLikeTeam(left) && looksLikeTeam(right)) {
-        rows.push({
-          time: normalizeTime(timeRaw),
-          champ_raw: currentChamp || 'Amistoso',
-          home_raw: cleanTeamRaw(left),
-          away_raw: cleanTeamRaw(right)
-        });
+        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
         continue;
       }
     }
 
-    // "Casa HH:MM" na linha e "Fora" na seguinte
+    // 4) “Casa HH:MM” na linha e “Fora” na seguinte
     if (TIME_INLINE_RE.test(line) && looksLikeTeam(lines[i+1]||'')) {
       const m = line.match(TIME_INLINE_RE);
       const timeRaw = m[1];
       const left = norm(line.replace(TIME_INLINE_RE,'')).replace(/^[\*\-•⭐]+/,'');
       const right = norm(lines[i+1]).replace(/^[\*\-•⭐]+/,'');
       if (looksLikeTeam(left) && looksLikeTeam(right)) {
-        rows.push({
-          time: normalizeTime(timeRaw),
-          champ_raw: currentChamp || 'Amistoso',
-          home_raw: cleanTeamRaw(left),
-          away_raw: cleanTeamRaw(right)
-        });
+        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
         i++;
         continue;
       }
     }
   }
 
-  // aplica alias/fuzzy para ligas e monta preview limpo
-  return rows.map(r => {
-    const champ = resolveChampName(r.champ_raw);
-    const homeMatch = fuzzyFindName(r.home_raw, window.teamsCache, 0.58);
-    const awayMatch = fuzzyFindName(r.away_raw, window.teamsCache, 0.58);
-    return { ...r, champ, home_match: homeMatch, away_match: awayMatch };
-  });
+  return rows
+    .filter(r => r.time && r.home && r.away)
+    .map(r => ({ ...r, champ: mapChamp(r.champ) }));
 }
 
-// ====== UI ======
+/* ===== UI ===== */
 fileInput.addEventListener('change', () => {
   btnOCR.disabled = !fileInput.files?.length;
   ocrStatus.textContent = '';
@@ -1036,22 +970,33 @@ fileInput.addEventListener('change', () => {
 btnOCR.addEventListener('click', async () => {
   if (!fileInput.files?.length) return;
   btnOCR.disabled = true;
-  ocrStatus.textContent = 'Preparando imagem…';
+  ocrStatus.textContent = 'Lendo imagem (OCR)…';
 
   try {
-    const text = await runOCR(fileInput.files[0]);
+    const pre = await preprocessImage(fileInput.files[0]);
 
-    importedRows = parseTextToRows(text);
+    const { data: { text } } = await Tesseract.recognize(pre, 'por+eng', {
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐',
+      psm: 6,
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
+        }
+      }
+    });
 
-    // PREVIEW (já limpo, sem letras estranhas)
+    // ⬇️ agora aplicamos a limpeza + casamento com times/ligas do painel
+    importedRows = parseTextToRows(text).map(resolveRowNames);
+
+    // preview
     tbody.innerHTML = '';
     importedRows.forEach(r => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="p-2">${r.time}</td>
         <td class="p-2">${r.champ}</td>
-        <td class="p-2">${r.home_raw}</td>
-        <td class="p-2">${r.away_raw}</td>
+        <td class="p-2">${r.home}</td>
+        <td class="p-2">${r.away}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -1067,7 +1012,6 @@ btnOCR.addEventListener('click', async () => {
   }
 });
 
-// ====== SALVAR ======
 btnSaveAll.addEventListener('click', async () => {
   if (!importedRows.length) return;
 
@@ -1079,16 +1023,13 @@ btnSaveAll.addEventListener('click', async () => {
 
   try {
     for (const r of importedRows) {
-      const homeName = r.home_match ? r.home_match : `(${r.home_raw})`;
-      const awayName = r.away_match ? r.away_match : `(${r.away_raw})`;
-
       const payload = {
         champ: r.champ,
         champ_logo: window.champsCache[r.champ] || '',
-        home: homeName,
-        home_logo: window.teamsCache[r.home_match] || '',
-        away: awayName,
-        away_logo: window.teamsCache[r.away_match] || '',
+        home: r.home,
+        home_logo: window.teamsCache[r.home] || '',
+        away: r.away,
+        away_logo: window.teamsCache[r.away] || '',
         time: r.time,
         channels: []
       };
