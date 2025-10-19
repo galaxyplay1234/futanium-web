@@ -408,14 +408,16 @@ async function loadTeams(){
     homeSel.appendChild(new Option(t.name, t.name));
     awaySel.appendChild(new Option(t.name, t.name));
   });
+  
+  // ao final de loadTeams()
+window.teamsCache = {};
+teamsArr.forEach(t => { window.teamsCache[t.name] = t.logo; })
 }
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
   await loadTeams();
 };
-// ao final de loadTeams()
-window.teamsCache = {};
-teamsArr.forEach(t => { window.teamsCache[t.name] = t.logo; })
+
 
 
 // ===== Campeonatos =====
@@ -456,14 +458,15 @@ async function loadChamps(){
 
     champSel.appendChild(new Option(c.name, c.name));
   });
+  // ao final de loadChamps()
+window.champsCache = {};
+champsArr.forEach(c => { window.champsCache[c.name] = c.logo; });
 }
 window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
   await loadChamps();
 };
-// ao final de loadChamps()
-window.champsCache = {};
-champsArr.forEach(c => { window.champsCache[c.name] = c.logo; });
+
 
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
