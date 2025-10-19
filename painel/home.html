@@ -59,6 +59,10 @@
             class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">Home</button>
     <button onclick="showTab('addgame', false, true)"
         class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('import')"
+        class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Importar
+</button>
     <button onclick="showTab('times')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Times</button>
     <button onclick="showTab('champions')"
@@ -154,6 +158,42 @@
       </form>
     </div>
 
+
+<!-- Importar (imagem -> jogos) -->
+<div id="tab-import" class="tab-content hidden">
+  <h2 class="text-lg sm:text-xl font-semibold mb-4">Importar jogos por imagem</h2>
+
+  <div class="bg-white rounded shadow p-4 mb-3">
+    <input id="img-file" type="file" accept="image/*"
+           class="block w-full mb-3">
+    <button id="btn-ocr" class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
+            disabled>📥 Ler imagem</button>
+    <span id="ocr-status" class="ml-3 text-sm text-gray-500"></span>
+  </div>
+
+  <div id="import-preview" class="bg-white rounded shadow p-0 overflow-hidden hidden">
+    <div class="px-4 py-3 border-b font-semibold">Pré-visualização</div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-2 text-left">Hora</th>
+            <th class="p-2 text-left">Campeonato</th>
+            <th class="p-2 text-left">Casa</th>
+            <th class="p-2 text-left">Fora</th>
+          </tr>
+        </thead>
+        <tbody id="import-tbody"></tbody>
+      </table>
+    </div>
+    <div class="p-3 border-t flex justify-between items-center">
+      <div class="text-gray-500 text-sm" id="import-count"></div>
+      <button id="btn-save-all" class="bg-green-600 text-white px-4 py-2 rounded">Salvar todos</button>
+    </div>
+  </div>
+</div>
+
+
     <!-- Times -->
     <div id="tab-times" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
@@ -227,6 +267,8 @@
     </div>
   </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -371,6 +413,10 @@ window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
   await loadTeams();
 };
+// ao final de loadTeams()
+window.teamsCache = {};
+teamsArr.forEach(t => { window.teamsCache[t.name] = t.logo; })
+
 
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
@@ -415,6 +461,9 @@ window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
   await loadChamps();
 };
+// ao final de loadChamps()
+window.champsCache = {};
+champsArr.forEach(c => { window.champsCache[c.name] = c.logo; });
 
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
@@ -663,6 +712,186 @@ function listenRealtimeCounters() {
 
 // ⏱️ Inicia a escuta assim que o painel carregar
 listenRealtimeCounters();
+
+
+
+
+// ================== IMPORTAR POR IMAGEM (OCR) ==================
+const fileInput = document.getElementById('img-file');
+const btnOCR    = document.getElementById('btn-ocr');
+const ocrStatus = document.getElementById('ocr-status');
+const preview   = document.getElementById('import-preview');
+const tbody     = document.getElementById('import-tbody');
+const countEl   = document.getElementById('import-count');
+const btnSaveAll= document.getElementById('btn-save-all');
+
+let importedRows = [];
+
+// aliases de campeonatos -> como está no seu painel
+const CHAMP_ALIASES = {
+  // Itália
+  "itália: serie a": "Campeonato Italiano",
+  "italia: serie a": "Campeonato Italiano",
+  // Espanha
+  "espanha: laliga": "Campeonato Espanhol",
+  "espanha: la liga": "Campeonato Espanhol",
+  // Inglaterra
+  "inglaterra: premier league": "Premier League",
+  // França
+  "frança: ligue 1": "Campeonato Francês",
+  "franca: ligue 1": "Campeonato Francês",
+  // Alemanha
+  "alemanha: bundesliga": "Campeonato Alemão",
+  // adicione outros conforme precisar…
+};
+
+function normalizeTime(str) {
+  // aceita "07:30", "07h30", "7 30", "7:30"
+  const m = str.replace(/[^\d]/g, ''); // só dígitos
+  if (m.length < 3) return '';         // inválido
+  const hh = m.slice(0, m.length - 2).padStart(2, '0');
+  const mm = m.slice(-2);
+  return `${hh}h${mm}`;
+}
+function norm(s){ return (s||'').trim().replace(/\s+/g,' '); }
+function key(s){ return norm(s).toLowerCase(); }
+
+// tenta mapear “ITALIA: SERIE A” -> “Campeonato Italiano”
+function mapChamp(raw){
+  const k = key(raw);
+  if (CHAMP_ALIASES[k]) return CHAMP_ALIASES[k];
+  // fallback: capitaliza primeira letra
+  return raw.replace(/\s+/g,' ').trim();
+}
+
+// detecta linhas do OCR:
+// 1) título de competição (ex.: "ITÁLIA: SERIE A")
+// 2) linha de jogo: "Como 07:30 Juventus"
+const TIME_RE = /(\d{1,2}[:h\. ]?\d{2})/;
+
+function parseTextToRows(text) {
+  const lines = text.split('\n')
+    .map(l => l.replace(/\t/g,' ').replace(/\s+/g,' ').trim())
+    .filter(Boolean);
+
+  let currentChamp = '';
+  const rows = [];
+
+  for (const line of lines) {
+    // título de campeonato (tem " : " ou termina com "LEAGUE"/"LIGA"/etc)
+    if (/[A-ZÀ-Úa-zà-ú]+:\s*[A-Z0-9]/.test(line) || /liga|league|serie|bundesliga|laliga/i.test(line) && !TIME_RE.test(line)) {
+      currentChamp = mapChamp(line);
+      continue;
+    }
+
+    // linha de jogo (tem hora)
+    const tMatch = line.match(TIME_RE);
+    if (!tMatch) continue;
+
+    const timeRaw = tMatch[1];
+    const partsLeft  = line.slice(0, tMatch.index).trim();
+    const partsRight = line.slice(tMatch.index + timeRaw.length).trim();
+
+    // nomes dos times (lado esq. e dir.)
+    if (!partsLeft || !partsRight) continue;
+
+    const home = partsLeft;
+    const away = partsRight;
+
+    rows.push({
+      time: normalizeTime(timeRaw),
+      champ: currentChamp || 'Amistoso',
+      home: home,
+      away: away
+    });
+  }
+  // remove duplicados e vazios
+  return rows.filter(r => r.time && r.home && r.away);
+}
+
+// UI helpers
+fileInput.addEventListener('change', () => {
+  btnOCR.disabled = !fileInput.files?.length;
+  ocrStatus.textContent = '';
+});
+btnOCR.addEventListener('click', async () => {
+  if (!fileInput.files?.length) return;
+  btnOCR.disabled = true;
+  ocrStatus.textContent = 'Lendo imagem (OCR)…';
+
+  try {
+    const img = fileInput.files[0];
+    const { data: { text } } = await Tesseract.recognize(img, 'por+eng', {
+      logger: m => { if (m.status === 'recognizing text') ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`; }
+    });
+
+    importedRows = parseTextToRows(text);
+
+    // monta preview
+    tbody.innerHTML = '';
+    importedRows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="p-2">${r.time}</td>
+        <td class="p-2">${r.champ}</td>
+        <td class="p-2">${r.home}</td>
+        <td class="p-2">${r.away}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    countEl.textContent = `${importedRows.length} jogo(s) detectado(s)`;
+    preview.classList.remove('hidden');
+    ocrStatus.textContent = 'Pronto';
+
+  } catch (e) {
+    console.error(e);
+    ocrStatus.textContent = 'Falha ao ler imagem';
+  } finally {
+    btnOCR.disabled = false;
+  }
+});
+
+btnSaveAll.addEventListener('click', async () => {
+  if (!importedRows.length) return;
+
+  // garante caches
+  window.teamsCache  = window.teamsCache  || {};
+  window.champsCache = window.champsCache || {};
+
+  btnSaveAll.disabled = true;
+  btnSaveAll.textContent = 'Salvando…';
+
+  try {
+    for (const r of importedRows) {
+      const payload = {
+        champ: r.champ,
+        champ_logo: window.champsCache[r.champ] || '',
+        home: r.home,
+        home_logo: window.teamsCache[r.home] || '',
+        away: r.away,
+        away_logo: window.teamsCache[r.away] || '',
+        time: r.time,
+        channels: [] // começa sem canais; edita depois se quiser
+      };
+      await addDoc(collection(db,'games'), payload);
+    }
+    await loadGames();
+    // limpa preview
+    importedRows = [];
+    preview.classList.add('hidden');
+    tbody.innerHTML = '';
+    fileInput.value = '';
+    btnOCR.disabled = true;
+    ocrStatus.textContent = 'Importado com sucesso!';
+
+  } catch (e) {
+    console.error(e);
+    ocrStatus.textContent = 'Erro ao salvar';
+  } finally {
+    btnSaveAll.disabled = false;
+    btnSaveAll.textContent = 'Salvar todos';
+  }
+});
 
 
 </script>
