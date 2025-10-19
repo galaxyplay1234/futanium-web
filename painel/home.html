@@ -720,13 +720,13 @@ listenRealtimeCounters();
 
 
 // ================== IMPORTAR POR IMAGEM (OCR) ==================
-const fileInput = document.getElementById('img-file');
-const btnOCR    = document.getElementById('btn-ocr');
-const ocrStatus = document.getElementById('ocr-status');
-const preview   = document.getElementById('import-preview');
-const tbody     = document.getElementById('import-tbody');
-const countEl   = document.getElementById('import-count');
-const btnSaveAll= document.getElementById('btn-save-all');
+const fileInput  = document.getElementById('img-file');
+const btnOCR     = document.getElementById('btn-ocr');
+const ocrStatus  = document.getElementById('ocr-status');
+const preview    = document.getElementById('import-preview');
+const tbody      = document.getElementById('import-tbody');
+const countEl    = document.getElementById('import-count');
+const btnSaveAll = document.getElementById('btn-save-all');
 
 let importedRows = [];
 
@@ -745,78 +745,109 @@ const CHAMP_ALIASES = {
   "franca: ligue 1": "Campeonato Francês",
   // Alemanha
   "alemanha: bundesliga": "Campeonato Alemão",
-  // adicione outros conforme precisar…
 };
 
+// ---------- helpers ----------
 function normalizeTime(str) {
-  // aceita "07:30", "07h30", "7 30", "7:30"
-  const m = str.replace(/[^\d]/g, ''); // só dígitos
-  if (m.length < 3) return '';         // inválido
-  const hh = m.slice(0, m.length - 2).padStart(2, '0');
-  const mm = m.slice(-2);
+  // aceita "07:30", "07h30", "7 30", "7:30" → "07h30"
+  const only = String(str || '').replace(/[^0-9]/g, '');
+  if (only.length < 3) return '';
+  const hh = only.slice(0, only.length - 2).padStart(2, '0');
+  const mm = only.slice(-2);
   return `${hh}h${mm}`;
 }
-function norm(s){ return (s||'').trim().replace(/\s+/g,' '); }
+function norm(s){ return (s || '').trim().replace(/\s+/g, ' '); }
 function key(s){ return norm(s).toLowerCase(); }
 
-// tenta mapear “ITALIA: SERIE A” -> “Campeonato Italiano”
-function mapChamp(raw){
-  const k = key(raw);
-  if (CHAMP_ALIASES[k]) return CHAMP_ALIASES[k];
-  // fallback: capitaliza primeira letra
-  return raw.replace(/\s+/g,' ').trim();
+// limpa ruídos que o OCR costuma gerar
+function cleanLine(raw) {
+  let s = String(raw || '');
+
+  // Correções comuns de OCR (O↔0, l↔1)
+  s = s.replace(/\bO(?=\d)/g, '0').replace(/(?<=\d)O\b/g, '0');
+  s = s.replace(/\bl(?=\d)/g, '1').replace(/(?<=\d)l\b/g, '1');
+
+  // remove emojis/símbolos isolados
+  s = s.replace(/[^\wÀ-ÿ:\.\-\s]/g, ' ');
+
+  // remove rótulos da UI
+  s = s.replace(/\b(HOJE|PREVIEW|AO\s*VIVO|FAVORITOS?)\b/gi, ' ');
+
+  // normaliza espaços
+  return s.replace(/\s+/g, ' ').trim();
 }
 
-// detecta linhas do OCR:
-// 1) título de competição (ex.: "ITÁLIA: SERIE A")
-// 2) linha de jogo: "Como 07:30 Juventus"
-const TIME_RE = /(\d{1,2}[:h\. ]?\d{2})/;
+// mapeia “ITÁLIA: SERIE A” → “Campeonato Italiano”
+function mapChamp(raw){
+  const k = key(raw);
+  return CHAMP_ALIASES[k] || raw.replace(/\s+/g, ' ').trim();
+}
 
+// hora: “07:30”, “07h30”, “07.30”
+const TIME_RE = /(?:^|\s)(\d{1,2})\s*[:h\.]\s*(\d{2})(?=\s|$)/;
+
+// remove cotações/odds no fim da linha (ex: " 2.88 3.20 2.15")
+function stripOdds(s){
+  return String(s || '').replace(/(\s\d+(?:[.,]\d+){1,2}\s*)+$/,'').trim();
+}
+
+// converte texto OCR → linhas {time, champ, home, away}
 function parseTextToRows(text) {
-  const lines = text.split('\n')
-    .map(l => l.replace(/\t/g,' ').replace(/\s+/g,' ').trim())
+  const lines = String(text || '')
+    .split('\n')
+    .map(cleanLine)
     .filter(Boolean);
 
   let currentChamp = '';
   const rows = [];
 
   for (const line of lines) {
-    // título de campeonato (tem " : " ou termina com "LEAGUE"/"LIGA"/etc)
-    if (/[A-ZÀ-Úa-zà-ú]+:\s*[A-Z0-9]/.test(line) || /liga|league|serie|bundesliga|laliga/i.test(line) && !TIME_RE.test(line)) {
+    // título de campeonato (tem “: ” e NÃO tem hora)
+    if (/[A-Za-zÀ-ÿ]+:\s*[A-Za-z0-9À-ÿ]/.test(line) && !TIME_RE.test(line)) {
       currentChamp = mapChamp(line);
       continue;
     }
 
-    // linha de jogo (tem hora)
-    const tMatch = line.match(TIME_RE);
-    if (!tMatch) continue;
+    // linha de jogo: precisa ter hora
+    const m = line.match(TIME_RE);
+    if (!m) continue;
 
-    const timeRaw = tMatch[1];
-    const partsLeft  = line.slice(0, tMatch.index).trim();
-    const partsRight = line.slice(tMatch.index + timeRaw.length).trim();
+    const hh = m[1], mm = m[2];
+    const timeRaw = `${hh}:${mm}`;
 
-    // nomes dos times (lado esq. e dir.)
-    if (!partsLeft || !partsRight) continue;
+    // antes da hora = casa ; depois da hora = fora
+    let left  = line.slice(0, m.index).trim();
+    let right = line.slice(m.index + m[0].length).trim();
 
-    const home = partsLeft;
-    const away = partsRight;
+    left  = stripOdds(left);
+    right = stripOdds(right);
+
+    // descarta ruído óbvio
+    if (!left || !right) continue;
+    if (/^(hoje|preview)$/i.test(left) || /^(hoje|preview)$/i.test(right)) continue;
 
     rows.push({
-      time: normalizeTime(timeRaw),
+      time : normalizeTime(timeRaw),
       champ: currentChamp || 'Amistoso',
-      home: home,
-      away: away
+      home : norm(left),
+      away : norm(right)
     });
   }
-  // remove duplicados e vazios
-  return rows.filter(r => r.time && r.home && r.away);
+
+  // remove entradas fracas (ex.: ".", "ED")
+  return rows.filter(r =>
+    r.time &&
+    r.home.replace(/[^\wÀ-ÿ]/g,'').length >= 3 &&
+    r.away.replace(/[^\wÀ-ÿ]/g,'').length >= 3
+  );
 }
 
-// UI helpers
+// ---------- UI ----------
 fileInput.addEventListener('change', () => {
   btnOCR.disabled = !fileInput.files?.length;
   ocrStatus.textContent = '';
 });
+
 btnOCR.addEventListener('click', async () => {
   if (!fileInput.files?.length) return;
   btnOCR.disabled = true;
@@ -825,7 +856,14 @@ btnOCR.addEventListener('click', async () => {
   try {
     const img = fileInput.files[0];
     const { data: { text } } = await Tesseract.recognize(img, 'por+eng', {
-      logger: m => { if (m.status === 'recognizing text') ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`; }
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          ocrStatus.textContent = `OCR ${Math.round(m.progress * 100)}%`;
+        }
+      },
+      // ⬇️ configs que limpam bastante o ruído
+      tessedit_char_whitelist: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïñòóôõöùúûüÿ 0123456789:.-h",
+      user_defined_dpi: "300"
     });
 
     importedRows = parseTextToRows(text);
@@ -879,6 +917,7 @@ btnSaveAll.addEventListener('click', async () => {
       await addDoc(collection(db,'games'), payload);
     }
     await loadGames();
+
     // limpa preview
     importedRows = [];
     preview.classList.add('hidden');
