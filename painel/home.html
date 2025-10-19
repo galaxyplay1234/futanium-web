@@ -723,6 +723,7 @@ listenRealtimeCounters();
 
 
 
+
 // refs da UI
 const fileInput = document.getElementById('img-file');
 const btnOCR    = document.getElementById('btn-ocr');
@@ -734,32 +735,18 @@ const btnSaveAll= document.getElementById('btn-save-all');
 
 let importedRows = [];
 
-/* ===== aliases de campeonatos -> como está no seu painel ===== */
-const CHAMP_ALIASES = {
-  "itália: serie a": "Campeonato Italiano",
-  "italia: serie a": "Campeonato Italiano",
-  "espanha: laliga": "Campeonato Espanhol",
-  "inglaterra: premier league": "Campeonato Inglês",
-  "frança: ligue 1": "Campeonato Francês",
-  "franca: ligue 1": "Campeonato Francês",
-  "alemanha: bundesliga": "Campeonato Alemão",
-  "arábia saudita: liga profissional saudita": "Campeonato Saudita",
-  "argentina: torneo betano": "Campeonato Argentino",
-  "brasil: brasileirão betano": "Brasileirão",
-  "brasil: brasileirão série b superbet": "Série B",
-  "mundo: copa do mundo sub-20": "Copa do Mundo Sub-20",
-};
-
+/* ===== helpers gerais ===== */
 function norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
-function key(s){ return norm(s).toLowerCase(); }
+function stripAccents(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function baseKey(s){
+  return stripAccents(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s\.']/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
 function onlyLettersSpaces(s){
   return norm((s||'').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\.\-']/g,''));
-}
-function mapChamp(raw){
-  // limpa lixos de começo tipo "==", "—", etc
-  raw = (raw||'').replace(/^[=\-\*\.\s]+/,'');
-  const k = key(raw);
-  return CHAMP_ALIASES[k] || norm(raw);
 }
 function normalizeTime(str){
   const digits = (str||'').replace(/[^\d]/g,'');
@@ -769,105 +756,80 @@ function normalizeTime(str){
   return `${hh}h${mm}`;
 }
 
-/* ===== helpers de normalização e fuzzy match ===== */
-function stripAccents(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-function normSpaces(s){ return (s||'').replace(/\s+/g,' ').trim(); }
-function baseKey(s){
-  return stripAccents(s).toLowerCase()
-    .replace(/[^a-z0-9\s\.']/g,'')
-    .replace(/\s+/g,' ')
-    .trim();
-}
-// remove ruídos comuns do OCR nos nomes dos times (A, &, números, parênteses soltos, etc.)
+// === times: limpeza leve
 function cleanTeamRaw(s){
   let t = (s||'')
-    .replace(/[|]/g,'l')                // OCR: | -> l
+    .replace(/[|]/g,'l')
     .replace(/[“”„]/g,'"')
     .replace(/[’‘´`]/g,"'")
-    .replace(/^[^A-Za-zÀ-ÖØ-öø-ÿ]+/,'') // lixo no começo
-    .replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\.']+$/,''); // lixo no fim (mantém ponto/apóstrofo)
-  t = normSpaces(t);
-  // alguns artefatos típicos
-  t = t.replace(/^J\)\s*/,'J ')
-       .replace(/^&\s*/,'')
-       .replace(/^\*\s*/,'')
-       .replace(/^\d+\s*/,'');
+    .replace(/^[^A-Za-zÀ-ÖØ-öø-ÿ]+/,'')
+    .replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\.']+$/,'');
+  t = norm(t);
+  t = t.replace(/^J\)\s*/,'J ').replace(/^&\s*/,'').replace(/^\*\s*/,'').replace(/^\d+\s*/,'');
   return t;
 }
-// Levenshtein simples p/ similaridade
+
+// === fuzzy match
 function levenshtein(a,b){
   a = baseKey(a); b = baseKey(b);
-  const m = a.length, n = b.length;
+  const m=a.length, n=b.length;
   if (!m) return n; if (!n) return m;
   const dp = Array(n+1).fill(0);
   for (let j=0;j<=n;j++) dp[j]=j;
   for (let i=1;i<=m;i++){
-    let prev = dp[0]; dp[0]=i;
+    let prev=dp[0]; dp[0]=i;
     for (let j=1;j<=n;j++){
-      const tmp = dp[j];
-      dp[j] = Math.min(
-        dp[j]+1,
-        dp[j-1]+1,
-        prev + (a[i-1]===b[j-1] ? 0 : 1)
-      );
-      prev = tmp;
+      const tmp=dp[j];
+      dp[j] = Math.min(dp[j]+1, dp[j-1]+1, prev + (a[i-1]===b[j-1]?0:1));
+      prev=tmp;
     }
   }
   return dp[n];
 }
 function sim(a,b){
-  const maxLen = Math.max(baseKey(a).length, baseKey(b).length) || 1;
-  return 1 - (levenshtein(a,b) / maxLen); // 0..1
+  const L = Math.max(baseKey(a).length, baseKey(b).length) || 1;
+  return 1 - (levenshtein(a,b)/L);
 }
-// procura o melhor nome dentro de um dicionário (ex.: teamsCache/champsCache)
-function fuzzyFindName(raw, dict){
+function fuzzyFindName(raw, dict, minScore=0.62){
   const keys = Object.keys(dict||{});
   if (!keys.length) return null;
 
   const rawB = baseKey(raw);
-  // tentativas fortes
   for (const k of keys){ if (baseKey(k) === rawB) return k; }
   for (const k of keys){ if (baseKey(k).startsWith(rawB) || rawB.startsWith(baseKey(k))) return k; }
   for (const k of keys){ if (baseKey(k).includes(rawB) || rawB.includes(baseKey(k))) return k; }
 
-  // fuzzy
-  let best = null, bestScore = 0;
+  let best=null, bestScore=0;
   for (const k of keys){
     const s = sim(raw, k);
-    if (s > bestScore){ bestScore = s; best = k; }
+    if (s > bestScore){ bestScore=s; best=k; }
   }
-  return bestScore >= 0.62 ? best : null; // limiar calibrado
+  return bestScore >= minScore ? best : null;
 }
-function resolveChampName(raw){
-  const byAlias = mapChamp(raw);
-  const inCache = fuzzyFindName(byAlias, window.champsCache);
-  return inCache || byAlias;
+
+// === campeonato 365: usa o texto até o traço; se não casar com o painel, guarda o lido
+function cutAfterDash(s){
+  if (!s) return s;
+  const parts = s.split(/[-–—]/);
+  return (parts[0] || s).trim();
 }
-function resolveRowNames(r){
-  const homeClean = cleanTeamRaw(r.home);
-  const awayClean = cleanTeamRaw(r.away);
-  const homeMatch = fuzzyFindName(homeClean, window.teamsCache);
-  const awayMatch = fuzzyFindName(awayClean, window.teamsCache);
-  return {
-    ...r,
-    champ: resolveChampName(r.champ),
-    home: homeMatch || homeClean,
-    away: awayMatch || awayClean,
-  };
+function resolveChamp365(raw){
+  const cut = cutAfterDash(norm((raw||'').replace(/^[=\-\*\.\s]+/,'')));
+  const match = fuzzyFindName(cut, window.champsCache, 0.62);
+  return match || cut; // se não casar, fica o nome lido do 365
 }
 
 /* ===== regex e filtros ===== */
-// hora sozinha (linha) OU hora embutida
 const TIME_LINE_RE   = /^\s*(\d{1,2})\s*[:h\. ]\s*(\d{2})\s*$/;
 const TIME_INLINE_RE = /(\d{1,2}\s*[:h\. ]\s*\d{2})/i;
-// linhas para ignorar (preview, data, odds, etc)
 const JUNK_RE = /^(hoje\b.*|\d{1,2}\.\d{2}\.|preview\b|[\d,]+\s*(\.\d+)?$)/i;
+
 function looksLikeTeam(s){
   const t = onlyLettersSpaces(s.replace(/^[\*\-•⭐]+/,''));
   return t.length >= 2;
 }
 
-/* ===== pré-processamento da imagem (ajuda o OCR) ===== */
+/* ===== pré-processamento (rápido) ===== */
 async function preprocessImage(file){
   const img = await new Promise(res=>{
     const i = new Image();
@@ -884,19 +846,19 @@ async function preprocessImage(file){
   const d = imgData.data;
   for (let p=0; p<d.length; p+=4){
     const g = (d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114);
-    const v = g > 180 ? 255 : 0; // binarização simples
+    const v = g > 180 ? 255 : 0;
     d[p]=d[p+1]=d[p+2]=v;
   }
   ctx.putImageData(imgData,0,0);
   return new Promise(res=>canvas.toBlob(res, 'image/png'));
 }
 
-/* ===== parser do texto OCR → linhas (hora/champ/casa/fora) ===== */
+/* ===== parser OCR → linhas ===== */
 function parseTextToRows(text){
   text = text
-    .replace(/[\u200B-\u200D\uFEFF]/g,'') // zero-width
-    .replace(/[|]/g,'l')                  // pipe → l
-    .replace(/O(?=\d)/g,'0');             // O antes de número → 0
+    .replace(/[\u200B-\u200D\uFEFF]/g,'')
+    .replace(/[|]/g,'l')
+    .replace(/O(?=\d)/g,'0');
 
   const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
 
@@ -910,15 +872,16 @@ function parseTextToRows(text){
   for (let i=0; i<lines.length; i++){
     const line = lines[i];
 
-    // 1) Cabeçalho de competição
-    const looksHeader = /:/.test(line) && !TIME_INLINE_RE.test(line);
-    const hasLeagueWord = /(liga|league|serie|bundesliga|laliga)/i.test(line);
-    if ((looksHeader || hasLeagueWord) && !/\d/.test(line)){
-      currentChamp = mapChamp(line);
+    // Cabeçalho de competição (texto, sem hora)
+    const looksHeader = !TIME_INLINE_RE.test(line) &&
+      /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i.test(line);
+
+    if (looksHeader && !/\d/.test(line)){
+      currentChamp = resolveChamp365(line);
       continue;
     }
 
-    // 2) Casa / HORA / Fora (hora isolada no meio)
+    // Casa / HH:MM / Fora (hora isolada no meio)
     if (TIME_LINE_RE.test(line)) {
       const prev = norm(lines[i-1] || '');
       const next = norm(lines[i+1] || '');
@@ -927,12 +890,12 @@ function parseTextToRows(text){
       if (looksLikeTeam(home) && looksLikeTeam(away)) {
         const [,hh,mm] = line.match(TIME_LINE_RE);
         rows.push({ time: normalizeTime(`${hh}:${mm}`), champ: currentChamp || 'Amistoso', home, away });
-        i++; // consome a de baixo
+        i++;
         continue;
       }
     }
 
-    // 3) Tudo em uma linha: "Casa HH:MM Fora"
+    // "Casa HH:MM Fora" numa linha
     if (TIME_INLINE_RE.test(line)) {
       const m = line.match(TIME_INLINE_RE);
       const timeRaw = m[1];
@@ -943,24 +906,21 @@ function parseTextToRows(text){
         continue;
       }
     }
-
-    // 4) “Casa HH:MM” na linha e “Fora” na seguinte
-    if (TIME_INLINE_RE.test(line) && looksLikeTeam(lines[i+1]||'')) {
-      const m = line.match(TIME_INLINE_RE);
-      const timeRaw = m[1];
-      const left = norm(line.replace(TIME_INLINE_RE,'')).replace(/^[\*\-•⭐]+/,'');
-      const right = norm(lines[i+1]).replace(/^[\*\-•⭐]+/,'');
-      if (looksLikeTeam(left) && looksLikeTeam(right)) {
-        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
-        i++;
-        continue;
-      }
-    }
   }
 
-  return rows
-    .filter(r => r.time && r.home && r.away)
-    .map(r => ({ ...r, champ: mapChamp(r.champ) }));
+  // times: limpeza e tentativa de casar com o painel
+  return rows.map(r => {
+    const homeClean = cleanTeamRaw(r.home);
+    const awayClean = cleanTeamRaw(r.away);
+    const homeMatch = fuzzyFindName(homeClean, window.teamsCache);
+    const awayMatch = fuzzyFindName(awayClean, window.teamsCache);
+    return {
+      time: r.time,
+      champ: resolveChamp365(r.champ), // <- campeonato já no formato final
+      home: homeMatch || homeClean,
+      away: awayMatch || awayClean
+    };
+  });
 }
 
 /* ===== UI ===== */
@@ -976,8 +936,7 @@ btnOCR.addEventListener('click', async () => {
 
   try {
     const pre = await preprocessImage(fileInput.files[0]);
-
-    const { data: { text } } = await Tesseract.recognize(pre, 'por+eng', {
+    const { data: { text} } = await Tesseract.recognize(pre, 'por+eng', {
       tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐',
       psm: 6,
       logger: m => {
@@ -987,10 +946,9 @@ btnOCR.addEventListener('click', async () => {
       }
     });
 
-    // ⬇️ agora aplicamos a limpeza + casamento com times/ligas do painel
-    importedRows = parseTextToRows(text).map(resolveRowNames);
+    importedRows = parseTextToRows(text);
 
-    // preview
+    // preview (mostra o que será salvo)
     tbody.innerHTML = '';
     importedRows.forEach(r => {
       const tr = document.createElement('tr');
@@ -1014,6 +972,7 @@ btnOCR.addEventListener('click', async () => {
   }
 });
 
+/* ===== SALVAR ===== */
 btnSaveAll.addEventListener('click', async () => {
   if (!importedRows.length) return;
 
@@ -1026,7 +985,7 @@ btnSaveAll.addEventListener('click', async () => {
   try {
     for (const r of importedRows) {
       const payload = {
-        champ: r.champ,
+        champ: r.champ,                                 // já vem “casado” ou o lido do 365
         champ_logo: window.champsCache[r.champ] || '',
         home: r.home,
         home_logo: window.teamsCache[r.home] || '',
@@ -1045,7 +1004,6 @@ btnSaveAll.addEventListener('click', async () => {
     fileInput.value = '';
     btnOCR.disabled = true;
     ocrStatus.textContent = 'Importado com sucesso!';
-
   } catch (e) {
     console.error(e);
     ocrStatus.textContent = 'Erro ao salvar';
