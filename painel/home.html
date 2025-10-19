@@ -720,6 +720,7 @@ listenRealtimeCounters();
 
 
 
+// ================== IMPORTAR POR IMAGEM (OCR) ==================
 // refs da UI
 const fileInput = document.getElementById('img-file');
 const btnOCR    = document.getElementById('btn-ocr');
@@ -746,14 +747,15 @@ const CHAMP_ALIASES = {
 function norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
 function key(s){ return norm(s).toLowerCase(); }
 function onlyLettersSpaces(s){
-  return norm(s.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\.\-']/g,''));
+  return norm((s||'').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\.\-']/g,''));
 }
 function mapChamp(raw){
+  // limpa lixos de começo tipo "==", "—", etc
+  raw = (raw||'').replace(/^[=\-\*\.\s]+/,'');
   const k = key(raw);
   return CHAMP_ALIASES[k] || norm(raw);
 }
 function normalizeTime(str){
-  // aceita "07:30", "07h30", "7.30", "7 30"
   const digits = (str||'').replace(/[^\d]/g,'');
   if (digits.length < 3) return '';
   const hh = digits.slice(0, digits.length - 2).padStart(2,'0');
@@ -761,29 +763,56 @@ function normalizeTime(str){
   return `${hh}h${mm}`;
 }
 
-// Hora isolada (linha só com hora) OU hora dentro da linha
-const TIME_LINE_RE = /^\s*(\d{1,2})\s*[:h\. ]\s*(\d{2})\s*$/;
+// hora sozinha (linha) OU hora embutida
+const TIME_LINE_RE   = /^\s*(\d{1,2})\s*[:h\. ]\s*(\d{2})\s*$/;
 const TIME_INLINE_RE = /(\d{1,2}\s*[:h\. ]\s*\d{2})/i;
-// linhas que devemos ignorar
-const JUNK_RE = /^(hoje\b|preview\b|\d{1,2}\.\d{2}\.|[\d,]+\s*(\.\d+)?$)/i;
 
-// Heurística para “parece nome de time”: letras, espaços, poucos sinais
+// linhas para ignorar (preview, data, odds, etc)
+const JUNK_RE = /^(hoje\b.*|\d{1,2}\.\d{2}\.|preview\b|[\d,]+\s*(\.\d+)?$)/i;
+
 function looksLikeTeam(s){
-  const t = onlyLettersSpaces(s);
-  return t.length >= 2 && !/^\s*$/.test(t);
+  const t = onlyLettersSpaces(s.replace(/^[\*\-•⭐]+/,''));
+  return t.length >= 2;
 }
 
-// Parser principal
+// Pré-processar a imagem no canvas (aumenta contraste e escala)
+async function preprocessImage(file){
+  const img = await new Promise(res=>{
+    const i = new Image();
+    i.onload = ()=>res(i);
+    i.src = URL.createObjectURL(file);
+  });
+
+  const scale = 2; // aumenta 2x
+  const canvas = document.createElement('canvas');
+  canvas.width  = img.width * scale;
+  canvas.height = img.height * scale;
+  const ctx = canvas.getContext('2d');
+
+  // desenha maior e aplica threshold simples
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d = imgData.data;
+  for (let p=0; p<d.length; p+=4){
+    const g = (d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114);
+    const v = g > 180 ? 255 : 0; // binarização
+    d[p]=d[p+1]=d[p+2]=v;
+  }
+  ctx.putImageData(imgData,0,0);
+
+  return new Promise(res=>canvas.toBlob(res, 'image/png'));
+}
+
 function parseTextToRows(text){
-  // pré-normalização: corrigir confusões comuns do OCR
+  // normalizações de OCR
   text = text
-    .replace(/[|]/g,'l')
-    .replace(/O(?=\d)/g,'0')
-    .replace(/\u200B/g,''); // zero-width
+    .replace(/[\u200B-\u200D\uFEFF]/g,'')   // zero-width
+    .replace(/[|]/g,'l')                    // pipe -> L
+    .replace(/O(?=\d)/g,'0');               // O -> 0 antes de número
 
   const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
 
-  // limpa ruídos (odds, "Hoje 19.10.", "PREVIEW" etc)
+  // remove ruídos
   const lines = rawLines
     .map(l => l.replace(/\t/g,' ').replace(/\s+/g,' ').trim())
     .filter(l => l && !JUNK_RE.test(l));
@@ -795,80 +824,56 @@ function parseTextToRows(text){
     const line = lines[i];
 
     // 1) Cabeçalho de competição
-    const maybeChamp = /:/.test(line) && !TIME_INLINE_RE.test(line);
+    const looksHeader = /:/.test(line) && !TIME_INLINE_RE.test(line);
     const hasLeagueWord = /(liga|league|serie|bundesliga|laliga)/i.test(line);
-    if ( (maybeChamp || hasLeagueWord) && looksLikeTeam(line) ){
+    if ((looksHeader || hasLeagueWord) && !/\d/.test(line)){
       currentChamp = mapChamp(line);
       continue;
     }
 
-    // 2) Padrão 3-linhas: Casa / HORA / Fora
-    //    (a captura funciona quando a hora está isolada na linha do meio)
+    // 2) Formato: Casa / HORA / Fora (hora isolada no meio)
     if (TIME_LINE_RE.test(line)) {
-      const prev = lines[i-1] || '';
-      const next = lines[i+1] || '';
-      const home = norm(prev);
-      const away = norm(next);
-
+      const prev = norm(lines[i-1] || '');
+      const next = norm(lines[i+1] || '');
+      const home = prev.replace(/^[\*\-•⭐]+/,'');
+      const away = next.replace(/^[\*\-•⭐]+/,'');
       if (looksLikeTeam(home) && looksLikeTeam(away)) {
         const [,hh,mm] = line.match(TIME_LINE_RE);
-        rows.push({
-          time: normalizeTime(`${hh}:${mm}`),
-          champ: currentChamp || 'Amistoso',
-          home, away
-        });
-        i++; // pula a linha de baixo já consumida
+        rows.push({ time: normalizeTime(`${hh}:${mm}`), champ: currentChamp || 'Amistoso', home, away });
+        i++; // consome a linha de baixo
         continue;
       }
     }
 
-    // 3) Padrão 1-linha: "Casa HH:MM Fora"
+    // 3) Tudo em uma linha: "Casa HH:MM Fora"
     if (TIME_INLINE_RE.test(line)) {
       const m = line.match(TIME_INLINE_RE);
       const timeRaw = m[1];
-      const left = norm(line.slice(0, m.index));
-      const right = norm(line.slice(m.index + timeRaw.length));
-
+      const left  = norm(line.slice(0, m.index)).replace(/^[\*\-•⭐]+/,'');
+      const right = norm(line.slice(m.index + timeRaw.length)).replace(/^[\*\-•⭐]+/,'');
       if (looksLikeTeam(left) && looksLikeTeam(right)) {
-        rows.push({
-          time: normalizeTime(timeRaw),
-          champ: currentChamp || 'Amistoso',
-          home: left,
-          away: right
-        });
+        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
         continue;
       }
     }
 
-    // 4) Padrão 2 linhas com hora pendurada no fim/início:
-    //    "Casa HH:MM" na linha i  e "Fora" na i+1
+    // 4) “Casa HH:MM” em uma linha e “Fora” na seguinte
     if (TIME_INLINE_RE.test(line) && looksLikeTeam(lines[i+1]||'')) {
       const m = line.match(TIME_INLINE_RE);
       const timeRaw = m[1];
-      const left = norm(line.replace(TIME_INLINE_RE,'').trim());
-      const right = norm(lines[i+1]);
+      const left = norm(line.replace(TIME_INLINE_RE,'')).replace(/^[\*\-•⭐]+/,'');
+      const right = norm(lines[i+1]).replace(/^[\*\-•⭐]+/,'');
       if (looksLikeTeam(left) && looksLikeTeam(right)) {
-        rows.push({
-          time: normalizeTime(timeRaw),
-          champ: currentChamp || 'Amistoso',
-          home: left,
-          away: right
-        });
-        i++; // consumiu a de baixo
+        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
+        i++;
         continue;
       }
     }
   }
 
-  // saneamento final
   return rows
     .filter(r => r.time && r.home && r.away)
-    .map(r => ({
-      time: r.time,
-      champ: mapChamp(r.champ),
-      home: r.home,
-      away: r.away
-    }));
+    .map(r => ({ ...r, champ: mapChamp(r.champ) }));
 }
 
 /* ===== UI ===== */
@@ -883,13 +888,13 @@ btnOCR.addEventListener('click', async () => {
   ocrStatus.textContent = 'Lendo imagem (OCR)…';
 
   try {
-    const img = fileInput.files[0];
-    const { data: { text } } = await Tesseract.recognize(img, 'por+eng', {
-      // o logger ajuda a mostrar progresso
+    const pre = await preprocessImage(fileInput.files[0]);
+
+    const { data: { text } } = await Tesseract.recognize(pre, 'por+eng', {
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐',
+      psm: 6, // assume blocos de texto
       logger: m => {
-        if (m.status === 'recognizing text') {
-          ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
-        }
+        if (m.status === 'recognizing text') ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
       }
     });
 
@@ -922,7 +927,6 @@ btnOCR.addEventListener('click', async () => {
 btnSaveAll.addEventListener('click', async () => {
   if (!importedRows.length) return;
 
-  // caches vindos do painel (se existirem)
   window.teamsCache  = window.teamsCache  || {};
   window.champsCache = window.champsCache || {};
 
@@ -945,7 +949,6 @@ btnSaveAll.addEventListener('click', async () => {
     }
     await loadGames();
 
-    // limpa
     importedRows = [];
     preview.classList.add('hidden');
     tbody.innerHTML = '';
