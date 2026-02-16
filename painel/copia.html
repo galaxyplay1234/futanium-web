@@ -57,14 +57,20 @@
   <div class="fixed top-14 left-0 right-0 bg-gray-100 px-2 h-12 flex items-center gap-2 z-40 shadow overflow-x-auto whitespace-nowrap">
     <button onclick="showTab('home')" id="btn-home"
             class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">Home</button>
+    
     <button onclick="showTab('addgame', false, true)"
         class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('buttons')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
+    <button onclick="showTab('import')"
+        class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Importar
+</button>
     <button onclick="showTab('times')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Times</button>
     <button onclick="showTab('champions')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Ligas</button>
-    <button onclick="showTab('buttons')"
-            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
+    
   </div>
 
   <!-- Conteúdo (abaixo da barra + tabs) -->
@@ -154,6 +160,42 @@
       </form>
     </div>
 
+
+<!-- Importar (imagem -> jogos) -->
+<div id="tab-import" class="tab-content hidden">
+  <h2 class="text-lg sm:text-xl font-semibold mb-4">Importar jogos por imagem</h2>
+
+  <div class="bg-white rounded shadow p-4 mb-3">
+    <input id="img-file" type="file" accept="image/*"
+           class="block w-full mb-3">
+    <button id="btn-ocr" class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
+            disabled>📥 Ler imagem</button>
+    <span id="ocr-status" class="ml-3 text-sm text-gray-500"></span>
+  </div>
+
+  <div id="import-preview" class="bg-white rounded shadow p-0 overflow-hidden hidden">
+    <div class="px-4 py-3 border-b font-semibold">Pré-visualização</div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-2 text-left">Hora</th>
+            <th class="p-2 text-left">Campeonato</th>
+            <th class="p-2 text-left">Casa</th>
+            <th class="p-2 text-left">Fora</th>
+          </tr>
+        </thead>
+        <tbody id="import-tbody"></tbody>
+      </table>
+    </div>
+    <div class="p-3 border-t flex justify-between items-center">
+      <div class="text-gray-500 text-sm" id="import-count"></div>
+      <button id="btn-save-all" class="bg-green-600 text-white px-4 py-2 rounded">Salvar todos</button>
+    </div>
+  </div>
+</div>
+
+
     <!-- Times -->
     <div id="tab-times" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
@@ -227,6 +269,8 @@
     </div>
   </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
@@ -366,11 +410,17 @@ async function loadTeams(){
     homeSel.appendChild(new Option(t.name, t.name));
     awaySel.appendChild(new Option(t.name, t.name));
   });
+  
+  // ao final de loadTeams()
+window.teamsCache = {};
+teamsArr.forEach(t => { window.teamsCache[t.name] = t.logo; })
 }
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
   await loadTeams();
 };
+
+
 
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
@@ -410,11 +460,15 @@ async function loadChamps(){
 
     champSel.appendChild(new Option(c.name, c.name));
   });
+  // ao final de loadChamps()
+window.champsCache = {};
+champsArr.forEach(c => { window.champsCache[c.name] = c.logo; });
 }
 window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
   await loadChamps();
 };
+
 
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
@@ -663,6 +717,303 @@ function listenRealtimeCounters() {
 
 // ⏱️ Inicia a escuta assim que o painel carregar
 listenRealtimeCounters();
+
+
+
+
+
+
+
+
+
+// refs da UI
+const fileInput = document.getElementById('img-file');
+const btnOCR    = document.getElementById('btn-ocr');
+const ocrStatus = document.getElementById('ocr-status');
+const preview   = document.getElementById('import-preview');
+const tbody     = document.getElementById('import-tbody');
+const countEl   = document.getElementById('import-count');
+const btnSaveAll= document.getElementById('btn-save-all');
+
+let importedRows = [];
+
+/* ===== helpers gerais ===== */
+function norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
+function stripAccents(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function baseKey(s){
+  return stripAccents(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s\.']/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function onlyLettersSpaces(s){
+  return norm((s||'').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\.\-']/g,''));
+}
+function normalizeTime(str){
+  const digits = (str||'').replace(/[^\d]/g,'');
+  if (digits.length < 3) return '';
+  const hh = digits.slice(0, digits.length - 2).padStart(2,'0');
+  const mm = digits.slice(-2);
+  return `${hh}h${mm}`;
+}
+
+// === times: limpeza leve
+function cleanTeamRaw(s){
+  let t = (s||'')
+    .replace(/[|]/g,'l')
+    .replace(/[“”„]/g,'"')
+    .replace(/[’‘´`]/g,"'")
+    .replace(/^[^A-Za-zÀ-ÖØ-öø-ÿ]+/,'')
+    .replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\.']+$/,'');
+  t = norm(t);
+  t = t.replace(/^J\)\s*/,'J ').replace(/^&\s*/,'').replace(/^\*\s*/,'').replace(/^\d+\s*/,'');
+  return t;
+}
+
+// === fuzzy match
+function levenshtein(a,b){
+  a = baseKey(a); b = baseKey(b);
+  const m=a.length, n=b.length;
+  if (!m) return n; if (!n) return m;
+  const dp = Array(n+1).fill(0);
+  for (let j=0;j<=n;j++) dp[j]=j;
+  for (let i=1;i<=m;i++){
+    let prev=dp[0]; dp[0]=i;
+    for (let j=1;j<=n;j++){
+      const tmp=dp[j];
+      dp[j] = Math.min(dp[j]+1, dp[j-1]+1, prev + (a[i-1]===b[j-1]?0:1));
+      prev=tmp;
+    }
+  }
+  return dp[n];
+}
+function sim(a,b){
+  const L = Math.max(baseKey(a).length, baseKey(b).length) || 1;
+  return 1 - (levenshtein(a,b)/L);
+}
+function fuzzyFindName(raw, dict, minScore=0.62){
+  const keys = Object.keys(dict||{});
+  if (!keys.length) return null;
+
+  const rawB = baseKey(raw);
+  for (const k of keys){ if (baseKey(k) === rawB) return k; }
+  for (const k of keys){ if (baseKey(k).startsWith(rawB) || rawB.startsWith(baseKey(k))) return k; }
+  for (const k of keys){ if (baseKey(k).includes(rawB) || rawB.includes(baseKey(k))) return k; }
+
+  let best=null, bestScore=0;
+  for (const k of keys){
+    const s = sim(raw, k);
+    if (s > bestScore){ bestScore=s; best=k; }
+  }
+  return bestScore >= minScore ? best : null;
+}
+
+// === campeonato 365: usa o texto até o traço; se não casar com o painel, guarda o lido
+function cutAfterDash(s){
+  if (!s) return s;
+  const parts = s.split(/[-–—]/);
+  return (parts[0] || s).trim();
+}
+function resolveChamp365(raw){
+  const cut = cutAfterDash(norm((raw||'').replace(/^[=\-\*\.\s]+/,'')));
+  const match = fuzzyFindName(cut, window.champsCache, 0.62);
+  return match || cut; // se não casar, fica o nome lido do 365
+}
+
+/* ===== regex e filtros ===== */
+const TIME_LINE_RE   = /^\s*(\d{1,2})\s*[:h\. ]\s*(\d{2})\s*$/;
+const TIME_INLINE_RE = /(\d{1,2}\s*[:h\. ]\s*\d{2})/i;
+const JUNK_RE = /^(hoje\b.*|\d{1,2}\.\d{2}\.|preview\b|[\d,]+\s*(\.\d+)?$)/i;
+
+function looksLikeTeam(s){
+  const t = onlyLettersSpaces(s.replace(/^[\*\-•⭐]+/,''));
+  return t.length >= 2;
+}
+
+/* ===== pré-processamento (rápido) ===== */
+async function preprocessImage(file){
+  const img = await new Promise(res=>{
+    const i = new Image();
+    i.onload = ()=>res(i);
+    i.src = URL.createObjectURL(file);
+  });
+  const scale = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width  = img.width * scale;
+  canvas.height = img.height * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d = imgData.data;
+  for (let p=0; p<d.length; p+=4){
+    const g = (d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114);
+    const v = g > 180 ? 255 : 0;
+    d[p]=d[p+1]=d[p+2]=v;
+  }
+  ctx.putImageData(imgData,0,0);
+  return new Promise(res=>canvas.toBlob(res, 'image/png'));
+}
+
+/* ===== parser OCR → linhas ===== */
+function parseTextToRows(text){
+  text = text
+    .replace(/[\u200B-\u200D\uFEFF]/g,'')
+    .replace(/[|]/g,'l')
+    .replace(/O(?=\d)/g,'0');
+
+  const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
+
+  const lines = rawLines
+    .map(l => l.replace(/\t/g,' ').replace(/\s+/g,' ').trim())
+    .filter(l => l && !JUNK_RE.test(l));
+
+  let currentChamp = '';
+  const rows = [];
+
+  for (let i=0; i<lines.length; i++){
+    const line = lines[i];
+
+    // Cabeçalho de competição (texto, sem hora)
+    const looksHeader = !TIME_INLINE_RE.test(line) &&
+      /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i.test(line);
+
+    if (looksHeader && !/\d/.test(line)){
+      currentChamp = resolveChamp365(line);
+      continue;
+    }
+
+    // Casa / HH:MM / Fora (hora isolada no meio)
+    if (TIME_LINE_RE.test(line)) {
+      const prev = norm(lines[i-1] || '');
+      const next = norm(lines[i+1] || '');
+      const home = prev.replace(/^[\*\-•⭐]+/,'');
+      const away = next.replace(/^[\*\-•⭐]+/,'');
+      if (looksLikeTeam(home) && looksLikeTeam(away)) {
+        const [,hh,mm] = line.match(TIME_LINE_RE);
+        rows.push({ time: normalizeTime(`${hh}:${mm}`), champ: currentChamp || 'Amistoso', home, away });
+        i++;
+        continue;
+      }
+    }
+
+    // "Casa HH:MM Fora" numa linha
+    if (TIME_INLINE_RE.test(line)) {
+      const m = line.match(TIME_INLINE_RE);
+      const timeRaw = m[1];
+      const left  = norm(line.slice(0, m.index)).replace(/^[\*\-•⭐]+/,'');
+      const right = norm(line.slice(m.index + timeRaw.length)).replace(/^[\*\-•⭐]+/,'');
+      if (looksLikeTeam(left) && looksLikeTeam(right)) {
+        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
+        continue;
+      }
+    }
+  }
+
+  // times: limpeza e tentativa de casar com o painel
+  return rows.map(r => {
+    const homeClean = cleanTeamRaw(r.home);
+    const awayClean = cleanTeamRaw(r.away);
+    const homeMatch = fuzzyFindName(homeClean, window.teamsCache);
+    const awayMatch = fuzzyFindName(awayClean, window.teamsCache);
+    return {
+      time: r.time,
+      champ: resolveChamp365(r.champ), // <- campeonato já no formato final
+      home: homeMatch || homeClean,
+      away: awayMatch || awayClean
+    };
+  });
+}
+
+/* ===== UI ===== */
+fileInput.addEventListener('change', () => {
+  btnOCR.disabled = !fileInput.files?.length;
+  ocrStatus.textContent = '';
+});
+
+btnOCR.addEventListener('click', async () => {
+  if (!fileInput.files?.length) return;
+  btnOCR.disabled = true;
+  ocrStatus.textContent = 'Lendo imagem (OCR)…';
+
+  try {
+    const pre = await preprocessImage(fileInput.files[0]);
+    const { data: { text} } = await Tesseract.recognize(pre, 'por+eng', {
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐',
+      psm: 6,
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
+        }
+      }
+    });
+
+    importedRows = parseTextToRows(text);
+
+    // preview (mostra o que será salvo)
+    tbody.innerHTML = '';
+    importedRows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="p-2">${r.time}</td>
+        <td class="p-2">${r.champ}</td>
+        <td class="p-2">${r.home}</td>
+        <td class="p-2">${r.away}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    countEl.textContent = `${importedRows.length} jogo(s) detectado(s)`;
+    preview.classList.toggle('hidden', importedRows.length === 0);
+    ocrStatus.textContent = importedRows.length ? 'Pronto' : 'Nada detectado';
+
+  } catch (e) {
+    console.error(e);
+    ocrStatus.textContent = 'Falha ao ler imagem';
+  } finally {
+    btnOCR.disabled = false;
+  }
+});
+
+/* ===== SALVAR ===== */
+btnSaveAll.addEventListener('click', async () => {
+  if (!importedRows.length) return;
+
+  window.teamsCache  = window.teamsCache  || {};
+  window.champsCache = window.champsCache || {};
+
+  btnSaveAll.disabled = true;
+  btnSaveAll.textContent = 'Salvando…';
+
+  try {
+    for (const r of importedRows) {
+      const payload = {
+        champ: r.champ,                                 // já vem “casado” ou o lido do 365
+        champ_logo: window.champsCache[r.champ] || '',
+        home: r.home,
+        home_logo: window.teamsCache[r.home] || '',
+        away: r.away,
+        away_logo: window.teamsCache[r.away] || '',
+        time: r.time,
+        channels: []
+      };
+      await addDoc(collection(db,'games'), payload);
+    }
+    await loadGames();
+
+    importedRows = [];
+    preview.classList.add('hidden');
+    tbody.innerHTML = '';
+    fileInput.value = '';
+    btnOCR.disabled = true;
+    ocrStatus.textContent = 'Importado com sucesso!';
+  } catch (e) {
+    console.error(e);
+    ocrStatus.textContent = 'Erro ao salvar';
+  } finally {
+    btnSaveAll.disabled = false;
+    btnSaveAll.textContent = 'Salvar todos';
+  }
+});
 
 
 </script>
