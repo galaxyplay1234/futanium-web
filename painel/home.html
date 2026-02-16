@@ -540,10 +540,10 @@ async function loadButtons(filter = ""){
     tr.innerHTML = `
       <td class="p-2">
   <span 
-    class="cursor-pointer text-blue-600 hover:underline"
-    onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
-    ${b.name}
-  </span>
+  class="cursor-pointer text-black hover:text-gray-600"
+  onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+  ${b.name}
+</span>
 </td>
       <td class="p-2">
         <a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">
