@@ -253,11 +253,27 @@
         <input id="button-link" type="text" placeholder="Link do botão" 
                class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
-        <input 
-  id="button-search" 
-  type="text" 
-  placeholder="🔍 Pesquisar botão..." 
-  class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <div class="relative mb-3">
+  
+  <!-- Ícone lupa -->
+  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+    🔍
+  </span>
+
+  <input 
+    id="button-search" 
+    type="text" 
+    placeholder="Pesquisar botão..." 
+    class="w-full pl-9 pr-9 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+  <!-- Botão limpar -->
+  <button 
+    id="clear-search" 
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hidden">
+    ✕
+  </button>
+
+</div>
       </form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
@@ -1064,10 +1080,28 @@ btnSaveAll.addEventListener('click', async () => {
 });
 
 
-document.getElementById("button-search")
-  .addEventListener("input", function(){
-    loadButtons(this.value);
-  });
+const searchInput = document.getElementById("button-search");
+const clearBtn = document.getElementById("clear-search");
+
+searchInput.addEventListener("input", function() {
+  const value = this.value;
+  
+  // Mostra ou esconde botão X
+  if (value.length > 0) {
+    clearBtn.classList.remove("hidden");
+  } else {
+    clearBtn.classList.add("hidden");
+  }
+
+  loadButtons(value);
+});
+
+// Botão limpar
+clearBtn.addEventListener("click", function() {
+  searchInput.value = "";
+  clearBtn.classList.add("hidden");
+  loadButtons();
+});
 
 
 </script>
