@@ -538,7 +538,13 @@ async function loadButtons(filter = ""){
   buttonsArr.forEach(b => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="p-2">${b.name}</td>
+      <td class="p-2">
+  <span 
+    class="cursor-pointer text-blue-600 hover:underline"
+    onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+    ${b.name}
+  </span>
+</td>
       <td class="p-2">
         <a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">
           ${b.link}
@@ -572,7 +578,37 @@ window.editButton = function(id, name, link){
   showTab('buttons');
 };
 
+const searchInput = document.getElementById("button-search");
+const clearBtn = document.getElementById("clear-search");
 
+searchInput.addEventListener("input", function() {
+  const value = this.value;
+  
+  // Mostra ou esconde botão X
+  if (value.length > 0) {
+    clearBtn.classList.remove("hidden");
+  } else {
+    clearBtn.classList.add("hidden");
+  }
+
+  loadButtons(value);
+});
+
+// Botão limpar
+clearBtn.addEventListener("click", function() {
+  searchInput.value = "";
+  clearBtn.classList.add("hidden");
+  loadButtons();
+});
+
+window.copyButtonLink = async function(link) {
+  try {
+    await navigator.clipboard.writeText(link);
+    showCopyToast("Link copiado!");
+  } catch (err) {
+    console.error("Erro ao copiar:", err);
+  }
+};
 
 // ===== Jogos (Adicionar / Editar) =====
 document.getElementById("game-form").addEventListener("submit", async e=>{
@@ -1080,28 +1116,8 @@ btnSaveAll.addEventListener('click', async () => {
 });
 
 
-const searchInput = document.getElementById("button-search");
-const clearBtn = document.getElementById("clear-search");
 
-searchInput.addEventListener("input", function() {
-  const value = this.value;
-  
-  // Mostra ou esconde botão X
-  if (value.length > 0) {
-    clearBtn.classList.remove("hidden");
-  } else {
-    clearBtn.classList.add("hidden");
-  }
 
-  loadButtons(value);
-});
-
-// Botão limpar
-clearBtn.addEventListener("click", function() {
-  searchInput.value = "";
-  clearBtn.classList.add("hidden");
-  loadButtons();
-});
 
 
 </script>
