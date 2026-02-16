@@ -1064,6 +1064,12 @@ btnSaveAll.addEventListener('click', async () => {
 });
 
 
+document.getElementById("button-search")
+  .addEventListener("input", function(){
+    loadButtons(this.value);
+  });
+
+
 </script>
 </body>
 </html>
