@@ -253,6 +253,11 @@
         <input id="button-link" type="text" placeholder="Link do botão" 
                class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+        <input 
+  id="button-search" 
+  type="text" 
+  placeholder="🔍 Pesquisar botão..." 
+  class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
       </form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
@@ -490,35 +495,49 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
   document.getElementById("button-form").reset();
   await loadButtons();
 });
-async function loadButtons(){
-  const q = await getDocs(collection(db,"buttons"));
-  const buttonsArr = [];
-  q.forEach(docSnap => buttonsArr.push({ id: docSnap.id, ...docSnap.data() }));
+async function loadButtons(filter = ""){
 
-  // ✅ Ordena em ordem alfabética pelo nome do botão
-  buttonsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+  const q = await getDocs(collection(db,"buttons"));
+  let buttonsArr = [];
+
+  q.forEach(docSnap => 
+    buttonsArr.push({ id: docSnap.id, ...docSnap.data() })
+  );
+
+  buttonsArr.sort((a, b) => 
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
+
+  if(filter){
+    const f = filter.toLowerCase();
+    buttonsArr = buttonsArr.filter(b => 
+      b.name.toLowerCase().includes(f) ||
+      b.link.toLowerCase().includes(f)
+    );
+  }
 
   const tbody = document.getElementById("buttons-list");
   tbody.innerHTML = "";
 
-  // ✅ Monta a tabela ordenada
   buttonsArr.forEach(b => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">${b.name}</td>
-      <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">${b.link}</a></td>
+      <td class="p-2">
+        <a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">
+          ${b.link}
+        </a>
+      </td>
       <td class="p-2 flex gap-2">
-  <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')" 
-    class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
-
-  <button onclick="deleteButton('${b.id}')" 
-    class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
-</td>
+        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')" 
+          class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
+        <button onclick="deleteButton('${b.id}')" 
+          class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
 
-  // ✅ Repopula os selects dos canais em ordem alfabética
   populateChannelSelects(buttonsArr);
 }
 window.deleteButton = async function(id){
