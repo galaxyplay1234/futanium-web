@@ -292,6 +292,7 @@ const db = getFirestore(app);
 const USER = "admin";
 const PASS = "12345";
 let currentEditId = null;
+let currentButtonEditId = null;
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -473,10 +474,19 @@ window.deleteChamp = async function(id){
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
+
   const name = document.getElementById("button-name").value.trim();
   const link = document.getElementById("button-link").value.trim();
   if(!name || !link) return;
-  await addDoc(collection(db,"buttons"),{name,link});
+
+  if(currentButtonEditId){
+    await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
+    currentButtonEditId = null;
+    document.querySelector("#button-form button").innerText = "Adicionar";
+  } else {
+    await addDoc(collection(db,"buttons"), { name, link });
+  }
+
   document.getElementById("button-form").reset();
   await loadButtons();
 });
@@ -497,7 +507,13 @@ async function loadButtons(){
     tr.innerHTML = `
       <td class="p-2">${b.name}</td>
       <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">${b.link}</a></td>
-      <td class="p-2"><button onclick="deleteButton('${b.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>
+      <td class="p-2 flex gap-2">
+  <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')" 
+    class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
+
+  <button onclick="deleteButton('${b.id}')" 
+    class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+</td>
     `;
     tbody.appendChild(tr);
   });
@@ -509,6 +525,19 @@ window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
   await loadButtons();
 };
+
+window.editButton = function(id, name, link){
+  document.getElementById("button-name").value = name;
+  document.getElementById("button-link").value = link;
+
+  currentButtonEditId = id;
+
+  document.querySelector("#button-form button").innerText = "Atualizar";
+
+  showTab('buttons');
+};
+
+
 
 // ===== Jogos (Adicionar / Editar) =====
 document.getElementById("game-form").addEventListener("submit", async e=>{
