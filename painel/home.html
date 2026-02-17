@@ -274,10 +274,15 @@
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
       <div id="button-form-container">
   <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="button-name" type="text" placeholder="Nome do canal" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="button-link" type="text" placeholder="Link do botão" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <textarea id="button-name"
+  rows="1"
+  placeholder="Nome do canal"
+  class="flex-1 p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+<textarea id="button-link"
+  rows="1"
+  placeholder="Link do botão"
+  class="flex-1 p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
         <div class="flex gap-2">
   <button id="button-submit"
     type="submit"
@@ -490,8 +495,19 @@ window.deleteTeam = async function(id){
 window.cancelButtonEdit = function(){
   currentButtonEditId = null;
 
-  document.getElementById("button-form").reset();
+  const nameEl = document.getElementById("button-name");
+  const linkEl = document.getElementById("button-link");
+
+  nameEl.value = "";
+  linkEl.value = "";
+
+  // 🔥 volta pro tamanho padrão
+  nameEl.style.height = "42px";
+  linkEl.style.height = "42px";
+
   document.getElementById("button-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 
@@ -615,20 +631,29 @@ window.cancelChampEdit = function(){
 document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
 
-  const name = document.getElementById("button-name").value.trim();
-  const link = document.getElementById("button-link").value.trim();
+  const nameEl = document.getElementById("button-name");
+  const linkEl = document.getElementById("button-link");
+
+  const name = nameEl.value.trim();
+  const link = linkEl.value.trim();
   if(!name || !link) return;
 
   if(currentButtonEditId){
     await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
     currentButtonEditId = null;
-
     document.getElementById("button-submit").innerText = "Adicionar";
   } else {
     await addDoc(collection(db,"buttons"), { name, link });
   }
 
-  document.getElementById("button-form").reset();
+  // 🔥 limpa campos
+  nameEl.value = "";
+  linkEl.value = "";
+
+  // 🔥 volta tamanho pro padrão
+  nameEl.style.height = "42px";
+  linkEl.style.height = "42px";
+
   await loadButtons();
 });
 async function loadButtons(filter = ""){
@@ -688,11 +713,20 @@ window.deleteButton = async function(id){
 };
 
 window.editButton = function(id, name, link){
-  document.getElementById("button-name").value = name;
-  document.getElementById("button-link").value = link;
+  const nameEl = document.getElementById("button-name");
+  const linkEl = document.getElementById("button-link");
+
+  nameEl.value = name;
+  linkEl.value = link;
+
+  // 🔥 recalcula altura automaticamente
+  nameEl.style.height = "auto";
+  nameEl.style.height = nameEl.scrollHeight + "px";
+
+  linkEl.style.height = "auto";
+  linkEl.style.height = linkEl.scrollHeight + "px";
 
   currentButtonEditId = id;
-
   document.getElementById("button-submit").innerText = "Atualizar";
 
   showTab('buttons');
@@ -1267,6 +1301,8 @@ function setupAutoResize(id){
 
 setupAutoResize("champ-name");
 setupAutoResize("champ-logo");
+setupAutoResize("button-name");
+setupAutoResize("button-link");
 
 
 
