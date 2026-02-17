@@ -719,16 +719,19 @@ window.editButton = function(id, name, link){
   nameEl.value = name;
   linkEl.value = link;
 
-  // 🔥 força resize correto (Safari precisa de pequeno delay)
-  setTimeout(() => {
-    autoResizeTextarea(nameEl);
-    autoResizeTextarea(linkEl);
-  }, 50);
-
   currentButtonEditId = id;
   document.getElementById("button-submit").innerText = "Atualizar";
 
   showTab('buttons');
+
+  // 🔥 espera a aba aparecer antes de calcular altura
+  setTimeout(() => {
+    nameEl.style.height = "auto";
+    nameEl.style.height = nameEl.scrollHeight + "px";
+
+    linkEl.style.height = "auto";
+    linkEl.style.height = linkEl.scrollHeight + "px";
+  }, 200);
 
   setTimeout(() => {
     const form = document.getElementById("button-form");
@@ -738,7 +741,7 @@ window.editButton = function(id, name, link){
       top: y,
       behavior: "smooth"
     });
-  }, 150);
+  }, 250);
 };
 
 const searchInput = document.getElementById("button-search");
