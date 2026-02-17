@@ -6,7 +6,7 @@ if (!getApps().length) {
     credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      privateKey: process.env.FIREBASE_PRIVATE_KEY,
     }),
   });
 }
@@ -24,7 +24,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(buttons);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Erro ao buscar botões" });
+    console.error("ERRO:", error);
+    res.status(500).json({ error: error.message });
   }
 }
