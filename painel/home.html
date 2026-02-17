@@ -253,7 +253,20 @@
                class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
         <input id="button-link" type="text" placeholder="Link do botão" 
                class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+        <div class="flex gap-2">
+  <button id="button-submit"
+    type="submit"
+    class="bg-green-600 text-white px-4 py-2 rounded w-full">
+    Adicionar
+  </button>
+
+  <button id="button-cancel"
+    type="button"
+    onclick="cancelButtonEdit()"
+    class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+    Cancelar
+  </button>
+</div>
         <div class="relative mb-3">
   
   <!-- Ícone lupa -->
@@ -445,6 +458,14 @@ window.deleteTeam = async function(id){
 };
 
 
+window.cancelButtonEdit = function(){
+  currentButtonEditId = null;
+
+  document.getElementById("button-form").reset();
+  document.getElementById("button-submit").innerText = "Adicionar";
+};
+
+
 
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
@@ -505,7 +526,8 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
   if(currentButtonEditId){
     await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
     currentButtonEditId = null;
-    document.querySelector("#button-form button").innerText = "Adicionar";
+
+    document.getElementById("button-submit").innerText = "Adicionar";
   } else {
     await addDoc(collection(db,"buttons"), { name, link });
   }
@@ -575,14 +597,13 @@ window.editButton = function(id, name, link){
 
   currentButtonEditId = id;
 
-  document.querySelector("#button-form button").innerText = "Atualizar";
+  document.getElementById("button-submit").innerText = "Atualizar";
 
   showTab('buttons');
 
   setTimeout(() => {
     const form = document.getElementById("button-form");
-    const y = form.getBoundingClientRect().top + window.scrollY - 230; 
-    // 110 = altura da topbar + tabs
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
 
     window.scrollTo({
       top: y,
