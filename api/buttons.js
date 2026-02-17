@@ -1,33 +1,30 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs } from "firebase/firestore";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
-  authDomain: "futanium-web.firebaseapp.com",
-  projectId: "futanium-web",
-  storageBucket: "futanium-web.firebasestorage.app",
-  messagingSenderId: "594412535848",
-  appId: "1:594412535848:web:83477e68402960c94ff51d"
-};
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    }),
+  });
+}
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getFirestore();
 
 export default async function handler(req, res) {
   try {
-    const snapshot = await getDocs(collection(db, "buttons"));
-    const buttons = [];
+    const snapshot = await db.collection("buttons").get();
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      buttons.push({
-        name: data.name,
-        link: data.link
-      });
-    });
+    const buttons = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
     res.status(200).json(buttons);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Erro ao buscar botões" });
   }
 }
