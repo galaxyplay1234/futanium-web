@@ -713,25 +713,27 @@ window.deleteButton = async function(id){
 };
 
 window.editButton = function(id, name, link){
-  const nameEl = document.getElementById("button-name");
-  const linkEl = document.getElementById("button-link");
 
-  nameEl.value = name;
-  linkEl.value = link;
+  showTab('buttons'); // 🔥 ativa primeiro
 
-  currentButtonEditId = id;
-  document.getElementById("button-submit").innerText = "Atualizar";
-
-  showTab('buttons');
-
-  // 🔥 espera a aba aparecer antes de calcular altura
   setTimeout(() => {
+
+    const nameEl = document.getElementById("button-name");
+    const linkEl = document.getElementById("button-link");
+
+    nameEl.value = name;
+    linkEl.value = link;
+
     nameEl.style.height = "auto";
     nameEl.style.height = nameEl.scrollHeight + "px";
 
     linkEl.style.height = "auto";
     linkEl.style.height = linkEl.scrollHeight + "px";
-  }, 200);
+
+  }, 100);
+
+  currentButtonEditId = id;
+  document.getElementById("button-submit").innerText = "Atualizar";
 
   setTimeout(() => {
     const form = document.getElementById("button-form");
@@ -741,7 +743,7 @@ window.editButton = function(id, name, link){
       top: y,
       behavior: "smooth"
     });
-  }, 250);
+  }, 150);
 };
 
 const searchInput = document.getElementById("button-search");
