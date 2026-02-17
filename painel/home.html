@@ -247,7 +247,8 @@
     <!-- Botões -->
     <div id="tab-buttons" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
-      <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+      <div id="button-form-container">
+  <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
         <input id="button-name" type="text" placeholder="Nome do canal" 
                class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
         <input id="button-link" type="text" placeholder="Link do botão" 
@@ -274,7 +275,8 @@
   </button>
 
 </div>
-      </form>
+        </form>
+</div>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
           <thead>
@@ -576,6 +578,12 @@ window.editButton = function(id, name, link){
   document.querySelector("#button-form button").innerText = "Atualizar";
 
   showTab('buttons');
+
+  // 👇 rola suavemente até o formulário
+  setTimeout(() => {
+    document.getElementById("button-form-container")
+      .scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 100);
 };
 
 const searchInput = document.getElementById("button-search");
