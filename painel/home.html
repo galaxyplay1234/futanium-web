@@ -561,11 +561,20 @@ window.deleteChamp = async function(id){
 };
 
 window.editChamp = function(id, name, logo){
-  document.getElementById("champ-name").value = name;
-  document.getElementById("champ-logo").value = logo;
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  nameEl.value = name;
+  logoEl.value = logo;
+
+  // 🔥 força recalcular o tamanho imediatamente
+  nameEl.style.height = "auto";
+  nameEl.style.height = nameEl.scrollHeight + "px";
+
+  logoEl.style.height = "auto";
+  logoEl.style.height = logoEl.scrollHeight + "px";
 
   currentChampEditId = id;
-
   document.getElementById("champ-submit").innerText = "Atualizar";
 
   showTab('champions');
@@ -585,7 +594,16 @@ window.editChamp = function(id, name, logo){
 window.cancelChampEdit = function(){
   currentChampEditId = null;
 
-  document.getElementById("champ-form").reset();
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  // 🔥 volta pro tamanho padrão
+  nameEl.style.height = "42px";
+  logoEl.style.height = "42px";
+
   document.getElementById("champ-submit").innerText = "Adicionar";
 
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1230,21 +1248,21 @@ btnSaveAll.addEventListener('click', async () => {
 
 
 // ===== Auto resize textarea (versão estável iPhone) =====
+function autoResizeTextarea(el){
+  if(!el) return;
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
+
 function setupAutoResize(id){
   const el = document.getElementById(id);
   if(!el) return;
 
-  const resize = () => {
-    el.style.height = "auto";
-    el.style.height = el.scrollHeight + "px";
-  };
+  el.addEventListener("input", () => autoResizeTextarea(el));
+  el.addEventListener("change", () => autoResizeTextarea(el));
+  el.addEventListener("focus", () => autoResizeTextarea(el));
 
-  el.addEventListener("input", resize);
-  el.addEventListener("change", resize);
-  el.addEventListener("focus", resize);
-
-  // pequeno delay garante cálculo correto no mobile
-  setTimeout(resize, 100);
+  setTimeout(() => autoResizeTextarea(el), 100);
 }
 
 setupAutoResize("champ-name");
