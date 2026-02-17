@@ -644,26 +644,7 @@ window.cancelTeamEdit = function(){
 
 
 
-const teamSearchInput = document.getElementById("team-search");
-const clearTeamBtn = document.getElementById("clear-team-search");
 
-teamSearchInput.addEventListener("input", function() {
-  const value = this.value;
-
-  if (value.length > 0) {
-    clearTeamBtn.classList.remove("hidden");
-  } else {
-    clearTeamBtn.classList.add("hidden");
-  }
-
-  loadTeams(value);
-});
-
-clearTeamBtn.addEventListener("click", function() {
-  teamSearchInput.value = "";
-  clearTeamBtn.classList.add("hidden");
-  loadTeams();
-});
 
 
 
