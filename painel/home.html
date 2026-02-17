@@ -424,22 +424,7 @@ function populateChannelSelects(buttons) {
   });
 }
 
-function autoResize(el){
-  el.style.height = "auto";
-  el.style.height = el.scrollHeight + "px";
-}
 
-["champ-name","champ-logo"].forEach(id => {
-  const el = document.getElementById(id);
-  if(el){
-    el.addEventListener("input", () => autoResize(el));
-    el.addEventListener("keyup", () => autoResize(el));
-    el.addEventListener("focus", () => autoResize(el));
-
-    // força resize inicial
-    autoResize(el);
-  }
-});
 
 
 // ===== Times =====
@@ -600,7 +585,26 @@ window.cancelChampEdit = function(){
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+// ===== Auto resize textarea (versão estável iPhone) =====
+function setupAutoResize(id){
+  const el = document.getElementById(id);
+  if(!el) return;
 
+  const resize = () => {
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  };
+
+  el.addEventListener("input", resize);
+  el.addEventListener("change", resize);
+  el.addEventListener("focus", resize);
+
+  // pequeno delay garante cálculo correto no mobile
+  setTimeout(resize, 100);
+}
+
+setupAutoResize("champ-name");
+setupAutoResize("champ-logo");
 
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
