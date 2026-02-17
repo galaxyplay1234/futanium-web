@@ -1,13 +1,17 @@
 export default async function handler(req, res) {
   try {
     // 🔐 IP liberado manualmente
-    const MASTER_IP = "177.75.111.25";
+    const MASTER_IPS = [
+  "177.75.111.25",
+  "SEU_OUTRO_IP_AQUI",
+  "MAIS_UM_IP_SE_PRECISAR"
+];
 
     // Captura IP real (Vercel usa x-forwarded-for)
     const forwarded = req.headers["x-forwarded-for"];
     const userIP = forwarded ? forwarded.split(",")[0].trim() : req.socket.remoteAddress;
 
-    const isMaster = userIP === MASTER_IP;
+    const isMaster = MASTER_IPS.includes(userIP);
 
     const url = "https://firestore.googleapis.com/v1/projects/futanium-web/databases/(default)/documents/games";
     const response = await fetch(url);
