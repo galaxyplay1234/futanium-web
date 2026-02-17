@@ -579,11 +579,16 @@ window.editButton = function(id, name, link){
 
   showTab('buttons');
 
-  // 🔥 Sobe exatamente até o início da aba Botões
   setTimeout(() => {
-    const tab = document.getElementById("tab-buttons");
-    tab.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 100);
+    const form = document.getElementById("button-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 110; 
+    // 110 = altura da topbar + tabs
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 150);
 };
 
 const searchInput = document.getElementById("button-search");
