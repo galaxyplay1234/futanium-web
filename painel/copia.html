@@ -25,6 +25,12 @@
   #dashboard {
     padding-top: calc(56px + 48px); /* topbar + tabs */
   }
+  
+  textarea {
+  line-height: 1.4;
+  min-height: 42px;
+}
+  
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -199,12 +205,54 @@
     <!-- Times -->
     <div id="tab-times" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
-      <form id="team-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="team-name" type="text" placeholder="Nome do time" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="team-logo" type="text" placeholder="URL do escudo" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+      <form id="team-form" class="flex flex-col gap-2 mb-4">
+
+  <textarea id="team-name"
+    rows="1"
+    placeholder="Nome do time"
+    class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+  <textarea id="team-logo"
+    rows="1"
+    placeholder="URL do escudo"
+    class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+        <div class="flex gap-2">
+  <button id="team-submit"
+    type="submit"
+    class="bg-green-600 text-white px-4 py-2 rounded w-full">
+    Adicionar
+  </button>
+
+  <button
+    type="button"
+    onclick="cancelTeamEdit()"
+    class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+    Cancelar
+  </button>
+</div>
+
+<div class="relative mb-3">
+  
+  <!-- Ícone lupa -->
+  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+    🔍
+  </span>
+
+  <input 
+    id="team-search" 
+    type="text" 
+    placeholder="Pesquisar time..." 
+    class="w-full pl-9 pr-9 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+  <!-- Botão limpar -->
+  <button 
+    id="clear-team-search" 
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hidden">
+    ✕
+  </button>
+
+</div>
+
       </form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
@@ -223,13 +271,32 @@
     <!-- Campeonatos -->
     <div id="tab-champions" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
-      <form id="champ-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="champ-name" type="text" placeholder="Nome do campeonato" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="champ-logo" type="text" placeholder="URL da logo" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
-      </form>
+      <form id="champ-form" class="flex flex-col gap-2 mb-4">
+  <textarea id="champ-name"
+  rows="1"
+  placeholder="Nome do campeonato"
+  class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+<textarea id="champ-logo"
+  rows="1"
+  placeholder="URL da logo"
+  class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+  <div class="flex gap-2">
+    <button id="champ-submit"
+      type="submit"
+      class="bg-green-600 text-white px-4 py-2 rounded w-full">
+      Adicionar
+    </button>
+
+    <button
+      type="button"
+      onclick="cancelChampEdit()"
+      class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+      Cancelar
+    </button>
+  </div>
+</form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
           <thead>
@@ -248,11 +315,16 @@
     <div id="tab-buttons" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
       <div id="button-form-container">
-  <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="button-name" type="text" placeholder="Nome do canal" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="button-link" type="text" placeholder="Link do botão" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+  <form id="button-form" class="flex flex-col gap-2 mb-4">
+        <textarea id="button-name"
+  rows="1"
+  placeholder="Nome do canal"
+  class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+<textarea id="button-link"
+  rows="1"
+  placeholder="Link do botão"
+  class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
         <div class="flex gap-2">
   <button id="button-submit"
     type="submit"
@@ -329,6 +401,8 @@ const USER = "admin";
 const PASS = "12345";
 let currentEditId = null;
 let currentButtonEditId = null;
+let currentChampEditId = null;
+let currentTeamEditId = null;
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -404,76 +478,210 @@ function populateChannelSelects(buttons) {
   });
 }
 
+
+
+
 // ===== Times =====
 document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
-  const name = document.getElementById("team-name").value.trim();
-  const logo = document.getElementById("team-logo").value.trim();
+
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  const name = nameEl.value.trim();
+  const logo = logoEl.value.trim();
   if (!name || !logo) return;
-  await addDoc(collection(db,"teams"),{name,logo});
-  document.getElementById("team-form").reset();
+
+  if(currentTeamEditId){
+    await updateDoc(doc(db,"teams",currentTeamEditId), { name, logo });
+    currentTeamEditId = null;
+    document.getElementById("team-submit").innerText = "Adicionar";
+  } else {
+    await addDoc(collection(db,"teams"),{name,logo});
+  }
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
+
   await loadTeams();
 });
 
-async function loadTeams(){
-  const q = await getDocs(collection(db, "teams"));
-  const teamsArr = [];
-  q.forEach(docSnap => teamsArr.push({ id: docSnap.id, ...docSnap.data() }));
 
-  // ✅ Ordena em ordem alfabética (ignora maiúsculas e acentos)
-  teamsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+
+async function loadTeams(filter = ""){
+  const q = await getDocs(collection(db, "teams"));
+  let teamsArr = [];
+
+  q.forEach(docSnap => 
+    teamsArr.push({ id: docSnap.id, ...docSnap.data() })
+  );
+
+  // Ordena
+  teamsArr.sort((a, b) => 
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
+
+  // 🔎 Aplica filtro se existir
+  if(filter){
+    const f = filter.toLowerCase();
+    teamsArr = teamsArr.filter(t =>
+      t.name.toLowerCase().includes(f) ||
+      t.logo.toLowerCase().includes(f)
+    );
+  }
 
   const tbody = document.getElementById("teams-list");
   tbody.innerHTML = "";
 
-  // ✅ Reseta selects antes de preencher
   const homeSel = document.getElementById("game-home-team");
   const awaySel = document.getElementById("game-away-team");
+
   resetSelect(homeSel, "Selecione o Time da Casa");
   resetSelect(awaySel, "Selecione o Time Visitante");
 
-  // ✅ Agora renderiza usando a lista ordenada!
   teamsArr.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="p-2">${t.name}</td>
-      <td class="p-2"><img src="${t.logo}" class="h-6"></td>
-      <td class="p-2">
-        <button onclick="deleteTeam('${t.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
-      </td>
-    `;
+  <td class="p-2">${t.name}</td>
+  <td class="p-2"><img src="${t.logo}" class="h-6"></td>
+  <td class="p-2 flex gap-2">
+    <button 
+      onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')" 
+      class="bg-yellow-500 text-white px-2 py-1 rounded">
+      Editar
+    </button>
+
+    <button 
+      onclick="deleteTeam('${t.id}')" 
+      class="bg-red-500 text-white px-2 py-1 rounded">
+      Excluir
+    </button>
+  </td>
+`;
     tbody.appendChild(tr);
 
     homeSel.appendChild(new Option(t.name, t.name));
     awaySel.appendChild(new Option(t.name, t.name));
   });
-  
-  // ao final de loadTeams()
-window.teamsCache = {};
-teamsArr.forEach(t => { window.teamsCache[t.name] = t.logo; })
+
+  window.teamsCache = {};
+  teamsArr.forEach(t => { 
+    window.teamsCache[t.name] = t.logo; 
+  });
 }
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
   await loadTeams();
 };
+  
+  
 
 
 window.cancelButtonEdit = function(){
   currentButtonEditId = null;
 
-  document.getElementById("button-form").reset();
+  const nameEl = document.getElementById("button-name");
+  const linkEl = document.getElementById("button-link");
+
+  nameEl.value = "";
+  linkEl.value = "";
+
+  // 🔥 volta pro tamanho padrão
+  autoResizeTextarea(nameEl);
+autoResizeTextarea(linkEl);
+
   document.getElementById("button-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 };
+
+window.editTeam = function(id, name, logo){
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  nameEl.value = name;
+  logoEl.value = logo;
+
+  currentTeamEditId = id;
+  document.getElementById("team-submit").innerText = "Atualizar";
+
+  showTab('times');
+
+  setTimeout(() => {
+    autoResizeTextarea(nameEl);
+    autoResizeTextarea(logoEl);
+
+    const form = document.getElementById("team-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 200);
+};
+
+window.cancelTeamEdit = function(){
+  currentTeamEditId = null;
+
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
+
+  document.getElementById("team-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+
+const teamSearchInput = document.getElementById("team-search");
+const clearTeamBtn = document.getElementById("clear-team-search");
+
+teamSearchInput.addEventListener("input", function() {
+  const value = this.value;
+
+  if (value.length > 0) {
+    clearTeamBtn.classList.remove("hidden");
+  } else {
+    clearTeamBtn.classList.add("hidden");
+  }
+
+  loadTeams(value);
+});
+
+clearTeamBtn.addEventListener("click", function() {
+  teamSearchInput.value = "";
+  clearTeamBtn.classList.add("hidden");
+  loadTeams();
+});
+
 
 
 
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
+
   const name = document.getElementById("champ-name").value.trim();
   const logo = document.getElementById("champ-logo").value.trim();
   if(!name || !logo) return;
-  await addDoc(collection(db,"championships"),{name,logo});
+
+  if(currentChampEditId){
+    await updateDoc(doc(db,"championships",currentChampEditId), { name, logo });
+    currentChampEditId = null;
+    document.getElementById("champ-submit").innerText = "Adicionar";
+  } else {
+    await addDoc(collection(db,"championships"), { name, logo });
+  }
+
   document.getElementById("champ-form").reset();
   await loadChamps();
 });
@@ -497,9 +705,17 @@ async function loadChamps(){
     tr.innerHTML = `
       <td class="p-2">${c.name}</td>
       <td class="p-2"><img src="${c.logo}" class="h-6"></td>
-      <td class="p-2">
-        <button onclick="deleteChamp('${c.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
-      </td>
+      <td class="p-2 flex gap-2">
+  <button onclick="editChamp('${c.id}','${c.name.replace(/'/g,"\\'")}','${c.logo.replace(/'/g,"\\'")}')" 
+    class="bg-yellow-500 text-white px-2 py-1 rounded">
+    Editar
+  </button>
+
+  <button onclick="deleteChamp('${c.id}')" 
+    class="bg-red-500 text-white px-2 py-1 rounded">
+    Excluir
+  </button>
+</td>
     `;
     tbody.appendChild(tr);
 
@@ -514,25 +730,84 @@ window.deleteChamp = async function(id){
   await loadChamps();
 };
 
+window.editChamp = function(id, name, logo){
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  nameEl.value = name;
+  logoEl.value = logo;
+
+  // 🔥 força recalcular o tamanho imediatamente
+  nameEl.style.height = "auto";
+  nameEl.style.height = nameEl.scrollHeight + "px";
+
+  logoEl.style.height = "auto";
+  logoEl.style.height = logoEl.scrollHeight + "px";
+
+  currentChampEditId = id;
+  document.getElementById("champ-submit").innerText = "Atualizar";
+
+  showTab('champions');
+
+  setTimeout(() => {
+    const form = document.getElementById("champ-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 150);
+};
+
+
+window.cancelChampEdit = function(){
+  currentChampEditId = null;
+
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  // 🔥 volta pro tamanho padrão
+  autoResizeTextarea(nameEl);
+autoResizeTextarea(logoEl);
+
+  document.getElementById("champ-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+
 
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
 
-  const name = document.getElementById("button-name").value.trim();
-  const link = document.getElementById("button-link").value.trim();
+  const nameEl = document.getElementById("button-name");
+  const linkEl = document.getElementById("button-link");
+
+  const name = nameEl.value.trim();
+  const link = linkEl.value.trim();
   if(!name || !link) return;
 
   if(currentButtonEditId){
     await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
     currentButtonEditId = null;
-
     document.getElementById("button-submit").innerText = "Adicionar";
   } else {
     await addDoc(collection(db,"buttons"), { name, link });
   }
 
-  document.getElementById("button-form").reset();
+  // 🔥 limpa campos
+  nameEl.value = "";
+  linkEl.value = "";
+
+  // 🔥 volta tamanho pro padrão
+  autoResizeTextarea(nameEl);
+autoResizeTextarea(linkEl);
+
   await loadButtons();
 });
 async function loadButtons(filter = ""){
@@ -592,14 +867,27 @@ window.deleteButton = async function(id){
 };
 
 window.editButton = function(id, name, link){
-  document.getElementById("button-name").value = name;
-  document.getElementById("button-link").value = link;
+
+  showTab('buttons'); // 🔥 ativa primeiro
+
+  setTimeout(() => {
+
+    const nameEl = document.getElementById("button-name");
+    const linkEl = document.getElementById("button-link");
+
+    nameEl.value = name;
+    linkEl.value = link;
+
+    nameEl.style.height = "auto";
+    nameEl.style.height = nameEl.scrollHeight + "px";
+
+    linkEl.style.height = "auto";
+    linkEl.style.height = linkEl.scrollHeight + "px";
+
+  }, 100);
 
   currentButtonEditId = id;
-
   document.getElementById("button-submit").innerText = "Atualizar";
-
-  showTab('buttons');
 
   setTimeout(() => {
     const form = document.getElementById("button-form");
@@ -1151,6 +1439,30 @@ btnSaveAll.addEventListener('click', async () => {
 
 
 
+// ===== Auto resize textarea (versão estável iPhone) =====
+function autoResizeTextarea(el){
+  if(!el) return;
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
+
+function setupAutoResize(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+
+  el.addEventListener("input", () => autoResizeTextarea(el));
+  el.addEventListener("change", () => autoResizeTextarea(el));
+  el.addEventListener("focus", () => autoResizeTextarea(el));
+
+  setTimeout(() => autoResizeTextarea(el), 100);
+}
+
+setupAutoResize("champ-name");
+setupAutoResize("champ-logo");
+setupAutoResize("button-name");
+setupAutoResize("button-link");
+setupAutoResize("team-name");
+setupAutoResize("team-logo");
 
 
 
