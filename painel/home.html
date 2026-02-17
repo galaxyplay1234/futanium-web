@@ -433,6 +433,11 @@ function autoResize(el){
   const el = document.getElementById(id);
   if(el){
     el.addEventListener("input", () => autoResize(el));
+    el.addEventListener("keyup", () => autoResize(el));
+    el.addEventListener("focus", () => autoResize(el));
+
+    // força resize inicial
+    autoResize(el);
   }
 });
 
