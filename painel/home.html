@@ -224,12 +224,27 @@
     <div id="tab-champions" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
       <form id="champ-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="champ-name" type="text" placeholder="Nome do campeonato" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="champ-logo" type="text" placeholder="URL da logo" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
-      </form>
+  <input id="champ-name" type="text" placeholder="Nome do campeonato" 
+         class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+  
+  <input id="champ-logo" type="text" placeholder="URL da logo" 
+         class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+  <div class="flex gap-2">
+    <button id="champ-submit"
+      type="submit"
+      class="bg-green-600 text-white px-4 py-2 rounded w-full">
+      Adicionar
+    </button>
+
+    <button
+      type="button"
+      onclick="cancelChampEdit()"
+      class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+      Cancelar
+    </button>
+  </div>
+</form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
           <thead>
@@ -329,6 +344,7 @@ const USER = "admin";
 const PASS = "12345";
 let currentEditId = null;
 let currentButtonEditId = null;
+let currentChampEditId = null;
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -470,10 +486,19 @@ window.cancelButtonEdit = function(){
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
+
   const name = document.getElementById("champ-name").value.trim();
   const logo = document.getElementById("champ-logo").value.trim();
   if(!name || !logo) return;
-  await addDoc(collection(db,"championships"),{name,logo});
+
+  if(currentChampEditId){
+    await updateDoc(doc(db,"championships",currentChampEditId), { name, logo });
+    currentChampEditId = null;
+    document.getElementById("champ-submit").innerText = "Adicionar";
+  } else {
+    await addDoc(collection(db,"championships"), { name, logo });
+  }
+
   document.getElementById("champ-form").reset();
   await loadChamps();
 });
@@ -497,9 +522,17 @@ async function loadChamps(){
     tr.innerHTML = `
       <td class="p-2">${c.name}</td>
       <td class="p-2"><img src="${c.logo}" class="h-6"></td>
-      <td class="p-2">
-        <button onclick="deleteChamp('${c.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
-      </td>
+      <td class="p-2 flex gap-2">
+  <button onclick="editChamp('${c.id}','${c.name.replace(/'/g,"\\'")}','${c.logo.replace(/'/g,"\\'")}')" 
+    class="bg-yellow-500 text-white px-2 py-1 rounded">
+    Editar
+  </button>
+
+  <button onclick="deleteChamp('${c.id}')" 
+    class="bg-red-500 text-white px-2 py-1 rounded">
+    Excluir
+  </button>
+</td>
     `;
     tbody.appendChild(tr);
 
@@ -513,6 +546,38 @@ window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
   await loadChamps();
 };
+
+window.editChamp = function(id, name, logo){
+  document.getElementById("champ-name").value = name;
+  document.getElementById("champ-logo").value = logo;
+
+  currentChampEditId = id;
+
+  document.getElementById("champ-submit").innerText = "Atualizar";
+
+  showTab('champions');
+
+  setTimeout(() => {
+    const form = document.getElementById("champ-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 150);
+};
+
+
+window.cancelChampEdit = function(){
+  currentChampEditId = null;
+
+  document.getElementById("champ-form").reset();
+  document.getElementById("champ-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
 
 
 // ===== Botões =====
