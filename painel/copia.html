@@ -247,13 +247,49 @@
     <!-- Botões -->
     <div id="tab-buttons" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
-      <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
+      <div id="button-form-container">
+  <form id="button-form" class="flex flex-col sm:flex-row gap-2 mb-4">
         <input id="button-name" type="text" placeholder="Nome do canal" 
                class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
         <input id="button-link" type="text" placeholder="Link do botão" 
                class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
-      </form>
+        <div class="flex gap-2">
+  <button id="button-submit"
+    type="submit"
+    class="bg-green-600 text-white px-4 py-2 rounded w-full">
+    Adicionar
+  </button>
+
+  <button id="button-cancel"
+    type="button"
+    onclick="cancelButtonEdit()"
+    class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+    Cancelar
+  </button>
+</div>
+        <div class="relative mb-3">
+  
+  <!-- Ícone lupa -->
+  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+    🔍
+  </span>
+
+  <input 
+    id="button-search" 
+    type="text" 
+    placeholder="Pesquisar botão..." 
+    class="w-full pl-9 pr-9 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+  <!-- Botão limpar -->
+  <button 
+    id="clear-search" 
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hidden">
+    ✕
+  </button>
+
+</div>
+        </form>
+</div>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
           <thead>
@@ -292,6 +328,7 @@ const db = getFirestore(app);
 const USER = "admin";
 const PASS = "12345";
 let currentEditId = null;
+let currentButtonEditId = null;
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -421,6 +458,14 @@ window.deleteTeam = async function(id){
 };
 
 
+window.cancelButtonEdit = function(){
+  currentButtonEditId = null;
+
+  document.getElementById("button-form").reset();
+  document.getElementById("button-submit").innerText = "Adicionar";
+};
+
+
 
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
@@ -473,41 +518,130 @@ window.deleteChamp = async function(id){
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
   e.preventDefault();
+
   const name = document.getElementById("button-name").value.trim();
   const link = document.getElementById("button-link").value.trim();
   if(!name || !link) return;
-  await addDoc(collection(db,"buttons"),{name,link});
+
+  if(currentButtonEditId){
+    await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
+    currentButtonEditId = null;
+
+    document.getElementById("button-submit").innerText = "Adicionar";
+  } else {
+    await addDoc(collection(db,"buttons"), { name, link });
+  }
+
   document.getElementById("button-form").reset();
   await loadButtons();
 });
-async function loadButtons(){
-  const q = await getDocs(collection(db,"buttons"));
-  const buttonsArr = [];
-  q.forEach(docSnap => buttonsArr.push({ id: docSnap.id, ...docSnap.data() }));
+async function loadButtons(filter = ""){
 
-  // ✅ Ordena em ordem alfabética pelo nome do botão
-  buttonsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+  const q = await getDocs(collection(db,"buttons"));
+  let buttonsArr = [];
+
+  q.forEach(docSnap => 
+    buttonsArr.push({ id: docSnap.id, ...docSnap.data() })
+  );
+
+  buttonsArr.sort((a, b) => 
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
+
+  if(filter){
+    const f = filter.toLowerCase();
+    buttonsArr = buttonsArr.filter(b => 
+      b.name.toLowerCase().includes(f) ||
+      b.link.toLowerCase().includes(f)
+    );
+  }
 
   const tbody = document.getElementById("buttons-list");
   tbody.innerHTML = "";
 
-  // ✅ Monta a tabela ordenada
   buttonsArr.forEach(b => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td class="p-2">${b.name}</td>
-      <td class="p-2"><a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">${b.link}</a></td>
-      <td class="p-2"><button onclick="deleteButton('${b.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button></td>
+      <td class="p-2">
+  <span 
+  class="cursor-pointer text-black hover:text-gray-600"
+  onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+  ${b.name}
+</span>
+</td>
+      <td class="p-2">
+        <a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">
+          ${b.link}
+        </a>
+      </td>
+      <td class="p-2 flex gap-2">
+        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')" 
+          class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
+        <button onclick="deleteButton('${b.id}')" 
+          class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
 
-  // ✅ Repopula os selects dos canais em ordem alfabética
   populateChannelSelects(buttonsArr);
 }
 window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
   await loadButtons();
+};
+
+window.editButton = function(id, name, link){
+  document.getElementById("button-name").value = name;
+  document.getElementById("button-link").value = link;
+
+  currentButtonEditId = id;
+
+  document.getElementById("button-submit").innerText = "Atualizar";
+
+  showTab('buttons');
+
+  setTimeout(() => {
+    const form = document.getElementById("button-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 150);
+};
+
+const searchInput = document.getElementById("button-search");
+const clearBtn = document.getElementById("clear-search");
+
+searchInput.addEventListener("input", function() {
+  const value = this.value;
+  
+  // Mostra ou esconde botão X
+  if (value.length > 0) {
+    clearBtn.classList.remove("hidden");
+  } else {
+    clearBtn.classList.add("hidden");
+  }
+
+  loadButtons(value);
+});
+
+// Botão limpar
+clearBtn.addEventListener("click", function() {
+  searchInput.value = "";
+  clearBtn.classList.add("hidden");
+  loadButtons();
+});
+
+window.copyButtonLink = async function(link) {
+  try {
+    await navigator.clipboard.writeText(link);
+    showCopyToast("Link copiado!");
+  } catch (err) {
+    console.error("Erro ao copiar:", err);
+  }
 };
 
 // ===== Jogos (Adicionar / Editar) =====
@@ -1014,6 +1148,10 @@ btnSaveAll.addEventListener('click', async () => {
     btnSaveAll.textContent = 'Salvar todos';
   }
 });
+
+
+
+
 
 
 </script>
