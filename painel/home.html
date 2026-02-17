@@ -205,12 +205,31 @@
     <!-- Times -->
     <div id="tab-times" class="tab-content hidden">
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
-      <form id="team-form" class="flex flex-col sm:flex-row gap-2 mb-4">
-        <input id="team-name" type="text" placeholder="Nome do time" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <input id="team-logo" type="text" placeholder="URL do escudo" 
-               class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Adicionar</button>
+      <form id="team-form" class="flex flex-col gap-2 mb-4">
+
+  <textarea id="team-name"
+    rows="1"
+    placeholder="Nome do time"
+    class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+  <textarea id="team-logo"
+    rows="1"
+    placeholder="URL do escudo"
+    class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+        <div class="flex gap-2">
+  <button id="team-submit"
+    type="submit"
+    class="bg-green-600 text-white px-4 py-2 rounded w-full">
+    Adicionar
+  </button>
+
+  <button
+    type="button"
+    onclick="cancelTeamEdit()"
+    class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+    Cancelar
+  </button>
+</div>
       </form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
@@ -360,6 +379,7 @@ const PASS = "12345";
 let currentEditId = null;
 let currentButtonEditId = null;
 let currentChampEditId = null;
+let currentTeamEditId = null;
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -441,11 +461,28 @@ function populateChannelSelects(buttons) {
 // ===== Times =====
 document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
-  const name = document.getElementById("team-name").value.trim();
-  const logo = document.getElementById("team-logo").value.trim();
+
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  const name = nameEl.value.trim();
+  const logo = logoEl.value.trim();
   if (!name || !logo) return;
-  await addDoc(collection(db,"teams"),{name,logo});
-  document.getElementById("team-form").reset();
+
+  if(currentTeamEditId){
+    await updateDoc(doc(db,"teams",currentTeamEditId), { name, logo });
+    currentTeamEditId = null;
+    document.getElementById("team-submit").innerText = "Adicionar";
+  } else {
+    await addDoc(collection(db,"teams"),{name,logo});
+  }
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
+
   await loadTeams();
 });
 
@@ -472,9 +509,17 @@ async function loadTeams(){
     tr.innerHTML = `
       <td class="p-2">${t.name}</td>
       <td class="p-2"><img src="${t.logo}" class="h-6"></td>
-      <td class="p-2">
-        <button onclick="deleteTeam('${t.id}')" class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
-      </td>
+      <td class="p-2 flex gap-2">
+  <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')" 
+    class="bg-yellow-500 text-white px-2 py-1 rounded">
+    Editar
+  </button>
+
+  <button onclick="deleteTeam('${t.id}')" 
+    class="bg-red-500 text-white px-2 py-1 rounded">
+    Excluir
+  </button>
+</td>
     `;
     tbody.appendChild(tr);
 
@@ -510,6 +555,48 @@ autoResizeTextarea(linkEl);
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
+window.editTeam = function(id, name, logo){
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  nameEl.value = name;
+  logoEl.value = logo;
+
+  currentTeamEditId = id;
+  document.getElementById("team-submit").innerText = "Atualizar";
+
+  showTab('times');
+
+  setTimeout(() => {
+    autoResizeTextarea(nameEl);
+    autoResizeTextarea(logoEl);
+
+    const form = document.getElementById("team-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 200);
+};
+
+window.cancelTeamEdit = function(){
+  currentTeamEditId = null;
+
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
+
+  document.getElementById("team-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
 
 
 // ===== Campeonatos =====
@@ -1307,6 +1394,8 @@ setupAutoResize("champ-name");
 setupAutoResize("champ-logo");
 setupAutoResize("button-name");
 setupAutoResize("button-link");
+setupAutoResize("team-name");
+setupAutoResize("team-logo");
 
 
 
