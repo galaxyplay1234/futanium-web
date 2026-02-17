@@ -230,6 +230,29 @@
     Cancelar
   </button>
 </div>
+
+<div class="relative mb-3">
+  
+  <!-- Ícone lupa -->
+  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+    🔍
+  </span>
+
+  <input 
+    id="team-search" 
+    type="text" 
+    placeholder="Pesquisar time..." 
+    class="w-full pl-9 pr-9 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+  <!-- Botão limpar -->
+  <button 
+    id="clear-team-search" 
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hidden">
+    ✕
+  </button>
+
+</div>
+
       </form>
       <div class="overflow-x-auto">
         <table class="w-full bg-white rounded shadow text-sm sm:text-base">
@@ -486,13 +509,27 @@ document.getElementById("team-form").addEventListener("submit", async e => {
   await loadTeams();
 });
 
-async function loadTeams(){
+async function loadTeams(filter = ""){
   const q = await getDocs(collection(db, "teams"));
-  const teamsArr = [];
-  q.forEach(docSnap => teamsArr.push({ id: docSnap.id, ...docSnap.data() }));
+  let teamsArr = [];
 
-  // ✅ Ordena em ordem alfabética (ignora maiúsculas e acentos)
-  teamsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+  q.forEach(docSnap => 
+    teamsArr.push({ id: docSnap.id, ...docSnap.data() })
+  );
+
+  // ✅ Ordena em ordem alfabética
+  teamsArr.sort((a, b) => 
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
+
+  // ✅ Aplica filtro se houver
+  if(filter){
+    const f = filter.toLowerCase();
+    teamsArr = teamsArr.filter(t => 
+      t.name.toLowerCase().includes(f) ||
+      t.logo.toLowerCase().includes(f)
+    );
+  }
 
   const tbody = document.getElementById("teams-list");
   tbody.innerHTML = "";
@@ -503,29 +540,36 @@ async function loadTeams(){
   resetSelect(homeSel, "Selecione o Time da Casa");
   resetSelect(awaySel, "Selecione o Time Visitante");
 
-  // ✅ Agora renderiza usando a lista ordenada!
+  // ✅ Renderiza lista
   teamsArr.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">${t.name}</td>
       <td class="p-2"><img src="${t.logo}" class="h-6"></td>
       <td class="p-2 flex gap-2">
-  <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')" 
-    class="bg-yellow-500 text-white px-2 py-1 rounded">
-    Editar
-  </button>
+        <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')" 
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
 
-  <button onclick="deleteTeam('${t.id}')" 
-    class="bg-red-500 text-white px-2 py-1 rounded">
-    Excluir
-  </button>
-</td>
+        <button onclick="deleteTeam('${t.id}')" 
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
 
     homeSel.appendChild(new Option(t.name, t.name));
     awaySel.appendChild(new Option(t.name, t.name));
   });
+
+  // ✅ Atualiza cache
+  window.teamsCache = {};
+  teamsArr.forEach(t => { 
+    window.teamsCache[t.name] = t.logo; 
+  });
+}
   
   // ao final de loadTeams()
 window.teamsCache = {};
@@ -597,6 +641,30 @@ window.cancelTeamEdit = function(){
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
+
+
+
+const teamSearchInput = document.getElementById("team-search");
+const clearTeamBtn = document.getElementById("clear-team-search");
+
+teamSearchInput.addEventListener("input", function() {
+  const value = this.value;
+
+  if (value.length > 0) {
+    clearTeamBtn.classList.remove("hidden");
+  } else {
+    clearTeamBtn.classList.add("hidden");
+  }
+
+  loadTeams(value);
+});
+
+clearTeamBtn.addEventListener("click", function() {
+  teamSearchInput.value = "";
+  clearTeamBtn.classList.add("hidden");
+  loadTeams();
+});
+
 
 
 // ===== Campeonatos =====
