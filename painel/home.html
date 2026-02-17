@@ -579,10 +579,10 @@ window.editButton = function(id, name, link){
 
   showTab('buttons');
 
-  // 👇 rola suavemente até o formulário
+  // 🔥 Sobe exatamente até o início da aba Botões
   setTimeout(() => {
-    document.getElementById("button-form-container")
-      .scrollIntoView({ behavior: "smooth", block: "start" });
+    const tab = document.getElementById("tab-buttons");
+    tab.scrollIntoView({ behavior: "smooth", block: "start" });
   }, 100);
 };
 
