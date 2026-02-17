@@ -14,23 +14,26 @@ if (!getApps().length) {
 const db = getFirestore();
 
 export default async function handler(req, res) {
-  try {
-    const snapshot = await db
-      .collection("buttons")
-      .orderBy("name") // 🔥 ordena pelo nome
-      .get();
+  // ✅ LIBERA CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    const buttons = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        name: data.name,
-        link: data.link
-      };
-    });
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
+  try {
+    const snapshot = await db.collection("buttons").get();
+
+    const buttons = snapshot.docs.map(doc => ({
+      name: doc.data().name,
+      link: doc.data().link
+    }));
 
     res.status(200).json(buttons);
   } catch (error) {
-    console.error("Erro API buttons:", error);
+    console.error(error);
     res.status(500).json({ error: "Erro ao buscar botões" });
   }
 }
