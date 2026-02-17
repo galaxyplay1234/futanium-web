@@ -502,8 +502,8 @@ window.cancelButtonEdit = function(){
   linkEl.value = "";
 
   // 🔥 volta pro tamanho padrão
-  nameEl.style.height = "42px";
-  linkEl.style.height = "42px";
+  autoResizeTextarea(nameEl);
+autoResizeTextarea(linkEl);
 
   document.getElementById("button-submit").innerText = "Adicionar";
 
@@ -651,8 +651,8 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
   linkEl.value = "";
 
   // 🔥 volta tamanho pro padrão
-  nameEl.style.height = "42px";
-  linkEl.style.height = "42px";
+  autoResizeTextarea(nameEl);
+autoResizeTextarea(linkEl);
 
   await loadButtons();
 });
