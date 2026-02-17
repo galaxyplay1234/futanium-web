@@ -719,12 +719,11 @@ window.editButton = function(id, name, link){
   nameEl.value = name;
   linkEl.value = link;
 
-  // 🔥 recalcula altura automaticamente
-  nameEl.style.height = "auto";
-  nameEl.style.height = nameEl.scrollHeight + "px";
-
-  linkEl.style.height = "auto";
-  linkEl.style.height = linkEl.scrollHeight + "px";
+  // 🔥 força resize correto (Safari precisa de pequeno delay)
+  setTimeout(() => {
+    autoResizeTextarea(nameEl);
+    autoResizeTextarea(linkEl);
+  }, 50);
 
   currentButtonEditId = id;
   document.getElementById("button-submit").innerText = "Atualizar";
