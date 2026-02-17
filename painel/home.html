@@ -511,50 +511,64 @@ document.getElementById("team-form").addEventListener("submit", async e => {
 
 
 
-async function loadTeams(){
+async function loadTeams(filter = ""){
   const q = await getDocs(collection(db, "teams"));
-  const teamsArr = [];
-  q.forEach(docSnap => teamsArr.push({ id: docSnap.id, ...docSnap.data() }));
+  let teamsArr = [];
 
-  // ✅ Ordena em ordem alfabética (ignora maiúsculas e acentos)
-  teamsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+  q.forEach(docSnap => 
+    teamsArr.push({ id: docSnap.id, ...docSnap.data() })
+  );
+
+  // Ordena
+  teamsArr.sort((a, b) => 
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
+
+  // 🔎 Aplica filtro se existir
+  if(filter){
+    const f = filter.toLowerCase();
+    teamsArr = teamsArr.filter(t =>
+      t.name.toLowerCase().includes(f) ||
+      t.logo.toLowerCase().includes(f)
+    );
+  }
 
   const tbody = document.getElementById("teams-list");
   tbody.innerHTML = "";
 
-  // ✅ Reseta selects antes de preencher
   const homeSel = document.getElementById("game-home-team");
   const awaySel = document.getElementById("game-away-team");
+
   resetSelect(homeSel, "Selecione o Time da Casa");
   resetSelect(awaySel, "Selecione o Time Visitante");
 
-  // ✅ Agora renderiza usando a lista ordenada!
   teamsArr.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">${t.name}</td>
       <td class="p-2"><img src="${t.logo}" class="h-6"></td>
       <td class="p-2 flex gap-2">
-  <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')" 
-    class="bg-yellow-500 text-white px-2 py-1 rounded">
-    Editar
-  </button>
+        <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
 
-  <button onclick="deleteTeam('${t.id}')" 
-    class="bg-red-500 text-white px-2 py-1 rounded">
-    Excluir
-  </button>
-</td>
+        <button onclick="deleteTeam('${t.id}')
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
 
     homeSel.appendChild(new Option(t.name, t.name));
     awaySel.appendChild(new Option(t.name, t.name));
   });
-  
-  // ao final de loadTeams()
-window.teamsCache = {};
-teamsArr.forEach(t => { window.teamsCache[t.name] = t.logo; })
+
+  window.teamsCache = {};
+  teamsArr.forEach(t => { 
+    window.teamsCache[t.name] = t.logo; 
+  });
 }
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
