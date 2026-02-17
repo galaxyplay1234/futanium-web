@@ -617,8 +617,8 @@ window.cancelChampEdit = function(){
   logoEl.value = "";
 
   // 🔥 volta pro tamanho padrão
-  nameEl.style.height = "42px";
-  logoEl.style.height = "42px";
+  autoResizeTextarea(nameEl);
+autoResizeTextarea(logoEl);
 
   document.getElementById("champ-submit").innerText = "Adicionar";
 
