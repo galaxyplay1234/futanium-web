@@ -1,12 +1,21 @@
 export default async function handler(req, res) {
   try {
+    // 🔐 IP liberado manualmente
+    const MASTER_IP = "177.75.111.25";
+
+    // Captura IP real (Vercel usa x-forwarded-for)
+    const forwarded = req.headers["x-forwarded-for"];
+    const userIP = forwarded ? forwarded.split(",")[0].trim() : req.socket.remoteAddress;
+
+    const isMaster = userIP === MASTER_IP;
+
     const url = "https://firestore.googleapis.com/v1/projects/futanium-web/databases/(default)/documents/games";
     const response = await fetch(url);
     const data = await response.json();
 
     if (!data.documents) return res.status(200).json([]);
 
-    // ✅ Hora local (São Paulo) calculada corretamente em 24h
+    // Hora São Paulo
     const now = new Date();
     const formatter = new Intl.DateTimeFormat("pt-BR", {
       timeZone: "America/Sao_Paulo",
@@ -14,6 +23,7 @@ export default async function handler(req, res) {
       minute: "2-digit",
       hour12: false
     });
+
     const [hourStr, minuteStr] = formatter.format(now).split(":");
     const nowMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
 
@@ -24,19 +34,20 @@ export default async function handler(req, res) {
 
       const isAviso = home.toLowerCase() === "aviso" && away.toLowerCase() === "aviso";
 
-      // Converte hora tipo "13h00" ou "13:00" → minutos
       const matchTimeStr = f.time?.stringValue || "";
       const cleanTime = matchTimeStr.replace("h", ":");
       const [h, m] = cleanTime.split(":").map(v => parseInt(v) || 0);
       const matchMinutes = h * 60 + m;
-      const endMinutes = matchMinutes + 130; // +2h10
+      const endMinutes = matchMinutes + 130;
 
       const isLive = nowMinutes >= matchMinutes && nowMinutes < endMinutes;
       const isFinished = nowMinutes >= endMinutes;
       const minutesToStart = matchMinutes - nowMinutes;
 
-      // 🔓 Libera 15 minutos antes do início
-      const canShowButtons = minutesToStart <= 15;
+      // 🔓 Regra especial
+      const canShowButtons = isMaster
+        ? true
+        : (minutesToStart <= 15);
 
       const allButtons = (f.channels?.arrayValue?.values || []).map((c, i) => ({
         url: c.mapValue.fields.url.stringValue,
@@ -61,7 +72,6 @@ export default async function handler(req, res) {
       };
     });
 
-    // 🕐 Ordenação de prioridade
     games.sort((a, b) => {
       if (a.is_live && !b.is_live) return -1;
       if (!a.is_live && b.is_live) return 1;
@@ -77,6 +87,7 @@ export default async function handler(req, res) {
     });
 
     res.status(200).json(games);
+
   } catch (err) {
     console.error("Erro na API:", err);
     res.status(500).json({ error: "Erro ao buscar jogos" });
