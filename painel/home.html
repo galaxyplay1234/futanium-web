@@ -448,6 +448,28 @@ let champsMemory = [];
 let buttonsMemory = [];
 let gamesMemory = [];
 
+import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+let gamesUnsubscribe = null;
+
+function startGamesListener() {
+
+  if (gamesUnsubscribe) return; // evita criar múltiplos listeners
+
+  gamesUnsubscribe = onSnapshot(collection(db, "games"), snapshot => {
+    gamesMemory = [];
+
+    snapshot.forEach(docSnap => {
+      gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
+    });
+
+    renderGames(); // apenas renderiza
+  });
+
+}
+
+
+
 // ===== Auth & Tabs =====
 window.login = function() {
   const u = document.getElementById("username").value;
@@ -1135,19 +1157,55 @@ teamsMemory.forEach(t => {
   }
 
   document.getElementById("game-form").reset();
-  await loadGames(true);
+  
   showTab('home');
 });
 
-async function loadGames(force = false) {
+function renderGames() {
 
-  if (!gamesMemory.length || force) {
-    const q = await getDocs(collection(db, "games"));
-    gamesMemory = [];
-    q.forEach(docSnap => {
-      gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
-    });
-  }
+  const gamesArr = [...gamesMemory];
+
+  gamesArr.sort((a, b) => {
+    const timeA = parseInt(a.time.replace(":", "").replace("h", ""));
+    const timeB = parseInt(b.time.replace(":", "").replace("h", ""));
+    return timeB - timeA;
+  });
+
+  const ul = document.getElementById("games-list");
+  ul.innerHTML = "";
+
+  gamesArr.forEach(g => {
+
+    const canaisLabel = (g.channels && g.channels.length)
+      ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
+           ${g.channels.map(c => `${c.name}`).join("<br>")}
+         </div>`
+      : "";
+
+    const li = document.createElement("li");
+    li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
+
+    li.innerHTML = `
+      <div class="flex justify-between items-start">
+        <div class="flex items-center gap-2">
+          <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
+          <span class="text-[12px] text-gray-500">${g.champ}</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
+          <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
+        </div>
+      </div>
+
+      <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
+
+      ${canaisLabel}
+    `;
+
+    ul.appendChild(li);
+  });
+
+}
 
   const gamesArr = [...gamesMemory];
 
@@ -1193,7 +1251,6 @@ async function loadGames(force = false) {
 
 window.deleteGame = async function(id){
   await deleteDoc(doc(db,"games",id));
-  await loadGames(true);
 };
 
 window.editGame = async function(id){
@@ -1229,7 +1286,7 @@ async function loadData(){
   await loadTeams();
   await loadChamps();
   await loadButtons();
-  await loadGames();
+  startGamesListener(); // 👈 aqui
 }
 
 // ✅ Limpa qualquer select individualmente ao clicar no "✕"
@@ -1565,7 +1622,7 @@ btnSaveAll.addEventListener('click', async () => {
       };
       await addDoc(collection(db,'games'), payload);
     }
-    await loadGames();
+    
 
     importedRows = [];
     preview.classList.add('hidden');
