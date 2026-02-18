@@ -501,12 +501,28 @@ document.getElementById("team-form").addEventListener("submit", async e => {
   const logo = logoEl.value.trim();
   if (!name || !logo) return;
 
-  if(currentTeamEditId){
-    await updateDoc(doc(db,"teams",currentTeamEditId), { name, logo });
+  if (currentTeamEditId) {
+    await updateDoc(doc(db, "teams", currentTeamEditId), { name, logo });
+
+    // 🔥 Atualiza apenas na memória
+    const index = teamsMemory.findIndex(t => t.id === currentTeamEditId);
+    if (index !== -1) {
+      teamsMemory[index].name = name;
+      teamsMemory[index].logo = logo;
+    }
+
     currentTeamEditId = null;
     document.getElementById("team-submit").innerText = "Adicionar";
+
   } else {
-    await addDoc(collection(db,"teams"),{name,logo});
+    const docRef = await addDoc(collection(db, "teams"), { name, logo });
+
+    // 🔥 Adiciona somente o novo time na memória
+    teamsMemory.push({
+      id: docRef.id,
+      name,
+      logo
+    });
   }
 
   nameEl.value = "";
@@ -515,7 +531,8 @@ document.getElementById("team-form").addEventListener("submit", async e => {
   autoResizeTextarea(nameEl);
   autoResizeTextarea(logoEl);
 
-  await loadTeams("", true);
+  // 🔥 Apenas renderiza usando cache, sem nova leitura
+  await loadTeams();
 });
 
 
