@@ -1023,9 +1023,17 @@ const selected = [
   showTab('home');
 });
 
-async function loadGames() {
-  const q = await getDocs(collection(db, "games"));
-  const gamesArr = [];
+async function loadGames(force = false) {
+
+  if(!gamesMemory.length || force){
+    const q = await getDocs(collection(db, "games"));
+    gamesMemory = [];
+    q.forEach(docSnap =>
+      gamesMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
+
+  const gamesArr = [...gamesMemory];
 
   q.forEach(docSnap => gamesArr.push({ id: docSnap.id, ...docSnap.data() }));
 
@@ -1070,7 +1078,7 @@ async function loadGames() {
 
 window.deleteGame = async function(id){
   await deleteDoc(doc(db,"games",id));
-  await loadGames();
+  await loadGames(true);
 };
 
 window.editGame = async function(id){
