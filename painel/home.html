@@ -697,20 +697,45 @@ clearTeamBtn.addEventListener("click", function() {
 document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
 
-  const name = document.getElementById("champ-name").value.trim();
-  const logo = document.getElementById("champ-logo").value.trim();
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  const name = nameEl.value.trim();
+  const logo = logoEl.value.trim();
   if(!name || !logo) return;
 
   if(currentChampEditId){
+
     await updateDoc(doc(db,"championships",currentChampEditId), { name, logo });
+
+    // 🔥 Atualiza apenas na memória
+    const index = champsMemory.findIndex(c => c.id === currentChampEditId);
+    if(index !== -1){
+      champsMemory[index].name = name;
+      champsMemory[index].logo = logo;
+    }
+
     currentChampEditId = null;
     document.getElementById("champ-submit").innerText = "Adicionar";
+
   } else {
-    await addDoc(collection(db,"championships"), { name, logo });
+
+    const docRef = await addDoc(collection(db,"championships"), { name, logo });
+
+    // 🔥 Adiciona só o novo campeonato na memória
+    champsMemory.push({
+      id: docRef.id,
+      name,
+      logo
+    });
   }
 
-  document.getElementById("champ-form").reset();
-  await loadChamps(true);
+  nameEl.value = "";
+  logoEl.value = "";
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
+
+  await loadChamps(); // ⚡ SEM force
 });
 
 async function loadChamps(force = false){
@@ -765,7 +790,11 @@ async function loadChamps(force = false){
 
 window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
-  await loadChamps(true);
+
+  // 🔥 Remove só da memória
+  champsMemory = champsMemory.filter(c => c.id !== id);
+
+  await loadChamps();
 };
 
 window.editChamp = function(id, name, logo){
@@ -930,7 +959,11 @@ async function loadButtons(filter = "", force = false){
 
 window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
-  await loadButtons("", true);
+
+  // 🔥 Remove só da memória
+  buttonsMemory = buttonsMemory.filter(b => b.id !== id);
+
+  await loadButtons();
 };
 
 window.editButton = function(id, name, link){
