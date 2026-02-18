@@ -601,7 +601,11 @@ async function loadTeams(filter = "", force = false){
 
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
-  await loadTeams("", true);
+
+  // 🔥 Remove só da memória
+  teamsMemory = teamsMemory.filter(t => t.id !== id);
+
+  await loadTeams();
 };
   
   
