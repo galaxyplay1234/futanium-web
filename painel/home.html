@@ -66,6 +66,10 @@
     
     <button onclick="showTab('addgame', false, true)"
         class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('analytics')"
+  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Analytics
+</button>
     <button onclick="showTab('buttons')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
     <button onclick="showTab('import')"
@@ -200,6 +204,28 @@
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
     </div>
+
+
+<!-- Analytics -->
+<div id="tab-analytics" class="tab-content hidden">
+  <h2 class="text-lg sm:text-xl font-semibold mb-4">Analytics do Dia</h2>
+
+  <div class="bg-white rounded shadow p-4 mb-4">
+    <div class="text-xl font-bold mb-2">
+      👥 Usuários únicos: <span id="analytics-users">0</span>
+    </div>
+    <div class="text-xl font-bold">
+      🔥 Total acessos: <span id="analytics-access">0</span>
+    </div>
+  </div>
+
+  <div class="bg-white rounded shadow p-4">
+    <h3 class="font-semibold mb-3">Acessos por hora</h3>
+    <div id="analytics-hours" class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm"></div>
+  </div>
+</div>
+
+
 
 
 <!-- Importar (imagem -> jogos) -->
@@ -1247,6 +1273,7 @@ async function loadData(){
   await loadChamps();
   await loadButtons();
   startGamesListener(); // 👈 aqui
+  listenAnalytics();
 }
 
 // ✅ Limpa qualquer select individualmente ao clicar no "✕"
@@ -1650,6 +1677,51 @@ window.moveChannel = function(position, direction){
   $(`#game-channel${position}`).trigger('change.select2');
   $(`#game-channel${targetPosition}`).trigger('change.select2');
 };
+
+
+
+import { ref, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+
+function listenAnalytics() {
+
+  const nowSP = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const today = nowSP.toISOString().split("T")[0];
+
+  const analyticsRef = ref(rtdb, `analytics/${today}`);
+
+  onValue(analyticsRef, snapshot => {
+
+    const data = snapshot.val();
+    if (!data) return;
+
+    // Atualiza totais
+    document.getElementById("analytics-users").textContent =
+      data.activeUsers || 0;
+
+    document.getElementById("analytics-access").textContent =
+      data.totalAccess || 0;
+
+    // Atualiza horas
+    const hoursDiv = document.getElementById("analytics-hours");
+    hoursDiv.innerHTML = "";
+
+    if (data.hours) {
+      Object.keys(data.hours)
+        .sort()
+        .forEach(hour => {
+          const div = document.createElement("div");
+          div.className = "bg-gray-100 p-2 rounded flex justify-between";
+          div.innerHTML = `
+            <span>${hour}</span>
+            <span class="font-bold">${data.hours[hour]}</span>
+          `;
+          hoursDiv.appendChild(div);
+        });
+    }
+
+  });
+}
+
 
 
 </script>
