@@ -19,7 +19,63 @@ export default async function handler(req, res) {
 
     const isMaster = MASTER_IPS.includes(userIP);
 
+    // ===============================
+    // 🔥 ANALYTICS (NOVO BLOCO)
+    // ===============================
+
+    try {
+      const nowSP = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+      const today = nowSP.toISOString().split("T")[0];
+
+      const hour = nowSP.getHours().toString().padStart(2, "0");
+      const nextHour = ((nowSP.getHours() + 1) % 24).toString().padStart(2, "0");
+      const hourKey = `${hour}:00 - ${nextHour}:00`;
+
+      const safeIP = userIP.replace(/\./g, "_");
+
+      const baseURL = `https://futanium-web-default-rtdb.firebaseio.com/analytics/${today}`;
+
+      // Incrementa totalAccess
+      await fetch(`${baseURL}/totalAccess.json`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          ".sv": { "increment": 1 }
+        })
+      });
+
+      // Incrementa contador da hora
+      await fetch(`${baseURL}/hours/${hourKey}.json`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          ".sv": { "increment": 1 }
+        })
+      });
+
+      // Verifica IP único
+      const ipCheck = await fetch(`${baseURL}/ips/${safeIP}.json`);
+      const ipExists = await ipCheck.json();
+
+      if (!ipExists) {
+        await fetch(`${baseURL}/ips/${safeIP}.json`, {
+          method: "PUT",
+          body: JSON.stringify(true)
+        });
+
+        await fetch(`${baseURL}/activeUsers.json`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            ".sv": { "increment": 1 }
+          })
+        });
+      }
+
+    } catch (analyticsError) {
+      console.log("Erro analytics (ignorado):", analyticsError);
+    }
+
+    // ===============================
     // 🔥 CACHE EM MEMÓRIA
+    // ===============================
     const nowCache = Date.now();
     if (cachedData && (nowCache - lastFetch < CACHE_TIME)) {
       res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate");
@@ -70,7 +126,6 @@ export default async function handler(req, res) {
       const isFinished = nowMinutes >= endMinutes;
       const minutesToStart = matchMinutes - nowMinutes;
 
-      // 🔓 Regra especial (MASTER IP)
       const canShowButtons = isMaster
         ? true
         : (minutesToStart <= 15);
@@ -102,7 +157,6 @@ export default async function handler(req, res) {
       };
     });
 
-    // 🔄 Ordenação original (mantida intacta)
     games.sort((a, b) => {
       if (a.is_live && !b.is_live) return -1;
       if (!a.is_live && b.is_live) return 1;
@@ -119,7 +173,6 @@ export default async function handler(req, res) {
       return 0;
     });
 
-    // 🔥 SALVA NO CACHE
     cachedData = games;
     lastFetch = nowCache;
 
