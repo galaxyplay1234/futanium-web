@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Painel Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Biblioteca Select2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -118,46 +118,81 @@
                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
 
         <!-- Campos fixos para Canais -->
-        <label for="game-channel1" class="block text-sm font-semibold mt-2">Canal 1</label>
+        <label class="block text-sm font-semibold mt-2">Canal 1</label>
 <div class="flex items-center gap-2">
-  <select id="game-channel1" class="p-2 border rounded w-[85%]">
+  <select id="game-channel1" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel1')" 
-    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+
+  <div class="flex flex-col gap-1">
+    <button type="button" onclick="moveChannel(1, -1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
+    <button type="button" onclick="moveChannel(1, 1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
+  </div>
+
+  <button type="button" onclick="clearSelect('game-channel1')"
+    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
     ✕
   </button>
 </div>
 
-<label for="game-channel2" class="block text-sm font-semibold mt-2">Canal 2</label>
+
+<label class="block text-sm font-semibold mt-2">Canal 2</label>
 <div class="flex items-center gap-2">
-  <select id="game-channel2" class="p-2 border rounded w-[85%]">
+  <select id="game-channel2" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel2')" 
-    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+
+  <div class="flex flex-col gap-1">
+    <button type="button" onclick="moveChannel(2, -1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
+    <button type="button" onclick="moveChannel(2, 1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
+  </div>
+
+  <button type="button" onclick="clearSelect('game-channel2')"
+    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
     ✕
   </button>
 </div>
 
-<label for="game-channel3" class="block text-sm font-semibold mt-2">Canal 3</label>
+
+<label class="block text-sm font-semibold mt-2">Canal 3</label>
 <div class="flex items-center gap-2">
-  <select id="game-channel3" class="p-2 border rounded w-[85%]">
+  <select id="game-channel3" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel3')" 
-    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+
+  <div class="flex flex-col gap-1">
+    <button type="button" onclick="moveChannel(3, -1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
+    <button type="button" onclick="moveChannel(3, 1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
+  </div>
+
+  <button type="button" onclick="clearSelect('game-channel3')"
+    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
     ✕
   </button>
 </div>
 
-<label for="game-channel4" class="block text-sm font-semibold mt-2">Canal 4</label>
+
+<label class="block text-sm font-semibold mt-2">Canal 4</label>
 <div class="flex items-center gap-2">
-  <select id="game-channel4" class="p-2 border rounded w-[85%]">
+  <select id="game-channel4" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel4')" 
-    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+
+  <div class="flex flex-col gap-1">
+    <button type="button" onclick="moveChannel(4, -1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
+    <button type="button" onclick="moveChannel(4, 1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
+  </div>
+
+  <button type="button" onclick="clearSelect('game-channel4')"
+    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
     ✕
   </button>
 </div>
@@ -412,6 +447,28 @@ let teamsMemory = [];
 let champsMemory = [];
 let buttonsMemory = [];
 let gamesMemory = [];
+
+import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+let gamesUnsubscribe = null;
+
+function startGamesListener() {
+
+  if (gamesUnsubscribe) return; // evita criar múltiplos listeners
+
+  gamesUnsubscribe = onSnapshot(collection(db, "games"), snapshot => {
+    gamesMemory = [];
+
+    snapshot.forEach(docSnap => {
+      gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
+    });
+
+    renderGames(); // apenas renderiza
+  });
+
+}
+
+
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -1100,19 +1157,11 @@ teamsMemory.forEach(t => {
   }
 
   document.getElementById("game-form").reset();
-  await loadGames(true);
+  
   showTab('home');
 });
 
-async function loadGames(force = false) {
-
-  if (!gamesMemory.length || force) {
-    const q = await getDocs(collection(db, "games"));
-    gamesMemory = [];
-    q.forEach(docSnap => {
-      gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
-    });
-  }
+function renderGames() {
 
   const gamesArr = [...gamesMemory];
 
@@ -1126,6 +1175,7 @@ async function loadGames(force = false) {
   ul.innerHTML = "";
 
   gamesArr.forEach(g => {
+
     const canaisLabel = (g.channels && g.channels.length)
       ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
            ${g.channels.map(c => `${c.name}`).join("<br>")}
@@ -1154,11 +1204,13 @@ async function loadGames(force = false) {
 
     ul.appendChild(li);
   });
+
 }
+
+  
 
 window.deleteGame = async function(id){
   await deleteDoc(doc(db,"games",id));
-  await loadGames(true);
 };
 
 window.editGame = async function(id){
@@ -1194,7 +1246,7 @@ async function loadData(){
   await loadTeams();
   await loadChamps();
   await loadButtons();
-  await loadGames();
+  startGamesListener(); // 👈 aqui
 }
 
 // ✅ Limpa qualquer select individualmente ao clicar no "✕"
@@ -1530,7 +1582,7 @@ btnSaveAll.addEventListener('click', async () => {
       };
       await addDoc(collection(db,'games'), payload);
     }
-    await loadGames();
+    
 
     importedRows = [];
     preview.classList.add('hidden');
@@ -1574,6 +1626,30 @@ setupAutoResize("button-link");
 setupAutoResize("team-name");
 setupAutoResize("team-logo");
 
+
+
+window.moveChannel = function(position, direction){
+
+  const current = document.getElementById(`game-channel${position}`);
+  if(!current) return;
+
+  const targetPosition = position + direction;
+
+  // Limites (1 a 4)
+  if(targetPosition < 1 || targetPosition > 4) return;
+
+  const target = document.getElementById(`game-channel${targetPosition}`);
+  if(!target) return;
+
+  // Troca os valores
+  const tempValue = current.value;
+  current.value = target.value;
+  target.value = tempValue;
+
+  // Atualiza Select2
+  $(`#game-channel${position}`).trigger('change.select2');
+  $(`#game-channel${targetPosition}`).trigger('change.select2');
+};
 
 
 </script>
