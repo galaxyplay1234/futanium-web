@@ -515,7 +515,7 @@ document.getElementById("team-form").addEventListener("submit", async e => {
   autoResizeTextarea(nameEl);
   autoResizeTextarea(logoEl);
 
-  await loadTeams();
+  await loadTeams("", true);
 });
 
 
@@ -693,7 +693,7 @@ document.getElementById("champ-form").addEventListener("submit", async e=>{
   }
 
   document.getElementById("champ-form").reset();
-  await loadChamps();
+  await loadChamps(true);
 });
 async function loadChamps(){
   const q = await getDocs(collection(db,"championships"));
@@ -818,7 +818,7 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
   autoResizeTextarea(nameEl);
 autoResizeTextarea(linkEl);
 
-  await loadButtons();
+  await loadButtons("", true);
 });
 
 
@@ -1019,7 +1019,7 @@ const selected = [
   }
 
   document.getElementById("game-form").reset();
-  await loadGames();
+  await loadGames(true);
   showTab('home');
 });
 
