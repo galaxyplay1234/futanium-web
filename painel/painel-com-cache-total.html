@@ -1,0 +1,1581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Biblioteca Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <style>
+  /* remove o padding-top do body */
+  body {
+    margin: 0;
+  }
+
+  /* remove o "x" padrão do Select2 */
+.select2-selection__clear {
+  display: none !important;
+}
+
+
+  /* aplica apenas no dashboard */
+  #dashboard {
+    padding-top: calc(56px + 48px); /* topbar + tabs */
+  }
+  
+  textarea {
+  line-height: 1.4;
+  min-height: 42px;
+}
+  
+</style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Tela de Login -->
+  <div id="login-screen" class="flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-sm bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-bold mb-6 text-center">Login</h2>
+      <input id="username" type="text" placeholder="Usuário" 
+             class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <input id="password" type="password" placeholder="Senha" 
+             class="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-blue-400">
+      <button onclick="login()" 
+              class="w-full bg-blue-600 text-white p-3 rounded font-semibold hover:bg-blue-700">
+        Entrar
+      </button>
+      <p id="login-error" class="text-red-500 text-sm mt-3 hidden text-center">Usuário ou senha incorretos!</p>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden w-full max-w-5xl mx-auto px-4">
+
+  <!-- Top bar -->
+  <div class="fixed top-0 left-0 right-0 h-14 bg-gray-900 text-white flex items-center justify-between px-4 shadow-md z-50">
+    <div class="font-bold text-lg">Painel Futanium</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="fixed top-14 left-0 right-0 bg-gray-100 px-2 h-12 flex items-center gap-2 z-40 shadow overflow-x-auto whitespace-nowrap">
+    <button onclick="showTab('home')" id="btn-home"
+            class="tab-btn bg-blue-500 text-white px-3 py-1 rounded text-sm">Home</button>
+    
+    <button onclick="showTab('addgame', false, true)"
+        class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('buttons')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
+    <button onclick="showTab('import')"
+        class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Importar
+</button>
+    <button onclick="showTab('times')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Times</button>
+    <button onclick="showTab('champions')"
+            class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Ligas</button>
+    
+  </div>
+
+  <!-- Conteúdo (abaixo da barra + tabs) -->
+  <div class="mt-[104px]">
+    <!-- 56px (h-14 da topbar) + 48px (tabs) = 104px -->
+
+
+
+    <!-- Home -->
+    <div id="tab-home" class="tab-content">
+      <!-- 📊 Contadores em tempo real -->
+<div id="realtime-stats" class="flex justify-between items-center bg-white p-4 rounded shadow mb-4 text-2xl font-bold">
+  <div id="onlineCount">🟢 0</div>
+  <div id="webviewCount">🟡 0</div>
+  <div id="m3u8Count">🔴 0</div>
+  <div id="instaladosCount">📥 0</div>
+</div>
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
+      <ul id="games-list" class="space-y-2"></ul>
+    </div>
+
+    <!-- Adicionar Jogo -->
+    <div id="tab-addgame" class="tab-content hidden">
+      <h2 id="form-title" class="text-lg sm:text-xl font-semibold mb-4">Adicionar Jogo</h2>
+      <form id="game-form" class="flex flex-col gap-2 mb-4">
+        <select id="game-champ" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Campeonato</option>
+        </select>
+        <select id="game-home-team" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Time da Casa</option>
+        </select>
+        <select id="game-away-team" 
+                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="">Selecione o Time Visitante</option>
+        </select>
+        <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
+               class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+        <!-- Campos fixos para Canais -->
+        <label for="game-channel1" class="block text-sm font-semibold mt-2">Canal 1</label>
+<div class="flex items-center gap-2">
+  <select id="game-channel1" class="p-2 border rounded w-[85%]">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel1')" 
+    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+    ✕
+  </button>
+</div>
+
+<label for="game-channel2" class="block text-sm font-semibold mt-2">Canal 2</label>
+<div class="flex items-center gap-2">
+  <select id="game-channel2" class="p-2 border rounded w-[85%]">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel2')" 
+    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+    ✕
+  </button>
+</div>
+
+<label for="game-channel3" class="block text-sm font-semibold mt-2">Canal 3</label>
+<div class="flex items-center gap-2">
+  <select id="game-channel3" class="p-2 border rounded w-[85%]">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel3')" 
+    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+    ✕
+  </button>
+</div>
+
+<label for="game-channel4" class="block text-sm font-semibold mt-2">Canal 4</label>
+<div class="flex items-center gap-2">
+  <select id="game-channel4" class="p-2 border rounded w-[85%]">
+    <option value="">Selecione um botão</option>
+  </select>
+  <button type="button" onclick="clearSelect('game-channel4')" 
+    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+    ✕
+  </button>
+</div>
+
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
+      </form>
+    </div>
+
+
+<!-- Importar (imagem -> jogos) -->
+<div id="tab-import" class="tab-content hidden">
+  <h2 class="text-lg sm:text-xl font-semibold mb-4">Importar jogos por imagem</h2>
+
+  <div class="bg-white rounded shadow p-4 mb-3">
+    <input id="img-file" type="file" accept="image/*"
+           class="block w-full mb-3">
+    <button id="btn-ocr" class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
+            disabled>📥 Ler imagem</button>
+    <span id="ocr-status" class="ml-3 text-sm text-gray-500"></span>
+  </div>
+
+  <div id="import-preview" class="bg-white rounded shadow p-0 overflow-hidden hidden">
+    <div class="px-4 py-3 border-b font-semibold">Pré-visualização</div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-2 text-left">Hora</th>
+            <th class="p-2 text-left">Campeonato</th>
+            <th class="p-2 text-left">Casa</th>
+            <th class="p-2 text-left">Fora</th>
+          </tr>
+        </thead>
+        <tbody id="import-tbody"></tbody>
+      </table>
+    </div>
+    <div class="p-3 border-t flex justify-between items-center">
+      <div class="text-gray-500 text-sm" id="import-count"></div>
+      <button id="btn-save-all" class="bg-green-600 text-white px-4 py-2 rounded">Salvar todos</button>
+    </div>
+  </div>
+</div>
+
+
+    <!-- Times -->
+    <div id="tab-times" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Times</h2>
+      <form id="team-form" class="flex flex-col gap-2 mb-4">
+
+  <textarea id="team-name"
+    rows="1"
+    placeholder="Nome do time"
+    class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+  <textarea id="team-logo"
+    rows="1"
+    placeholder="URL do escudo"
+    class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+        <div class="flex gap-2">
+  <button id="team-submit"
+    type="submit"
+    class="bg-green-600 text-white px-4 py-2 rounded w-full">
+    Adicionar
+  </button>
+
+  <button
+    type="button"
+    onclick="cancelTeamEdit()"
+    class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+    Cancelar
+  </button>
+</div>
+
+<div class="relative mb-3">
+  
+  <!-- Ícone lupa -->
+  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+    🔍
+  </span>
+
+  <input 
+    id="team-search" 
+    type="text" 
+    placeholder="Pesquisar time..." 
+    class="w-full pl-9 pr-9 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+  <!-- Botão limpar -->
+  <button 
+    id="clear-team-search" 
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hidden">
+    ✕
+  </button>
+
+</div>
+
+      </form>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Time</th>
+              <th class="p-2 text-left">Escudo</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="teams-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Campeonatos -->
+    <div id="tab-champions" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Campeonatos</h2>
+      <form id="champ-form" class="flex flex-col gap-2 mb-4">
+  <textarea id="champ-name"
+  rows="1"
+  placeholder="Nome do campeonato"
+  class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+<textarea id="champ-logo"
+  rows="1"
+  placeholder="URL da logo"
+  class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+  <div class="flex gap-2">
+    <button id="champ-submit"
+      type="submit"
+      class="bg-green-600 text-white px-4 py-2 rounded w-full">
+      Adicionar
+    </button>
+
+    <button
+      type="button"
+      onclick="cancelChampEdit()"
+      class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+      Cancelar
+    </button>
+  </div>
+</form>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Campeonato</th>
+              <th class="p-2 text-left">Logo</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="champions-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Botões -->
+    <div id="tab-buttons" class="tab-content hidden">
+      <h2 class="text-lg sm:text-xl font-semibold mb-4">Botões</h2>
+      <div id="button-form-container">
+  <form id="button-form" class="flex flex-col gap-2 mb-4">
+        <textarea id="button-name"
+  rows="1"
+  placeholder="Nome do canal"
+  class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+
+<textarea id="button-link"
+  rows="1"
+  placeholder="Link do botão"
+  class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+        <div class="flex gap-2">
+  <button id="button-submit"
+    type="submit"
+    class="bg-green-600 text-white px-4 py-2 rounded w-full">
+    Adicionar
+  </button>
+
+  <button id="button-cancel"
+    type="button"
+    onclick="cancelButtonEdit()"
+    class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+    Cancelar
+  </button>
+</div>
+        <div class="relative mb-3">
+  
+  <!-- Ícone lupa -->
+  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
+    🔍
+  </span>
+
+  <input 
+    id="button-search" 
+    type="text" 
+    placeholder="Pesquisar botão..." 
+    class="w-full pl-9 pr-9 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+  <!-- Botão limpar -->
+  <button 
+    id="clear-search" 
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hidden">
+    ✕
+  </button>
+
+</div>
+        </form>
+</div>
+      <div class="overflow-x-auto">
+        <table class="w-full bg-white rounded shadow text-sm sm:text-base">
+          <thead>
+            <tr class="bg-gray-200">
+              <th class="p-2 text-left">Canal</th>
+              <th class="p-2 text-left">Link</th>
+              <th class="p-2 text-left">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="buttons-list"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<!-- Firebase + Script -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
+    authDomain: "futanium-web.firebaseapp.com",
+    projectId: "futanium-web",
+    storageBucket: "futanium-web.firebasestorage.app",
+    messagingSenderId: "594412535848",
+    appId: "1:594412535848:web:83477e68402960c94ff51d",
+    measurementId: "G-L2RV01TXJC"
+  };
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+enableIndexedDbPersistence(db).catch((err) => {
+  console.log("Persistência não habilitada:", err.code);
+});
+
+const USER = "admin";
+const PASS = "12345";
+let currentEditId = null;
+let currentButtonEditId = null;
+let currentChampEditId = null;
+let currentTeamEditId = null;
+let teamsMemory = [];
+let champsMemory = [];
+let buttonsMemory = [];
+let gamesMemory = [];
+
+// ===== Auth & Tabs =====
+window.login = function() {
+  const u = document.getElementById("username").value;
+  const p = document.getElementById("password").value;
+  if (u === USER && p === PASS) {
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+    showTab('home', true); // abre Home direto e força ativo
+    loadData();
+  } else {
+    document.getElementById("login-error").classList.remove("hidden");
+  }
+};
+
+window.showTab = function(tab, forceActive = false, resetForm = false) {
+  // Esconde todas as abas
+  document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+  document.getElementById("tab-" + tab).classList.remove("hidden");
+
+  // Reseta estilos dos botões
+  document.querySelectorAll(".tab-btn").forEach(el => {
+    el.classList.remove("bg-blue-500", "text-white");
+    el.classList.add("bg-gray-200", "text-gray-700");
+  });
+
+  // Marca o botão clicado
+  if (forceActive) {
+    document.getElementById("btn-home").classList.remove("bg-gray-200", "text-gray-700");
+    document.getElementById("btn-home").classList.add("bg-blue-500", "text-white");
+  } else if (window.event && event.target) {
+    event.target.classList.remove("bg-gray-200", "text-gray-700");
+    event.target.classList.add("bg-blue-500", "text-white");
+  }
+
+  // ✅ Só limpa os selects se resetForm for true (quando for novo jogo)
+  if (tab === "addgame" && resetForm) {
+    currentEditId = null;
+    document.getElementById("form-title").innerText = "Adicionar Jogo";
+    document.getElementById("game-form").reset();
+
+    // Reseta selects manualmente
+    $('#game-champ').val(null).trigger('change');
+    $('#game-home-team').val(null).trigger('change');
+    $('#game-away-team').val(null).trigger('change');
+    $('#game-channel1').val(null).trigger('change');
+    $('#game-channel2').val(null).trigger('change');
+    $('#game-channel3').val(null).trigger('change');
+    $('#game-channel4').val(null).trigger('change');
+  }
+};
+
+// ===== Helpers para selects =====
+function resetSelect(el, placeholder){
+  el.innerHTML = `<option value="">${placeholder}</option>`;
+}
+
+function populateChannelSelects(buttons) {
+  const selects = [
+    document.getElementById('game-channel1'),
+    document.getElementById('game-channel2'),
+    document.getElementById('game-channel3'),
+    document.getElementById('game-channel4'),
+  ];
+
+  selects.forEach(sel => {
+    sel.innerHTML = `<option value="">Selecione um botão</option>`;
+    buttons.forEach(btn => {
+      // Aqui o text = nome real do botão (Ex: ESPN 1)
+      const opt = new Option(btn.name, btn.link);
+      sel.appendChild(opt);
+    });
+  });
+}
+
+
+
+
+// ===== Times =====
+document.getElementById("team-form").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  const name = nameEl.value.trim();
+  const logo = logoEl.value.trim();
+  if (!name || !logo) return;
+
+  if (currentTeamEditId) {
+    await updateDoc(doc(db, "teams", currentTeamEditId), { name, logo });
+
+    // 🔥 Atualiza apenas na memória
+    const index = teamsMemory.findIndex(t => t.id === currentTeamEditId);
+    if (index !== -1) {
+      teamsMemory[index].name = name;
+      teamsMemory[index].logo = logo;
+    }
+
+    currentTeamEditId = null;
+    document.getElementById("team-submit").innerText = "Adicionar";
+
+  } else {
+    const docRef = await addDoc(collection(db, "teams"), { name, logo });
+
+    // 🔥 Adiciona somente o novo time na memória
+    teamsMemory.push({
+      id: docRef.id,
+      name,
+      logo
+    });
+  }
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
+
+  // 🔥 Apenas renderiza usando cache, sem nova leitura
+  await loadTeams();
+});
+
+
+
+async function loadTeams(filter = "", force = false){
+
+  if(!teamsMemory.length || force){
+    const q = await getDocs(collection(db, "teams"));
+    teamsMemory = [];
+    q.forEach(docSnap => 
+      teamsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
+
+  let teamsArr = [...teamsMemory];
+
+  teamsArr.sort((a, b) => 
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
+
+  if(filter){
+    const f = filter.toLowerCase();
+    teamsArr = teamsArr.filter(t =>
+      t.name.toLowerCase().includes(f) ||
+      t.logo.toLowerCase().includes(f)
+    );
+  }
+
+  const tbody = document.getElementById("teams-list");
+  tbody.innerHTML = "";
+
+  const homeSel = document.getElementById("game-home-team");
+  const awaySel = document.getElementById("game-away-team");
+
+  resetSelect(homeSel, "Selecione o Time da Casa");
+  resetSelect(awaySel, "Selecione o Time Visitante");
+
+  teamsArr.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2">${t.name}</td>
+      <td class="p-2"><img src="${t.logo}" class="h-6"></td>
+      <td class="p-2 flex gap-2">
+        <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteTeam('${t.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+
+    homeSel.appendChild(new Option(t.name, t.name));
+    awaySel.appendChild(new Option(t.name, t.name));
+  });
+
+  window.teamsCache = {};
+  teamsArr.forEach(t => { 
+    window.teamsCache[t.name] = t.logo; 
+  });
+}
+
+
+window.deleteTeam = async function(id){
+  await deleteDoc(doc(db,"teams",id));
+
+  // 🔥 Remove só da memória
+  teamsMemory = teamsMemory.filter(t => t.id !== id);
+
+  await loadTeams();
+};
+  
+  
+
+
+window.cancelButtonEdit = function(){
+  currentButtonEditId = null;
+
+  const nameEl = document.getElementById("button-name");
+  const linkEl = document.getElementById("button-link");
+
+  nameEl.value = "";
+  linkEl.value = "";
+
+  // 🔥 volta pro tamanho padrão
+  autoResizeTextarea(nameEl);
+autoResizeTextarea(linkEl);
+
+  document.getElementById("button-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+window.editTeam = function(id, name, logo){
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  nameEl.value = name;
+  logoEl.value = logo;
+
+  currentTeamEditId = id;
+  document.getElementById("team-submit").innerText = "Atualizar";
+
+  showTab('times');
+
+  setTimeout(() => {
+    autoResizeTextarea(nameEl);
+    autoResizeTextarea(logoEl);
+
+    const form = document.getElementById("team-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 200);
+};
+
+window.cancelTeamEdit = function(){
+  currentTeamEditId = null;
+
+  const nameEl = document.getElementById("team-name");
+  const logoEl = document.getElementById("team-logo");
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
+
+  document.getElementById("team-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+
+const teamSearchInput = document.getElementById("team-search");
+const clearTeamBtn = document.getElementById("clear-team-search");
+
+teamSearchInput.addEventListener("input", function() {
+  const value = this.value;
+
+  if (value.length > 0) {
+    clearTeamBtn.classList.remove("hidden");
+  } else {
+    clearTeamBtn.classList.add("hidden");
+  }
+
+  loadTeams(value);
+});
+
+clearTeamBtn.addEventListener("click", function() {
+  teamSearchInput.value = "";
+  clearTeamBtn.classList.add("hidden");
+  loadTeams();
+});
+
+
+
+
+// ===== Campeonatos =====
+document.getElementById("champ-form").addEventListener("submit", async e=>{
+  e.preventDefault();
+
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  const name = nameEl.value.trim();
+  const logo = logoEl.value.trim();
+  if(!name || !logo) return;
+
+  if(currentChampEditId){
+
+    await updateDoc(doc(db,"championships",currentChampEditId), { name, logo });
+
+    // 🔥 Atualiza apenas na memória
+    const index = champsMemory.findIndex(c => c.id === currentChampEditId);
+    if(index !== -1){
+      champsMemory[index].name = name;
+      champsMemory[index].logo = logo;
+    }
+
+    currentChampEditId = null;
+    document.getElementById("champ-submit").innerText = "Adicionar";
+
+  } else {
+
+    const docRef = await addDoc(collection(db,"championships"), { name, logo });
+
+    // 🔥 Adiciona só o novo campeonato na memória
+    champsMemory.push({
+      id: docRef.id,
+      name,
+      logo
+    });
+  }
+
+  nameEl.value = "";
+  logoEl.value = "";
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
+
+  await loadChamps(); // ⚡ SEM force
+});
+
+async function loadChamps(force = false){
+
+  if(!champsMemory.length || force){
+    const q = await getDocs(collection(db,"championships"));
+    champsMemory = [];
+    q.forEach(docSnap =>
+      champsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
+
+  const champsArr = [...champsMemory];
+
+  champsArr.sort((a, b) =>
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
+
+  const tbody = document.getElementById("champions-list");
+  tbody.innerHTML = "";
+
+  const champSel = document.getElementById("game-champ");
+  resetSelect(champSel, "Selecione o Campeonato");
+
+  champsArr.forEach(c => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2">${c.name}</td>
+      <td class="p-2"><img src="${c.logo}" class="h-6"></td>
+      <td class="p-2 flex gap-2">
+        <button onclick="editChamp('${c.id}','${c.name.replace(/'/g,"\\'")}','${c.logo.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteChamp('${c.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+
+    champSel.appendChild(new Option(c.name, c.name));
+  });
+
+  window.champsCache = {};
+  champsArr.forEach(c => {
+    window.champsCache[c.name] = c.logo;
+  });
+}
+
+
+window.deleteChamp = async function(id){
+  await deleteDoc(doc(db,"championships",id));
+
+  // 🔥 Remove só da memória
+  champsMemory = champsMemory.filter(c => c.id !== id);
+
+  await loadChamps();
+};
+
+window.editChamp = function(id, name, logo){
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  nameEl.value = name;
+  logoEl.value = logo;
+
+  // 🔥 força recalcular o tamanho imediatamente
+  nameEl.style.height = "auto";
+  nameEl.style.height = nameEl.scrollHeight + "px";
+
+  logoEl.style.height = "auto";
+  logoEl.style.height = logoEl.scrollHeight + "px";
+
+  currentChampEditId = id;
+  document.getElementById("champ-submit").innerText = "Atualizar";
+
+  showTab('champions');
+
+  setTimeout(() => {
+    const form = document.getElementById("champ-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 150);
+};
+
+
+window.cancelChampEdit = function(){
+  currentChampEditId = null;
+
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  nameEl.value = "";
+  logoEl.value = "";
+
+  // 🔥 volta pro tamanho padrão
+  autoResizeTextarea(nameEl);
+autoResizeTextarea(logoEl);
+
+  document.getElementById("champ-submit").innerText = "Adicionar";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+
+
+// ===== Botões =====
+document.getElementById("button-form").addEventListener("submit", async e=>{
+  e.preventDefault();
+
+  const nameEl = document.getElementById("button-name");
+  const linkEl = document.getElementById("button-link");
+
+  const name = nameEl.value.trim();
+  const link = linkEl.value.trim();
+  if(!name || !link) return;
+
+  if(currentButtonEditId){
+
+    await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
+
+    // 🔥 Atualiza apenas na memória
+    const index = buttonsMemory.findIndex(b => b.id === currentButtonEditId);
+    if(index !== -1){
+      buttonsMemory[index].name = name;
+      buttonsMemory[index].link = link;
+    }
+
+    currentButtonEditId = null;
+    document.getElementById("button-submit").innerText = "Adicionar";
+
+  } else {
+
+    const docRef = await addDoc(collection(db,"buttons"), { name, link });
+
+    // 🔥 Adiciona só o novo botão na memória
+    buttonsMemory.push({
+      id: docRef.id,
+      name,
+      link
+    });
+  }
+
+  // limpa campos
+  nameEl.value = "";
+  linkEl.value = "";
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(linkEl);
+
+  // 🔥 Apenas renderiza usando cache
+  await loadButtons();
+});
+
+
+async function loadButtons(filter = "", force = false){
+
+  if(!buttonsMemory.length || force){
+    const q = await getDocs(collection(db,"buttons"));
+    buttonsMemory = [];
+    q.forEach(docSnap => 
+      buttonsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
+
+  let buttonsArr = [...buttonsMemory];
+
+  buttonsArr.sort((a, b) => 
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
+
+  if(filter){
+    const f = filter.toLowerCase();
+    buttonsArr = buttonsArr.filter(b => 
+      b.name.toLowerCase().includes(f) ||
+      b.link.toLowerCase().includes(f)
+    );
+  }
+
+  const tbody = document.getElementById("buttons-list");
+  tbody.innerHTML = "";
+
+  buttonsArr.forEach(b => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2">
+        <span class="cursor-pointer text-black hover:text-gray-600"
+          onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+          ${b.name}
+        </span>
+      </td>
+      <td class="p-2">
+        <a href="${b.link}" target="_blank"
+          class="text-blue-600 underline break-all">
+          ${b.link}
+        </a>
+      </td>
+      <td class="p-2 flex gap-2">
+        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteButton('${b.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  populateChannelSelects(buttonsArr);
+}
+
+
+
+window.deleteButton = async function(id){
+  await deleteDoc(doc(db,"buttons",id));
+
+  // 🔥 Remove só da memória
+  buttonsMemory = buttonsMemory.filter(b => b.id !== id);
+
+  await loadButtons();
+};
+
+window.editButton = function(id, name, link){
+
+  showTab('buttons'); // 🔥 ativa primeiro
+
+  setTimeout(() => {
+
+    const nameEl = document.getElementById("button-name");
+    const linkEl = document.getElementById("button-link");
+
+    nameEl.value = name;
+    linkEl.value = link;
+
+    nameEl.style.height = "auto";
+    nameEl.style.height = nameEl.scrollHeight + "px";
+
+    linkEl.style.height = "auto";
+    linkEl.style.height = linkEl.scrollHeight + "px";
+
+  }, 100);
+
+  currentButtonEditId = id;
+  document.getElementById("button-submit").innerText = "Atualizar";
+
+  setTimeout(() => {
+    const form = document.getElementById("button-form");
+    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth"
+    });
+  }, 150);
+};
+
+const searchInput = document.getElementById("button-search");
+const clearBtn = document.getElementById("clear-search");
+
+searchInput.addEventListener("input", function() {
+  const value = this.value;
+  
+  // Mostra ou esconde botão X
+  if (value.length > 0) {
+    clearBtn.classList.remove("hidden");
+  } else {
+    clearBtn.classList.add("hidden");
+  }
+
+  loadButtons(value);
+});
+
+// Botão limpar
+clearBtn.addEventListener("click", function() {
+  searchInput.value = "";
+  clearBtn.classList.add("hidden");
+  loadButtons();
+});
+
+window.copyButtonLink = async function(link) {
+  try {
+    await navigator.clipboard.writeText(link);
+    showCopyToast("Link copiado!");
+  } catch (err) {
+    console.error("Erro ao copiar:", err);
+  }
+};
+
+// ===== Jogos (Adicionar / Editar) =====
+document.getElementById("game-form").addEventListener("submit", async e=>{
+  e.preventDefault();
+
+  // 👇 força atualização dos selects Select2 antes de coletar valores
+  $('#game-champ').trigger('change.select2');
+  $('#game-home-team').trigger('change.select2');
+  $('#game-away-team').trigger('change.select2');
+  $('#game-channel1').trigger('change.select2');
+  $('#game-channel2').trigger('change.select2');
+  $('#game-channel3').trigger('change.select2');
+  $('#game-channel4').trigger('change.select2');
+
+  const champ = document.getElementById("game-champ").value;
+  const home  = document.getElementById("game-home-team").value;
+  const away  = document.getElementById("game-away-team").value;
+  const time  = document.getElementById("game-time").value;
+
+  // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
+  // coleta canais selecionados (valor = link, nome = texto real do botão)
+const selected = [
+  { name: document.getElementById("game-channel1").selectedOptions[0]?.text || "", url: document.getElementById("game-channel1").value },
+  { name: document.getElementById("game-channel2").selectedOptions[0]?.text || "", url: document.getElementById("game-channel2").value },
+  { name: document.getElementById("game-channel3").selectedOptions[0]?.text || "", url: document.getElementById("game-channel3").value },
+  { name: document.getElementById("game-channel4").selectedOptions[0]?.text || "", url: document.getElementById("game-channel4").value },
+].filter(c => c.url && c.name && c.name.trim() !== "");
+
+  if(!champ || !home || !away || !time) return;
+
+  // Buscar logo do campeonato
+  let champLogo = "";
+champsMemory.forEach(c => {
+  if(c.name === champ) champLogo = c.logo;
+});
+
+  // Buscar logo dos times
+  let homeLogo = "";
+let awayLogo = "";
+
+teamsMemory.forEach(t => {
+  if(t.name === home) homeLogo = t.logo;
+  if(t.name === away) awayLogo = t.logo;
+});
+
+  const payload = {
+    champ,
+    champ_logo: champLogo,
+    home,
+    home_logo: homeLogo,
+    away,
+    away_logo: awayLogo,
+    time,
+    channels: selected
+  };
+
+  if(currentEditId){
+    await updateDoc(doc(db,"games",currentEditId), payload);
+    currentEditId = null;
+    document.getElementById("form-title").innerText = "Adicionar Jogo";
+  } else {
+    await addDoc(collection(db,"games"), payload);
+  }
+
+  document.getElementById("game-form").reset();
+  await loadGames(true);
+  showTab('home');
+});
+
+async function loadGames(force = false) {
+
+  if (!gamesMemory.length || force) {
+    const q = await getDocs(collection(db, "games"));
+    gamesMemory = [];
+    q.forEach(docSnap => {
+      gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
+    });
+  }
+
+  const gamesArr = [...gamesMemory];
+
+  gamesArr.sort((a, b) => {
+    const timeA = parseInt(a.time.replace(":", "").replace("h", ""));
+    const timeB = parseInt(b.time.replace(":", "").replace("h", ""));
+    return timeB - timeA;
+  });
+
+  const ul = document.getElementById("games-list");
+  ul.innerHTML = "";
+
+  gamesArr.forEach(g => {
+    const canaisLabel = (g.channels && g.channels.length)
+      ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
+           ${g.channels.map(c => `${c.name}`).join("<br>")}
+         </div>`
+      : "";
+
+    const li = document.createElement("li");
+    li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
+
+    li.innerHTML = `
+      <div class="flex justify-between items-start">
+        <div class="flex items-center gap-2">
+          <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
+          <span class="text-[12px] text-gray-500">${g.champ}</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
+          <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
+        </div>
+      </div>
+
+      <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
+
+      ${canaisLabel}
+    `;
+
+    ul.appendChild(li);
+  });
+}
+
+window.deleteGame = async function(id){
+  await deleteDoc(doc(db,"games",id));
+  await loadGames(true);
+};
+
+window.editGame = async function(id){
+  const snap = await getDoc(doc(db,"games",id));
+  if(!snap.exists()) return;
+  const g = snap.data();
+
+  // garante que selects estejam populados
+  await loadChamps();
+  await loadTeams();
+  await loadButtons();
+
+  // 👇 força sincronização do Select2 depois de preencher os selects
+  $('#game-champ').val(g.champ || "").trigger('change.select2');
+  $('#game-home-team').val(g.home || "").trigger('change.select2');
+  $('#game-away-team').val(g.away || "").trigger('change.select2');
+
+  const ch = g.channels || [];
+  $('#game-channel1').val(ch[0]?.url || null).trigger('change.select2');
+$('#game-channel2').val(ch[1]?.url || null).trigger('change.select2');
+$('#game-channel3').val(ch[2]?.url || null).trigger('change.select2');
+$('#game-channel4').val(ch[3]?.url || null).trigger('change.select2');
+
+  document.getElementById("game-time").value = g.time || "";
+
+  currentEditId = id;
+  document.getElementById("form-title").innerText = "Editar Jogo";
+  showTab('addgame');
+};
+
+// ===== Carregar tudo =====
+async function loadData(){
+  await loadTeams();
+  await loadChamps();
+  await loadButtons();
+  await loadGames();
+}
+
+// ✅ Limpa qualquer select individualmente ao clicar no "✕"
+window.clearSelect = function(id) {
+  $('#' + id).val(null).trigger('change');
+};
+
+
+// Ativa busca nos selects
+$(document).ready(function () {
+  $('#game-champ').select2({ placeholder: "Selecione o Campeonato", allowClear: true, width: '100%' });
+  $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa", allowClear: true, width: '100%' });
+  $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante", allowClear: true, width: '100%' });
+
+  // ✅ habilita limpar nos canais
+  $('#game-channel1, #game-channel2, #game-channel3, #game-channel4').select2({
+    placeholder: "Selecione um botão",
+    allowClear: true,     // <- mostra o “x” para limpar
+    width: '100%'
+  });
+});
+
+// ===== Contadores em tempo real (Realtime Database) =====
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
+
+const rtdb = getDatabase(app);
+
+function listenRealtimeCounters() {
+  const nodes = ["online", "webview", "m3u8", "instalados"];
+  const elements = {
+    online: document.getElementById("onlineCount"),
+    webview: document.getElementById("webviewCount"),
+    m3u8: document.getElementById("m3u8Count"),
+    instalados: document.getElementById("instaladosCount"),
+  };
+
+  nodes.forEach(node => {
+    const nodeRef = ref(rtdb, node);
+    onValue(nodeRef, snap => {
+      const data = snap.val();
+      const total = data ? Object.keys(data).length : 0;
+
+      if (elements[node]) {
+        if (node === "online") elements[node].textContent = `🟢 ${total}`;
+        if (node === "webview") elements[node].textContent = `🟡 ${total}`;
+        if (node === "m3u8") elements[node].textContent = `🔴 ${total}`;
+        if (node === "instalados") elements[node].textContent = `📥 ${total}`;
+      }
+    });
+  });
+}
+
+// ⏱️ Inicia a escuta assim que o painel carregar
+listenRealtimeCounters();
+
+
+
+
+
+
+
+
+
+// refs da UI
+const fileInput = document.getElementById('img-file');
+const btnOCR    = document.getElementById('btn-ocr');
+const ocrStatus = document.getElementById('ocr-status');
+const preview   = document.getElementById('import-preview');
+const tbody     = document.getElementById('import-tbody');
+const countEl   = document.getElementById('import-count');
+const btnSaveAll= document.getElementById('btn-save-all');
+
+let importedRows = [];
+
+/* ===== helpers gerais ===== */
+function norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
+function stripAccents(s){ return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function baseKey(s){
+  return stripAccents(s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s\.']/g,'')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function onlyLettersSpaces(s){
+  return norm((s||'').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\s\.\-']/g,''));
+}
+function normalizeTime(str){
+  const digits = (str||'').replace(/[^\d]/g,'');
+  if (digits.length < 3) return '';
+  const hh = digits.slice(0, digits.length - 2).padStart(2,'0');
+  const mm = digits.slice(-2);
+  return `${hh}h${mm}`;
+}
+
+// === times: limpeza leve
+function cleanTeamRaw(s){
+  let t = (s||'')
+    .replace(/[|]/g,'l')
+    .replace(/[“”„]/g,'"')
+    .replace(/[’‘´`]/g,"'")
+    .replace(/^[^A-Za-zÀ-ÖØ-öø-ÿ]+/,'')
+    .replace(/[^A-Za-zÀ-ÖØ-öø-ÿ\.']+$/,'');
+  t = norm(t);
+  t = t.replace(/^J\)\s*/,'J ').replace(/^&\s*/,'').replace(/^\*\s*/,'').replace(/^\d+\s*/,'');
+  return t;
+}
+
+// === fuzzy match
+function levenshtein(a,b){
+  a = baseKey(a); b = baseKey(b);
+  const m=a.length, n=b.length;
+  if (!m) return n; if (!n) return m;
+  const dp = Array(n+1).fill(0);
+  for (let j=0;j<=n;j++) dp[j]=j;
+  for (let i=1;i<=m;i++){
+    let prev=dp[0]; dp[0]=i;
+    for (let j=1;j<=n;j++){
+      const tmp=dp[j];
+      dp[j] = Math.min(dp[j]+1, dp[j-1]+1, prev + (a[i-1]===b[j-1]?0:1));
+      prev=tmp;
+    }
+  }
+  return dp[n];
+}
+function sim(a,b){
+  const L = Math.max(baseKey(a).length, baseKey(b).length) || 1;
+  return 1 - (levenshtein(a,b)/L);
+}
+function fuzzyFindName(raw, dict, minScore=0.62){
+  const keys = Object.keys(dict||{});
+  if (!keys.length) return null;
+
+  const rawB = baseKey(raw);
+  for (const k of keys){ if (baseKey(k) === rawB) return k; }
+  for (const k of keys){ if (baseKey(k).startsWith(rawB) || rawB.startsWith(baseKey(k))) return k; }
+  for (const k of keys){ if (baseKey(k).includes(rawB) || rawB.includes(baseKey(k))) return k; }
+
+  let best=null, bestScore=0;
+  for (const k of keys){
+    const s = sim(raw, k);
+    if (s > bestScore){ bestScore=s; best=k; }
+  }
+  return bestScore >= minScore ? best : null;
+}
+
+// === campeonato 365: usa o texto até o traço; se não casar com o painel, guarda o lido
+function cutAfterDash(s){
+  if (!s) return s;
+  const parts = s.split(/[-–—]/);
+  return (parts[0] || s).trim();
+}
+function resolveChamp365(raw){
+  const cut = cutAfterDash(norm((raw||'').replace(/^[=\-\*\.\s]+/,'')));
+  const match = fuzzyFindName(cut, window.champsCache, 0.62);
+  return match || cut; // se não casar, fica o nome lido do 365
+}
+
+/* ===== regex e filtros ===== */
+const TIME_LINE_RE   = /^\s*(\d{1,2})\s*[:h\. ]\s*(\d{2})\s*$/;
+const TIME_INLINE_RE = /(\d{1,2}\s*[:h\. ]\s*\d{2})/i;
+const JUNK_RE = /^(hoje\b.*|\d{1,2}\.\d{2}\.|preview\b|[\d,]+\s*(\.\d+)?$)/i;
+
+function looksLikeTeam(s){
+  const t = onlyLettersSpaces(s.replace(/^[\*\-•⭐]+/,''));
+  return t.length >= 2;
+}
+
+/* ===== pré-processamento (rápido) ===== */
+async function preprocessImage(file){
+  const img = await new Promise(res=>{
+    const i = new Image();
+    i.onload = ()=>res(i);
+    i.src = URL.createObjectURL(file);
+  });
+  const scale = 2;
+  const canvas = document.createElement('canvas');
+  canvas.width  = img.width * scale;
+  canvas.height = img.height * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
+  const d = imgData.data;
+  for (let p=0; p<d.length; p+=4){
+    const g = (d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114);
+    const v = g > 180 ? 255 : 0;
+    d[p]=d[p+1]=d[p+2]=v;
+  }
+  ctx.putImageData(imgData,0,0);
+  return new Promise(res=>canvas.toBlob(res, 'image/png'));
+}
+
+/* ===== parser OCR → linhas ===== */
+function parseTextToRows(text){
+  text = text
+    .replace(/[\u200B-\u200D\uFEFF]/g,'')
+    .replace(/[|]/g,'l')
+    .replace(/O(?=\d)/g,'0');
+
+  const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
+
+  const lines = rawLines
+    .map(l => l.replace(/\t/g,' ').replace(/\s+/g,' ').trim())
+    .filter(l => l && !JUNK_RE.test(l));
+
+  let currentChamp = '';
+  const rows = [];
+
+  for (let i=0; i<lines.length; i++){
+    const line = lines[i];
+
+    // Cabeçalho de competição (texto, sem hora)
+    const looksHeader = !TIME_INLINE_RE.test(line) &&
+      /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i.test(line);
+
+    if (looksHeader && !/\d/.test(line)){
+      currentChamp = resolveChamp365(line);
+      continue;
+    }
+
+    // Casa / HH:MM / Fora (hora isolada no meio)
+    if (TIME_LINE_RE.test(line)) {
+      const prev = norm(lines[i-1] || '');
+      const next = norm(lines[i+1] || '');
+      const home = prev.replace(/^[\*\-•⭐]+/,'');
+      const away = next.replace(/^[\*\-•⭐]+/,'');
+      if (looksLikeTeam(home) && looksLikeTeam(away)) {
+        const [,hh,mm] = line.match(TIME_LINE_RE);
+        rows.push({ time: normalizeTime(`${hh}:${mm}`), champ: currentChamp || 'Amistoso', home, away });
+        i++;
+        continue;
+      }
+    }
+
+    // "Casa HH:MM Fora" numa linha
+    if (TIME_INLINE_RE.test(line)) {
+      const m = line.match(TIME_INLINE_RE);
+      const timeRaw = m[1];
+      const left  = norm(line.slice(0, m.index)).replace(/^[\*\-•⭐]+/,'');
+      const right = norm(line.slice(m.index + timeRaw.length)).replace(/^[\*\-•⭐]+/,'');
+      if (looksLikeTeam(left) && looksLikeTeam(right)) {
+        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
+        continue;
+      }
+    }
+  }
+
+  // times: limpeza e tentativa de casar com o painel
+  return rows.map(r => {
+    const homeClean = cleanTeamRaw(r.home);
+    const awayClean = cleanTeamRaw(r.away);
+    const homeMatch = fuzzyFindName(homeClean, window.teamsCache);
+    const awayMatch = fuzzyFindName(awayClean, window.teamsCache);
+    return {
+      time: r.time,
+      champ: resolveChamp365(r.champ), // <- campeonato já no formato final
+      home: homeMatch || homeClean,
+      away: awayMatch || awayClean
+    };
+  });
+}
+
+/* ===== UI ===== */
+fileInput.addEventListener('change', () => {
+  btnOCR.disabled = !fileInput.files?.length;
+  ocrStatus.textContent = '';
+});
+
+btnOCR.addEventListener('click', async () => {
+  if (!fileInput.files?.length) return;
+  btnOCR.disabled = true;
+  ocrStatus.textContent = 'Lendo imagem (OCR)…';
+
+  try {
+    const pre = await preprocessImage(fileInput.files[0]);
+    const { data: { text} } = await Tesseract.recognize(pre, 'por+eng', {
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐',
+      psm: 6,
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
+        }
+      }
+    });
+
+    importedRows = parseTextToRows(text);
+
+    // preview (mostra o que será salvo)
+    tbody.innerHTML = '';
+    importedRows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="p-2">${r.time}</td>
+        <td class="p-2">${r.champ}</td>
+        <td class="p-2">${r.home}</td>
+        <td class="p-2">${r.away}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+    countEl.textContent = `${importedRows.length} jogo(s) detectado(s)`;
+    preview.classList.toggle('hidden', importedRows.length === 0);
+    ocrStatus.textContent = importedRows.length ? 'Pronto' : 'Nada detectado';
+
+  } catch (e) {
+    console.error(e);
+    ocrStatus.textContent = 'Falha ao ler imagem';
+  } finally {
+    btnOCR.disabled = false;
+  }
+});
+
+/* ===== SALVAR ===== */
+btnSaveAll.addEventListener('click', async () => {
+  if (!importedRows.length) return;
+
+  window.teamsCache  = window.teamsCache  || {};
+  window.champsCache = window.champsCache || {};
+
+  btnSaveAll.disabled = true;
+  btnSaveAll.textContent = 'Salvando…';
+
+  try {
+    for (const r of importedRows) {
+      const payload = {
+        champ: r.champ,                                 // já vem “casado” ou o lido do 365
+        champ_logo: window.champsCache[r.champ] || '',
+        home: r.home,
+        home_logo: window.teamsCache[r.home] || '',
+        away: r.away,
+        away_logo: window.teamsCache[r.away] || '',
+        time: r.time,
+        channels: []
+      };
+      await addDoc(collection(db,'games'), payload);
+    }
+    await loadGames();
+
+    importedRows = [];
+    preview.classList.add('hidden');
+    tbody.innerHTML = '';
+    fileInput.value = '';
+    btnOCR.disabled = true;
+    ocrStatus.textContent = 'Importado com sucesso!';
+  } catch (e) {
+    console.error(e);
+    ocrStatus.textContent = 'Erro ao salvar';
+  } finally {
+    btnSaveAll.disabled = false;
+    btnSaveAll.textContent = 'Salvar todos';
+  }
+});
+
+
+
+// ===== Auto resize textarea (versão estável iPhone) =====
+function autoResizeTextarea(el){
+  if(!el) return;
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
+
+function setupAutoResize(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+
+  el.addEventListener("input", () => autoResizeTextarea(el));
+  el.addEventListener("change", () => autoResizeTextarea(el));
+  el.addEventListener("focus", () => autoResizeTextarea(el));
+
+  setTimeout(() => autoResizeTextarea(el), 100);
+}
+
+setupAutoResize("champ-name");
+setupAutoResize("champ-logo");
+setupAutoResize("button-name");
+setupAutoResize("button-link");
+setupAutoResize("team-name");
+setupAutoResize("team-logo");
+
+
+
+</script>
+</body>
+</html>
