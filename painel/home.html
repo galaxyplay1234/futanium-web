@@ -695,13 +695,22 @@ document.getElementById("champ-form").addEventListener("submit", async e=>{
   document.getElementById("champ-form").reset();
   await loadChamps(true);
 });
-async function loadChamps(){
-  const q = await getDocs(collection(db,"championships"));
-  const champsArr = [];
-  q.forEach(docSnap => champsArr.push({ id: docSnap.id, ...docSnap.data() }));
 
-  // ✅ Ordena em ordem alfabética pelo nome
-  champsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+async function loadChamps(force = false){
+
+  if(!champsMemory.length || force){
+    const q = await getDocs(collection(db,"championships"));
+    champsMemory = [];
+    q.forEach(docSnap =>
+      champsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
+
+  const champsArr = [...champsMemory];
+
+  champsArr.sort((a, b) =>
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
 
   const tbody = document.getElementById("champions-list");
   tbody.innerHTML = "";
@@ -709,35 +718,37 @@ async function loadChamps(){
   const champSel = document.getElementById("game-champ");
   resetSelect(champSel, "Selecione o Campeonato");
 
-  // ✅ Agora renderiza usando a lista ordenada
   champsArr.forEach(c => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">${c.name}</td>
       <td class="p-2"><img src="${c.logo}" class="h-6"></td>
       <td class="p-2 flex gap-2">
-  <button onclick="editChamp('${c.id}','${c.name.replace(/'/g,"\\'")}','${c.logo.replace(/'/g,"\\'")}')" 
-    class="bg-yellow-500 text-white px-2 py-1 rounded">
-    Editar
-  </button>
-
-  <button onclick="deleteChamp('${c.id}')" 
-    class="bg-red-500 text-white px-2 py-1 rounded">
-    Excluir
-  </button>
-</td>
+        <button onclick="editChamp('${c.id}','${c.name.replace(/'/g,"\\'")}','${c.logo.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteChamp('${c.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
 
     champSel.appendChild(new Option(c.name, c.name));
   });
-  // ao final de loadChamps()
-window.champsCache = {};
-champsArr.forEach(c => { window.champsCache[c.name] = c.logo; });
+
+  window.champsCache = {};
+  champsArr.forEach(c => {
+    window.champsCache[c.name] = c.logo;
+  });
 }
+
+
 window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
-  await loadChamps();
+  await loadChamps(true);
 };
 
 window.editChamp = function(id, name, logo){
@@ -985,19 +996,18 @@ const selected = [
 
   // Buscar logo do campeonato
   let champLogo = "";
-  const champsSnap = await getDocs(collection(db,"championships"));
-  champsSnap.forEach(docSnap => {
-    if(docSnap.data().name === champ) champLogo = docSnap.data().logo;
-  });
+champsMemory.forEach(c => {
+  if(c.name === champ) champLogo = c.logo;
+});
 
   // Buscar logo dos times
   let homeLogo = "";
-  let awayLogo = "";
-  const teamsSnap = await getDocs(collection(db,"teams"));
-  teamsSnap.forEach(docSnap => {
-    if(docSnap.data().name === home) homeLogo = docSnap.data().logo;
-    if(docSnap.data().name === away) awayLogo = docSnap.data().logo;
-  });
+let awayLogo = "";
+
+teamsMemory.forEach(t => {
+  if(t.name === home) homeLogo = t.logo;
+  if(t.name === away) awayLogo = t.logo;
+});
 
   const payload = {
     champ,
