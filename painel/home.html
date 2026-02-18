@@ -1614,31 +1614,25 @@ setupAutoResize("team-logo");
 window.moveChannel = function(position, direction){
 
   const current = document.getElementById(`game-channel${position}`);
+  if(!current) return;
 
-  let targetPosition;
+  const targetPosition = position + direction;
 
-  if(direction === "up"){
-    if(position === 1) return;
-    targetPosition = position - 1;
-  } else {
-    if(position === 4) return;
-    targetPosition = position + 1;
-  }
+  // Limites (1 a 4)
+  if(targetPosition < 1 || targetPosition > 4) return;
 
   const target = document.getElementById(`game-channel${targetPosition}`);
+  if(!target) return;
 
   // Troca os valores
   const tempValue = current.value;
-  const tempText = current.selectedOptions[0]?.text || "";
-
   current.value = target.value;
   target.value = tempValue;
 
   // Atualiza Select2
   $(`#game-channel${position}`).trigger('change.select2');
   $(`#game-channel${targetPosition}`).trigger('change.select2');
-}
-
+};
 
 
 </script>
