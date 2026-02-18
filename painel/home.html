@@ -396,6 +396,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+enableIndexedDbPersistence(db).catch((err) => {
+  console.log("Persistência não habilitada:", err.code);
+});
 
 const USER = "admin";
 const PASS = "12345";
@@ -403,6 +408,10 @@ let currentEditId = null;
 let currentButtonEditId = null;
 let currentChampEditId = null;
 let currentTeamEditId = null;
+let teamsMemory = [];
+let champsMemory = [];
+let buttonsMemory = [];
+let gamesMemory = [];
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -511,20 +520,22 @@ document.getElementById("team-form").addEventListener("submit", async e => {
 
 
 
-async function loadTeams(filter = ""){
-  const q = await getDocs(collection(db, "teams"));
-  let teamsArr = [];
+async function loadTeams(filter = "", force = false){
 
-  q.forEach(docSnap => 
-    teamsArr.push({ id: docSnap.id, ...docSnap.data() })
-  );
+  if(!teamsMemory.length || force){
+    const q = await getDocs(collection(db, "teams"));
+    teamsMemory = [];
+    q.forEach(docSnap => 
+      teamsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
 
-  // Ordena
+  let teamsArr = [...teamsMemory];
+
   teamsArr.sort((a, b) => 
     a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
   );
 
-  // 🔎 Aplica filtro se existir
   if(filter){
     const f = filter.toLowerCase();
     teamsArr = teamsArr.filter(t =>
@@ -545,22 +556,19 @@ async function loadTeams(filter = ""){
   teamsArr.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-  <td class="p-2">${t.name}</td>
-  <td class="p-2"><img src="${t.logo}" class="h-6"></td>
-  <td class="p-2 flex gap-2">
-    <button 
-      onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')" 
-      class="bg-yellow-500 text-white px-2 py-1 rounded">
-      Editar
-    </button>
-
-    <button 
-      onclick="deleteTeam('${t.id}')" 
-      class="bg-red-500 text-white px-2 py-1 rounded">
-      Excluir
-    </button>
-  </td>
-`;
+      <td class="p-2">${t.name}</td>
+      <td class="p-2"><img src="${t.logo}" class="h-6"></td>
+      <td class="p-2 flex gap-2">
+        <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteTeam('${t.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
+    `;
     tbody.appendChild(tr);
 
     homeSel.appendChild(new Option(t.name, t.name));
@@ -572,9 +580,11 @@ async function loadTeams(filter = ""){
     window.teamsCache[t.name] = t.logo; 
   });
 }
+
+
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
-  await loadTeams();
+  await loadTeams("", true);
 };
   
   
@@ -810,14 +820,19 @@ autoResizeTextarea(linkEl);
 
   await loadButtons();
 });
-async function loadButtons(filter = ""){
 
-  const q = await getDocs(collection(db,"buttons"));
-  let buttonsArr = [];
 
-  q.forEach(docSnap => 
-    buttonsArr.push({ id: docSnap.id, ...docSnap.data() })
-  );
+async function loadButtons(filter = "", force = false){
+
+  if(!buttonsMemory.length || force){
+    const q = await getDocs(collection(db,"buttons"));
+    buttonsMemory = [];
+    q.forEach(docSnap => 
+      buttonsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
+
+  let buttonsArr = [...buttonsMemory];
 
   buttonsArr.sort((a, b) => 
     a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
@@ -838,22 +853,26 @@ async function loadButtons(filter = ""){
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">
-  <span 
-  class="cursor-pointer text-black hover:text-gray-600"
-  onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
-  ${b.name}
-</span>
-</td>
+        <span class="cursor-pointer text-black hover:text-gray-600"
+          onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+          ${b.name}
+        </span>
+      </td>
       <td class="p-2">
-        <a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">
+        <a href="${b.link}" target="_blank"
+          class="text-blue-600 underline break-all">
           ${b.link}
         </a>
       </td>
       <td class="p-2 flex gap-2">
-        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')" 
-          class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
-        <button onclick="deleteButton('${b.id}')" 
-          class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteButton('${b.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -861,9 +880,12 @@ async function loadButtons(filter = ""){
 
   populateChannelSelects(buttonsArr);
 }
+
+
+
 window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
-  await loadButtons();
+  await loadButtons("", true);
 };
 
 window.editButton = function(id, name, link){
