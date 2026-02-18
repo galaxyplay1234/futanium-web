@@ -831,22 +831,39 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
   if(!name || !link) return;
 
   if(currentButtonEditId){
+
     await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
+
+    // 🔥 Atualiza apenas na memória
+    const index = buttonsMemory.findIndex(b => b.id === currentButtonEditId);
+    if(index !== -1){
+      buttonsMemory[index].name = name;
+      buttonsMemory[index].link = link;
+    }
+
     currentButtonEditId = null;
     document.getElementById("button-submit").innerText = "Adicionar";
+
   } else {
-    await addDoc(collection(db,"buttons"), { name, link });
+
+    const docRef = await addDoc(collection(db,"buttons"), { name, link });
+
+    // 🔥 Adiciona só o novo botão na memória
+    buttonsMemory.push({
+      id: docRef.id,
+      name,
+      link
+    });
   }
 
-  // 🔥 limpa campos
+  // limpa campos
   nameEl.value = "";
   linkEl.value = "";
-
-  // 🔥 volta tamanho pro padrão
   autoResizeTextarea(nameEl);
-autoResizeTextarea(linkEl);
+  autoResizeTextarea(linkEl);
 
-  await loadButtons("", true);
+  // 🔥 Apenas renderiza usando cache
+  await loadButtons();
 });
 
 
