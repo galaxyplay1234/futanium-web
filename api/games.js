@@ -23,55 +23,42 @@ export default async function handler(req, res) {
     // 🔥 ANALYTICS (NOVO BLOCO)
     // ===============================
 
-    try {
-      const nowSP = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-      const today = nowSP.toISOString().split("T")[0];
+    // ===== ANALYTICS =====
+try {
 
-      const hour = nowSP.getHours().toString().padStart(2, "0");
-      const nextHour = ((nowSP.getHours() + 1) % 24).toString().padStart(2, "0");
-      const hourKey = `${hour}:00 - ${nextHour}:00`;
+  const nowSP = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+  );
 
-      const safeIP = userIP.replace(/\./g, "_");
+  const today = nowSP.toISOString().split("T")[0];
+  const hour = nowSP.getHours().toString().padStart(2, "0") + ":00";
 
-      const baseURL = `https://futanium-web-default-rtdb.firebaseio.com/analytics/${today}`;
+  const ipKey = userIP.replace(/\./g, "_");
 
-      // Incrementa totalAccess
-      await fetch(`${baseURL}/totalAccess.json`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          ".sv": { "increment": 1 }
-        })
-      });
+  const dayRef = ref(rtdb, `analytics/${today}`);
 
-      // Incrementa contador da hora
-      await fetch(`${baseURL}/hours/${hourKey}.json`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          ".sv": { "increment": 1 }
-        })
-      });
+  const snapshot = await get(dayRef);
+  const analyticsData = snapshot.val() || {};
 
-      // Verifica IP único
-      const ipCheck = await fetch(`${baseURL}/ips/${safeIP}.json`);
-      const ipExists = await ipCheck.json();
+  // Atualiza IP único
+  analyticsData.ips = analyticsData.ips || {};
+  analyticsData.ips[ipKey] = true;
 
-      if (!ipExists) {
-        await fetch(`${baseURL}/ips/${safeIP}.json`, {
-          method: "PUT",
-          body: JSON.stringify(true)
-        });
+  // Atualiza total acessos
+  analyticsData.totalAccess = (analyticsData.totalAccess || 0) + 1;
 
-        await fetch(`${baseURL}/activeUsers.json`, {
-          method: "PATCH",
-          body: JSON.stringify({
-            ".sv": { "increment": 1 }
-          })
-        });
-      }
+  // Atualiza usuários únicos
+  analyticsData.activeUsers = Object.keys(analyticsData.ips).length;
 
-    } catch (analyticsError) {
-      console.log("Erro analytics (ignorado):", analyticsError);
-    }
+  // Atualiza horas
+  analyticsData.hours = analyticsData.hours || {};
+  analyticsData.hours[hour] = (analyticsData.hours[hour] || 0) + 1;
+
+  await set(dayRef, analyticsData);
+
+} catch (err) {
+  console.log("Erro analytics:", err);
+}
 
     // ===============================
     // 🔥 CACHE EM MEMÓRIA
