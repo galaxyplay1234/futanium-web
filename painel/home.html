@@ -1682,6 +1682,9 @@ window.moveChannel = function(position, direction){
 
 
 
+let analyticsUnsubscribe = null;
+let currentListeningDay = null;
+
 function listenAnalytics() {
 
   function getTodaySP() {
@@ -1691,18 +1694,35 @@ function listenAnalytics() {
     return nowSP.toISOString().split("T")[0];
   }
 
-  const today = getTodaySP();
-  const analyticsRef = ref(rtdb, `analytics/${today}`);
+  function startListening() {
 
-  onValue(analyticsRef, snapshot => {
+    const today = getTodaySP();
 
-    const data = snapshot.val() || {};
+    // Se já está ouvindo esse dia, não recria
+    if (today === currentListeningDay) return;
 
-    document.getElementById("analytics-users").textContent =
-      data.activeUsers || 0;
+    currentListeningDay = today;
 
-    document.getElementById("analytics-access").textContent =
-      data.totalAccess || 0;
+    // Remove listener antigo
+    if (analyticsUnsubscribe) analyticsUnsubscribe();
+
+    const analyticsRef = ref(rtdb, `analytics/${today}`);
+
+    analyticsUnsubscribe = onValue(analyticsRef, snapshot => {
+
+      const data = snapshot.val() || {};
+
+      document.getElementById("analytics-users").textContent =
+        data.activeUsers || 0;
+
+      document.getElementById("analytics-access").textContent =
+        data.totalAccess || 0;
+
+      renderHours(data.hours || {});
+    });
+  }
+
+  function renderHours(hoursData) {
 
     const hoursDiv = document.getElementById("analytics-hours");
     hoursDiv.innerHTML = "";
@@ -1711,31 +1731,39 @@ function listenAnalytics() {
       new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
     );
 
-    const currentHour = nowSP.getHours().toString().padStart(2, "0") + ":00";
+    const currentHour =
+      nowSP.getHours().toString().padStart(2, "0") + ":00";
 
     for (let i = 0; i < 24; i++) {
 
       const hourKey = i.toString().padStart(2, "0") + ":00";
-      const value = data.hours?.[hourKey] || 0;
+      const value = hoursData[hourKey] || 0;
 
       const div = document.createElement("div");
 
       div.className = `
         p-2 rounded flex justify-between
-        ${hourKey === currentHour 
-          ? "bg-green-100 border border-green-300 font-bold text-green-700" 
+        ${hourKey === currentHour
+          ? "bg-green-100 border border-green-300"
           : "bg-gray-100"}
       `;
 
       div.innerHTML = `
-        <span class="font-semibold">${hourKey}</span>
-        <span class="font-bold">${value}</span>
+        <span>${hourKey}</span>
+        <span class="${hourKey === currentHour ? 'font-bold text-green-700' : ''}">
+          ${value}
+        </span>
       `;
 
       hoursDiv.appendChild(div);
     }
+  }
 
-  });
+  // Inicia imediatamente
+  startListening();
+
+  // Verifica a cada 30 segundos se virou o dia
+  setInterval(startListening, 30000);
 }
 
 
