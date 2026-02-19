@@ -1684,8 +1684,20 @@ window.moveChannel = function(position, direction){
 
 function listenAnalytics() {
 
-  const nowSP = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  const today = nowSP.toISOString().split("T")[0];
+  function getTodaySP() {
+    const now = new Date();
+    const sp = new Date(
+      now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+    );
+
+    const year = sp.getFullYear();
+    const month = String(sp.getMonth() + 1).padStart(2, "0");
+    const day = String(sp.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
+
+  const today = getTodaySP();
 
   const analyticsRef = ref(rtdb, `analytics/${today}`);
 
@@ -1694,14 +1706,12 @@ function listenAnalytics() {
     const data = snapshot.val();
     if (!data) return;
 
-    // Atualiza totais
     document.getElementById("analytics-users").textContent =
       data.activeUsers || 0;
 
     document.getElementById("analytics-access").textContent =
       data.totalAccess || 0;
 
-    // Atualiza horas
     const hoursDiv = document.getElementById("analytics-hours");
     hoursDiv.innerHTML = "";
 
