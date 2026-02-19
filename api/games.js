@@ -1,15 +1,8 @@
 import fetch from "node-fetch";
 
-
-
-let cachedData = null;
-let lastFetch = 0;
-const CACHE_TIME = 30 * 1000; // 30 segundos
-
 export default async function handler(req, res) {
   try {
 
-    // 🔐 IP liberado manualmente
     const MASTER_IPS = [
       "177.75.111.25",
       "181.77.207.80",
@@ -24,70 +17,62 @@ export default async function handler(req, res) {
     const isMaster = MASTER_IPS.includes(userIP);
 
     // ===============================
-// 🔥 ANALYTICS VIA REST (SEGURO)
-// ===============================
-try {
+    // 🔥 ANALYTICS VIA REST
+    // ===============================
+    try {
 
-  const nowSP = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-  );
+      const nowSP = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+      );
 
-  const today = nowSP.toISOString().split("T")[0];
-  const hour = nowSP.getHours().toString().padStart(2, "0") + ":00";
+      const today = nowSP.toISOString().split("T")[0];
+      const hour = nowSP.getHours().toString().padStart(2, "0") + ":00";
 
-  const ipKey = userIP.replace(/\./g, "_");
+      const ipKey = userIP.replace(/\./g, "_");
 
-  const baseURL = "https://futanium-web-default-rtdb.firebaseio.com";
-  const analyticsURL = `${baseURL}/analytics/${today}.json`;
+      const baseURL = "https://futanium-web-default-rtdb.firebaseio.com";
+      const analyticsURL = `${baseURL}/analytics/${today}.json`;
 
-  const snapshot = await fetch(analyticsURL);
-  const analyticsData = await snapshot.json() || {};
+      const snapshot = await fetch(analyticsURL);
+      const analyticsData = await snapshot.json() || {};
 
-  const ips = analyticsData.ips || {};
-  const hours = analyticsData.hours || {};
+      const ips = analyticsData.ips || {};
+      const hours = analyticsData.hours || {};
 
-  ips[ipKey] = true;
+      ips[ipKey] = true;
 
-  const updatedData = {
-    ips,
-    totalAccess: (analyticsData.totalAccess || 0) + 1,
-    activeUsers: Object.keys(ips).length,
-    hours: {
-      ...hours,
-      [hour]: (hours[hour] || 0) + 1
+      const updatedData = {
+        ips,
+        totalAccess: (analyticsData.totalAccess || 0) + 1,
+        activeUsers: Object.keys(ips).length,
+        hours: {
+          ...hours,
+          [hour]: (hours[hour] || 0) + 1
+        }
+      };
+
+      await fetch(analyticsURL, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedData)
+      });
+
+    } catch (err) {
+      console.log("Erro analytics:", err);
     }
-  };
-
-  await fetch(analyticsURL, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(updatedData)
-  });
-
-} catch (err) {
-  console.log("Erro analytics:", err);
-}
 
     // ===============================
-    // 🔥 CACHE EM MEMÓRIA
+    // 🔥 BUSCA DIRETO DO FIRESTORE
     // ===============================
-    const nowCache = Date.now();
-    if (cachedData && (nowCache - lastFetch < CACHE_TIME)) {
-      res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate");
-      return res.status(200).json(cachedData);
-    }
 
     const url = "https://firestore.googleapis.com/v1/projects/futanium-web/databases/(default)/documents/games";
     const response = await fetch(url);
     const data = await response.json();
 
     if (!data.documents) {
-      cachedData = [];
-      lastFetch = nowCache;
       return res.status(200).json([]);
     }
 
-    // Hora São Paulo
     const now = new Date();
     const formatter = new Intl.DateTimeFormat("pt-BR", {
       timeZone: "America/Sao_Paulo",
@@ -141,7 +126,6 @@ try {
         home_team_image_url: f.home_logo?.stringValue || null,
         visiting_team_image_url: f.away_logo?.stringValue || null,
         start_time: f.time?.stringValue || "",
-        end_time: null,
         is_live: isLive,
         is_finished: isFinished,
         start_minutes: matchMinutes,
@@ -156,22 +140,17 @@ try {
       if (a.is_live && !b.is_live) return -1;
       if (!a.is_live && b.is_live) return 1;
       if (a.is_live && b.is_live) return b.start_minutes - a.start_minutes;
-
       if (!a.is_finished && !b.is_finished)
         return a.start_minutes - b.start_minutes;
-
       if (a.is_finished && !b.is_finished) return 1;
       if (!a.is_finished && b.is_finished) return -1;
       if (a.is_finished && b.is_finished)
         return a.start_minutes - b.start_minutes;
-
       return 0;
     });
 
-    cachedData = games;
-    lastFetch = nowCache;
-
-    res.setHeader("Cache-Control", "s-maxage=30, stale-while-revalidate");
+    // 🚫 sem cache
+    res.setHeader("Cache-Control", "no-store");
     res.status(200).json(games);
 
   } catch (err) {
