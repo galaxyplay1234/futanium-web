@@ -1688,11 +1688,10 @@ let currentListeningDay = null;
 function listenAnalytics() {
 
   function getTodaySP() {
-    const nowSP = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-    );
-    return nowSP.toISOString().split("T")[0];
-  }
+  return new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo"
+  });
+}
 
   function startListening() {
 
