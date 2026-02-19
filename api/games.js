@@ -19,11 +19,9 @@ export default async function handler(req, res) {
 
     const isMaster = MASTER_IPS.includes(userIP);
 
-    // ===============================
-    // 🔥 ANALYTICS (NOVO BLOCO)
-    // ===============================
+   import { ref, get, update } from "firebase/database";
 
-    // ===== ANALYTICS =====
+// ===== ANALYTICS =====
 try {
 
   const nowSP = new Date(
@@ -40,21 +38,20 @@ try {
   const snapshot = await get(dayRef);
   const analyticsData = snapshot.val() || {};
 
-  // Atualiza IP único
-  analyticsData.ips = analyticsData.ips || {};
-  analyticsData.ips[ipKey] = true;
+  const ips = analyticsData.ips || {};
+  const hours = analyticsData.hours || {};
 
-  // Atualiza total acessos
-  analyticsData.totalAccess = (analyticsData.totalAccess || 0) + 1;
+  ips[ipKey] = true;
 
-  // Atualiza usuários únicos
-  analyticsData.activeUsers = Object.keys(analyticsData.ips).length;
-
-  // Atualiza horas
-  analyticsData.hours = analyticsData.hours || {};
-  analyticsData.hours[hour] = (analyticsData.hours[hour] || 0) + 1;
-
-  await set(dayRef, analyticsData);
+  await update(dayRef, {
+    ips: ips,
+    totalAccess: (analyticsData.totalAccess || 0) + 1,
+    activeUsers: Object.keys(ips).length,
+    hours: {
+      ...hours,
+      [hour]: (hours[hour] || 0) + 1
+    }
+  });
 
 } catch (err) {
   console.log("Erro analytics:", err);
