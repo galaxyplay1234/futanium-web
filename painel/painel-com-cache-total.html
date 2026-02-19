@@ -66,6 +66,10 @@
     
     <button onclick="showTab('addgame', false, true)"
         class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('analytics')"
+  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Analytics
+</button>
     <button onclick="showTab('buttons')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
     <button onclick="showTab('import')"
@@ -200,6 +204,28 @@
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
     </div>
+
+
+<!-- Analytics -->
+<div id="tab-analytics" class="tab-content hidden">
+  <h2 class="text-lg sm:text-xl font-semibold mb-4">Analytics do Dia</h2>
+
+  <div class="bg-white rounded shadow p-4 mb-4">
+    <div class="text-xl font-bold mb-2">
+      👥 Usuários únicos: <span id="analytics-users">0</span>
+    </div>
+    <div class="text-xl font-bold">
+      🔥 Total acessos: <span id="analytics-access">0</span>
+    </div>
+  </div>
+
+  <div class="bg-white rounded shadow p-4">
+    <h3 class="font-semibold mb-3">Acessos por hora</h3>
+    <div id="analytics-hours" class="flex flex-col gap-2 text-sm"></div>
+  </div>
+</div>
+
+
 
 
 <!-- Importar (imagem -> jogos) -->
@@ -1247,6 +1273,7 @@ async function loadData(){
   await loadChamps();
   await loadButtons();
   startGamesListener(); // 👈 aqui
+  listenAnalytics();
 }
 
 // ✅ Limpa qualquer select individualmente ao clicar no "✕"
@@ -1650,6 +1677,97 @@ window.moveChannel = function(position, direction){
   $(`#game-channel${position}`).trigger('change.select2');
   $(`#game-channel${targetPosition}`).trigger('change.select2');
 };
+
+
+
+
+
+let analyticsUnsubscribe = null;
+let currentListeningDay = null;
+
+function listenAnalytics() {
+
+  function getTodaySP() {
+  return new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo"
+  });
+}
+
+  function startListening() {
+
+    const today = getTodaySP();
+
+    // Se já está ouvindo esse dia, não recria
+    if (today === currentListeningDay) return;
+
+    currentListeningDay = today;
+
+    // Remove listener antigo
+    if (analyticsUnsubscribe) analyticsUnsubscribe();
+
+    const analyticsRef = ref(rtdb, `analytics/${today}`);
+
+    analyticsUnsubscribe = onValue(analyticsRef, snapshot => {
+
+      const data = snapshot.val() || {};
+
+      document.getElementById("analytics-users").textContent =
+        data.activeUsers || 0;
+
+      document.getElementById("analytics-access").textContent =
+        data.totalAccess || 0;
+
+      renderHours(data.hours || {});
+    });
+  }
+
+  function renderHours(hoursData) {
+
+  const hoursDiv = document.getElementById("analytics-hours");
+  hoursDiv.innerHTML = "";
+
+  const nowSP = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+  );
+
+  const currentHourNumber = nowSP.getHours();
+  const currentHour =
+    currentHourNumber.toString().padStart(2, "0") + ":00";
+
+  // 🔥 Começa pela hora atual
+  for (let offset = 0; offset < 24; offset++) {
+
+    const hourNumber = (currentHourNumber + offset) % 24;
+    const hourKey = hourNumber.toString().padStart(2, "0") + ":00";
+    const value = hoursData[hourKey] || 0;
+
+    const div = document.createElement("div");
+
+    div.className = `
+      p-2 rounded flex justify-between
+      ${hourKey === currentHour
+        ? "bg-green-100 border border-green-300"
+        : "bg-gray-100"}
+    `;
+
+    div.innerHTML = `
+      <span>${hourKey}</span>
+      <span class="${hourKey === currentHour ? 'font-bold text-green-700' : ''}">
+        ${value}
+      </span>
+    `;
+
+    hoursDiv.appendChild(div);
+  }
+}
+
+  // Inicia imediatamente
+  startListening();
+
+  // Verifica a cada 30 segundos se virou o dia
+  setInterval(startListening, 30000);
+}
+
 
 
 </script>
