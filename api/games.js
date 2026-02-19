@@ -1,3 +1,16 @@
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, get, update } from "firebase/database";
+
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY_AQUI",
+  authDomain: "futanium-web.firebaseapp.com",
+  databaseURL: "https://futanium-web-default-rtdb.firebaseio.com",
+  projectId: "futanium-web",
+};
+
+const app = initializeApp(firebaseConfig);
+const rtdb = getDatabase(app);
+
 let cachedData = null;
 let lastFetch = 0;
 const CACHE_TIME = 30 * 1000; // 30 segundos
@@ -19,43 +32,43 @@ export default async function handler(req, res) {
 
     const isMaster = MASTER_IPS.includes(userIP);
 
-   import { ref, get, update } from "firebase/database";
+    // ===============================
+    // 🔥 ANALYTICS
+    // ===============================
+    try {
 
-// ===== ANALYTICS =====
-try {
+      const nowSP = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+      );
 
-  const nowSP = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-  );
+      const today = nowSP.toISOString().split("T")[0];
+      const hour = nowSP.getHours().toString().padStart(2, "0") + ":00";
 
-  const today = nowSP.toISOString().split("T")[0];
-  const hour = nowSP.getHours().toString().padStart(2, "0") + ":00";
+      const ipKey = userIP.replace(/\./g, "_");
 
-  const ipKey = userIP.replace(/\./g, "_");
+      const dayRef = ref(rtdb, `analytics/${today}`);
 
-  const dayRef = ref(rtdb, `analytics/${today}`);
+      const snapshot = await get(dayRef);
+      const analyticsData = snapshot.val() || {};
 
-  const snapshot = await get(dayRef);
-  const analyticsData = snapshot.val() || {};
+      const ips = analyticsData.ips || {};
+      const hours = analyticsData.hours || {};
 
-  const ips = analyticsData.ips || {};
-  const hours = analyticsData.hours || {};
+      ips[ipKey] = true;
 
-  ips[ipKey] = true;
+      await update(dayRef, {
+        ips,
+        totalAccess: (analyticsData.totalAccess || 0) + 1,
+        activeUsers: Object.keys(ips).length,
+        hours: {
+          ...hours,
+          [hour]: (hours[hour] || 0) + 1
+        }
+      });
 
-  await update(dayRef, {
-    ips: ips,
-    totalAccess: (analyticsData.totalAccess || 0) + 1,
-    activeUsers: Object.keys(ips).length,
-    hours: {
-      ...hours,
-      [hour]: (hours[hour] || 0) + 1
+    } catch (err) {
+      console.log("Erro analytics:", err);
     }
-  });
-
-} catch (err) {
-  console.log("Erro analytics:", err);
-}
 
     // ===============================
     // 🔥 CACHE EM MEMÓRIA
