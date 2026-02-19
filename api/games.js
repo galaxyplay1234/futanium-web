@@ -1,12 +1,4 @@
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, get, update } from "firebase/database";
-
-const firebaseConfig = {
-  apiKey: "SUA_API_KEY_AQUI",
-  authDomain: "futanium-web.firebaseapp.com",
-  databaseURL: "https://futanium-web-default-rtdb.firebaseio.com",
-  projectId: "futanium-web",
-};
+import fetch from "node-fetch";
 
 const app = initializeApp(firebaseConfig);
 const rtdb = getDatabase(app);
