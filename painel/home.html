@@ -1723,40 +1723,43 @@ function listenAnalytics() {
 
   function renderHours(hoursData) {
 
-    const hoursDiv = document.getElementById("analytics-hours");
-    hoursDiv.innerHTML = "";
+  const hoursDiv = document.getElementById("analytics-hours");
+  hoursDiv.innerHTML = "";
 
-    const nowSP = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-    );
+  const nowSP = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+  );
 
-    const currentHour =
-      nowSP.getHours().toString().padStart(2, "0") + ":00";
+  const currentHourNumber = nowSP.getHours();
+  const currentHour =
+    currentHourNumber.toString().padStart(2, "0") + ":00";
 
-    for (let i = 0; i < 24; i++) {
+  // 🔥 Começa pela hora atual
+  for (let offset = 0; offset < 24; offset++) {
 
-      const hourKey = i.toString().padStart(2, "0") + ":00";
-      const value = hoursData[hourKey] || 0;
+    const hourNumber = (currentHourNumber + offset) % 24;
+    const hourKey = hourNumber.toString().padStart(2, "0") + ":00";
+    const value = hoursData[hourKey] || 0;
 
-      const div = document.createElement("div");
+    const div = document.createElement("div");
 
-      div.className = `
-        p-2 rounded flex justify-between
-        ${hourKey === currentHour
-          ? "bg-green-100 border border-green-300"
-          : "bg-gray-100"}
-      `;
+    div.className = `
+      p-2 rounded flex justify-between
+      ${hourKey === currentHour
+        ? "bg-green-100 border border-green-300"
+        : "bg-gray-100"}
+    `;
 
-      div.innerHTML = `
-        <span>${hourKey}</span>
-        <span class="${hourKey === currentHour ? 'font-bold text-green-700' : ''}">
-          ${value}
-        </span>
-      `;
+    div.innerHTML = `
+      <span>${hourKey}</span>
+      <span class="${hourKey === currentHour ? 'font-bold text-green-700' : ''}">
+        ${value}
+      </span>
+    `;
 
-      hoursDiv.appendChild(div);
-    }
+    hoursDiv.appendChild(div);
   }
+}
 
   // Inicia imediatamente
   startListening();
