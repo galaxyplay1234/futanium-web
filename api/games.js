@@ -24,42 +24,49 @@ export default async function handler(req, res) {
     const isMaster = MASTER_IPS.includes(userIP);
 
     // ===============================
-    // 🔥 ANALYTICS
-    // ===============================
-    try {
+// 🔥 ANALYTICS VIA REST (SEGURO)
+// ===============================
+try {
 
-      const nowSP = new Date(
-        new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-      );
+  const nowSP = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+  );
 
-      const today = nowSP.toISOString().split("T")[0];
-      const hour = nowSP.getHours().toString().padStart(2, "0") + ":00";
+  const today = nowSP.toISOString().split("T")[0];
+  const hour = nowSP.getHours().toString().padStart(2, "0") + ":00";
 
-      const ipKey = userIP.replace(/\./g, "_");
+  const ipKey = userIP.replace(/\./g, "_");
 
-      const dayRef = ref(rtdb, `analytics/${today}`);
+  const baseURL = "https://futanium-web-default-rtdb.firebaseio.com";
+  const analyticsURL = `${baseURL}/analytics/${today}.json`;
 
-      const snapshot = await get(dayRef);
-      const analyticsData = snapshot.val() || {};
+  const snapshot = await fetch(analyticsURL);
+  const analyticsData = await snapshot.json() || {};
 
-      const ips = analyticsData.ips || {};
-      const hours = analyticsData.hours || {};
+  const ips = analyticsData.ips || {};
+  const hours = analyticsData.hours || {};
 
-      ips[ipKey] = true;
+  ips[ipKey] = true;
 
-      await update(dayRef, {
-        ips,
-        totalAccess: (analyticsData.totalAccess || 0) + 1,
-        activeUsers: Object.keys(ips).length,
-        hours: {
-          ...hours,
-          [hour]: (hours[hour] || 0) + 1
-        }
-      });
-
-    } catch (err) {
-      console.log("Erro analytics:", err);
+  const updatedData = {
+    ips,
+    totalAccess: (analyticsData.totalAccess || 0) + 1,
+    activeUsers: Object.keys(ips).length,
+    hours: {
+      ...hours,
+      [hour]: (hours[hour] || 0) + 1
     }
+  };
+
+  await fetch(analyticsURL, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedData)
+  });
+
+} catch (err) {
+  console.log("Erro analytics:", err);
+}
 
     // ===============================
     // 🔥 CACHE EM MEMÓRIA
