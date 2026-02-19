@@ -1685,51 +1685,65 @@ window.moveChannel = function(position, direction){
 function listenAnalytics() {
 
   function getTodaySP() {
-    const now = new Date();
-    const sp = new Date(
-      now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+    const nowSP = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
     );
-
-    const year = sp.getFullYear();
-    const month = String(sp.getMonth() + 1).padStart(2, "0");
-    const day = String(sp.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
+    return nowSP.toISOString().split("T")[0];
   }
 
-  const today = getTodaySP();
+  function renderAnalytics() {
 
-  const analyticsRef = ref(rtdb, `analytics/${today}`);
+    const today = getTodaySP();
+    const analyticsRef = ref(rtdb, `analytics/${today}`);
 
-  onValue(analyticsRef, snapshot => {
+    onValue(analyticsRef, snapshot => {
 
-    const data = snapshot.val();
-    if (!data) return;
+      const data = snapshot.val() || {};
 
-    document.getElementById("analytics-users").textContent =
-      data.activeUsers || 0;
+      document.getElementById("analytics-users").textContent =
+        data.activeUsers || 0;
 
-    document.getElementById("analytics-access").textContent =
-      data.totalAccess || 0;
+      document.getElementById("analytics-access").textContent =
+        data.totalAccess || 0;
 
-    const hoursDiv = document.getElementById("analytics-hours");
-    hoursDiv.innerHTML = "";
+      const hoursDiv = document.getElementById("analytics-hours");
+      hoursDiv.innerHTML = "";
 
-    if (data.hours) {
-      Object.keys(data.hours)
-        .sort()
-        .forEach(hour => {
-          const div = document.createElement("div");
-          div.className = "bg-gray-100 p-2 rounded flex justify-between";
-          div.innerHTML = `
-            <span>${hour}</span>
-            <span class="font-bold">${data.hours[hour]}</span>
-          `;
-          hoursDiv.appendChild(div);
-        });
-    }
+      const nowSP = new Date(
+        new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+      );
 
-  });
+      const currentHour = nowSP.getHours().toString().padStart(2, "0") + ":00";
+
+      for (let i = 0; i < 24; i++) {
+
+        const hourKey = i.toString().padStart(2, "0") + ":00";
+        const value = data.hours?.[hourKey] || 0;
+
+        const div = document.createElement("div");
+
+        div.className = `
+          bg-gray-100 p-2 rounded flex justify-between
+          ${hourKey === currentHour ? "bg-gray-300 font-bold shadow-inner animate-pulse" : ""}
+        `;
+
+        div.innerHTML = `
+          <span>${hourKey}</span>
+          <span>${value}</span>
+        `;
+
+        hoursDiv.appendChild(div);
+      }
+
+    });
+  }
+
+  renderAnalytics();
+
+  // 🔄 Verifica mudança de dia a cada 60 segundos
+  setInterval(() => {
+    renderAnalytics();
+  }, 60000);
 }
 
 
