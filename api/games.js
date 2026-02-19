@@ -1,7 +1,6 @@
 import fetch from "node-fetch";
 
-const app = initializeApp(firebaseConfig);
-const rtdb = getDatabase(app);
+
 
 let cachedData = null;
 let lastFetch = 0;
