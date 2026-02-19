@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     // 🔐 IP liberado manualmente
     const MASTER_IPS = [
       "177.75.111.25",
-      "SEU_OUTRO_IP_AQUI",
+      "181.77.207.80",
       "MAIS_UM_IP_SE_PRECISAR"
     ];
 
