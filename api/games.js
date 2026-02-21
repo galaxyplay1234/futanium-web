@@ -102,29 +102,31 @@ export default async function handler(req, res) {
 let isLive = false;
 let isFinished = false;
 
-// 🔵 Regra especial só para jogos das 22:00 em diante
-if (matchMinutes >= 1320) { // 1320 = 22 * 60
+// 🔵 Regra especial só para jogos que começam às 22:00 ou depois
+if (matchMinutes >= 1320) { // 22 * 60 = 1320
 
   let adjustedNow = nowMinutes;
   let adjustedMatch = matchMinutes;
-  let adjustedEnd = matchMinutes + 130;
+  let adjustedEnd = matchMinutes + 130; // duração padrão
 
-  // Se for antes das 02:00 ainda é "dia esportivo anterior"
-  if (nowMinutes < 120) {
-    adjustedNow += 1440;
-  }
-
+  // Se passou da meia-noite, ajusta fim
   if (adjustedEnd >= 1440) {
     adjustedEnd -= 1440;
   }
 
-  if (adjustedMatch < 120) {
-    adjustedMatch += 1440;
-    adjustedEnd += 1440;
+  // 🔵 Até 02:09 ainda pertence ao dia anterior
+  if (nowMinutes < 130) { // 130 minutos = 02:10
+    adjustedNow += 1440;
   }
 
-  // 🔴 Depois das 02:00 reseta para jogo normal
-  if (nowMinutes >= 120) {
+  // Se o jogo atravessa meia-noite
+  if (matchMinutes + 130 >= 1440) {
+    adjustedMatch = matchMinutes;
+    adjustedEnd = matchMinutes + 130;
+  }
+
+  // 🔴 Reset do dia acontece às 02:10
+  if (nowMinutes >= 130) {
     isLive = false;
     isFinished = false;
   } else {
