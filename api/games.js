@@ -99,39 +99,54 @@ export default async function handler(req, res) {
 
       const matchMinutes = h * 60 + m;
 
-// 🧠 Dia esportivo até 02:00
-let adjustedNow = nowMinutes;
-let adjustedMatch = matchMinutes;
-let adjustedEnd = matchMinutes + 130;
-
-// Se for antes das 02:00 → ainda pertence ao dia anterior
-if (nowMinutes < 120) {
-  adjustedNow += 1440;
-}
-
-// Se jogo começa antes das 02:00 → pertence ao dia anterior
-if (adjustedMatch < 120) {
-  adjustedMatch += 1440;
-  adjustedEnd += 1440;
-}
-
 let isLive = false;
 let isFinished = false;
 
-// 🔴 Depois das 02:00 ignora status do dia anterior
-if (nowMinutes >= 120) {
+// 🔵 Regra especial só para jogos das 22:00 em diante
+if (matchMinutes >= 1320) { // 1320 = 22 * 60
 
-  isLive = false;
-  isFinished = false;
+  let adjustedNow = nowMinutes;
+  let adjustedMatch = matchMinutes;
+  let adjustedEnd = matchMinutes + 130;
+
+  // Se for antes das 02:00 ainda é "dia esportivo anterior"
+  if (nowMinutes < 120) {
+    adjustedNow += 1440;
+  }
+
+  if (adjustedEnd >= 1440) {
+    adjustedEnd -= 1440;
+  }
+
+  if (adjustedMatch < 120) {
+    adjustedMatch += 1440;
+    adjustedEnd += 1440;
+  }
+
+  // 🔴 Depois das 02:00 reseta para jogo normal
+  if (nowMinutes >= 120) {
+    isLive = false;
+    isFinished = false;
+  } else {
+    isLive =
+      adjustedNow >= adjustedMatch &&
+      adjustedNow < adjustedEnd;
+
+    isFinished =
+      adjustedNow >= adjustedEnd;
+  }
 
 } else {
 
+  // 🟢 Jogos normais (antes das 22:00)
+  const endMinutes = matchMinutes + 130;
+
   isLive =
-    adjustedNow >= adjustedMatch &&
-    adjustedNow < adjustedEnd;
+    nowMinutes >= matchMinutes &&
+    nowMinutes < endMinutes;
 
   isFinished =
-    adjustedNow >= adjustedEnd;
+    nowMinutes >= endMinutes;
 }
 
       const minutesToStart = matchMinutes - nowMinutes;
