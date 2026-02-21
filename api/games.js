@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     const MASTER_IPS = [
       "177.75.111.25",
       "181.77.207.80",
-      "MAIS_UM_IP_SE_PRECISAR"
+      "177.75.111.148"
     ];
 
     const forwarded = req.headers["x-forwarded-for"];
