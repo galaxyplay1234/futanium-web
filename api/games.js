@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     }
 
     // ===============================
-    // 🔥 BUSCA DIRETO DO FIRESTORE
+    // 🔥 BUSCA FIRESTORE
     // ===============================
 
     const url = "https://firestore.googleapis.com/v1/projects/futanium-web/databases/(default)/documents/games";
@@ -96,14 +96,31 @@ export default async function handler(req, res) {
       const matchTimeStr = f.time?.stringValue || "";
       const cleanTime = matchTimeStr.replace("h", ":");
       const [h, m] = cleanTime.split(":").map(v => parseInt(v) || 0);
+
       const matchMinutes = h * 60 + m;
-      const endMinutes = matchMinutes + 130;
 
-      const isLive =
-        nowMinutes >= matchMinutes &&
-        nowMinutes < endMinutes;
+      let endMinutes = matchMinutes + 130;
 
-      const isFinished = nowMinutes >= endMinutes;
+      // 🔥 Ajuste para jogos que passam da meia-noite
+      let crossesMidnight = false;
+      if (endMinutes >= 1440) {
+        endMinutes = endMinutes - 1440;
+        crossesMidnight = true;
+      }
+
+      let isLive = false;
+      let isFinished = false;
+
+      if (!crossesMidnight) {
+        // jogo normal
+        isLive = nowMinutes >= matchMinutes && nowMinutes < endMinutes;
+        isFinished = nowMinutes >= endMinutes;
+      } else {
+        // jogo atravessa meia-noite
+        isLive = nowMinutes >= matchMinutes || nowMinutes < endMinutes;
+        isFinished = nowMinutes >= endMinutes && nowMinutes < matchMinutes;
+      }
+
       const minutesToStart = matchMinutes - nowMinutes;
 
       const canShowButtons = isMaster
@@ -149,7 +166,6 @@ export default async function handler(req, res) {
       return 0;
     });
 
-    // 🚫 sem cache
     res.setHeader("Cache-Control", "no-store");
     res.status(200).json(games);
 
