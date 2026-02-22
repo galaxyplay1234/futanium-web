@@ -17,10 +17,9 @@ export default async function handler(req, res) {
     const isMaster = MASTER_IPS.includes(userIP);
 
     // ===============================
-    // 🔥 ANALYTICS VIA REST
+    // 🔥 ANALYTICS
     // ===============================
     try {
-
       const nowSP = new Date(
         new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
       );
@@ -73,7 +72,6 @@ export default async function handler(req, res) {
       return res.status(200).json([]);
     }
 
-    // 🔥 Hora São Paulo
     const nowSP = new Date(
       new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
     );
@@ -90,9 +88,11 @@ export default async function handler(req, res) {
     const sportDateString = sportDate.toISOString().split("T")[0];
 
     let games = data.documents.map(doc => {
+
       const f = doc.fields;
       const gameDate = f.date?.stringValue || "";
 
+      // 🔥 MOSTRAR SOMENTE O DIA ESPORTIVO ATUAL
       if (gameDate !== sportDateString) {
         return null;
       }
@@ -107,51 +107,28 @@ export default async function handler(req, res) {
       const matchTimeStr = f.time?.stringValue || "";
       const cleanTime = matchTimeStr.replace("h", ":");
       const [h, m] = cleanTime.split(":").map(v => parseInt(v) || 0);
-
       const matchMinutes = h * 60 + m;
 
       let isLive = false;
       let isFinished = false;
 
-      // 🔵 Regra especial para jogos 22h+
-      if (matchMinutes >= 1320) {
+      // 🔵 Ajuste absoluto para atravessar meia-noite
+      let adjustedNow = nowMinutes;
+      let adjustedMatch = matchMinutes;
+      let adjustedEnd = matchMinutes + 130;
 
-        let adjustedNow = nowMinutes;
-        let adjustedMatch = matchMinutes;
-        let adjustedEnd = matchMinutes + 130;
-
-        if (adjustedEnd >= 1440) {
-          adjustedEnd -= 1440;
-        }
-
-        if (nowMinutes < 130) {
-          adjustedNow += 1440;
-        }
-
-        if (matchMinutes + 130 >= 1440) {
-          adjustedMatch = matchMinutes;
-          adjustedEnd = matchMinutes + 130;
-        }
-
-        // 🔥 CORRIGIDO: remove bloqueio das 02:10
-        isLive =
-          adjustedNow >= adjustedMatch &&
-          adjustedNow < adjustedEnd;
-
-        isFinished =
-          adjustedNow >= adjustedEnd;
-
-      } else {
-
-        const endMinutes = matchMinutes + 130;
-
-        isLive =
-          nowMinutes >= matchMinutes &&
-          nowMinutes < endMinutes;
-
-        isFinished =
-          nowMinutes >= endMinutes;
+      if (adjustedEnd >= 1440) adjustedEnd -= 1440;
+      if (nowMinutes < 130) adjustedNow += 1440;
+      if (matchMinutes + 130 >= 1440) {
+        adjustedEnd = matchMinutes + 130;
       }
+
+      isLive =
+        adjustedNow >= adjustedMatch &&
+        adjustedNow < adjustedEnd;
+
+      isFinished =
+        adjustedNow >= adjustedEnd;
 
       const minutesToStart = matchMinutes - nowMinutes;
 
