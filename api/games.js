@@ -76,26 +76,13 @@ export default async function handler(req, res) {
       new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
     );
 
+    const nowDateString = nowSP.toISOString().split("T")[0];
     const nowMinutes = nowSP.getHours() * 60 + nowSP.getMinutes();
-
-    // 🔥 DIA ESPORTIVO (reseta às 02:10)
-    let sportDate = new Date(nowSP);
-
-    if (nowMinutes < 130) {
-      sportDate.setDate(sportDate.getDate() - 1);
-    }
-
-    const sportDateString = sportDate.toISOString().split("T")[0];
 
     let games = data.documents.map(doc => {
 
       const f = doc.fields;
       const gameDate = f.date?.stringValue || "";
-
-      // 🔥 MOSTRAR SOMENTE O DIA ESPORTIVO ATUAL
-      if (gameDate !== sportDateString) {
-        return null;
-      }
 
       const home = f.home?.stringValue || "";
       const away = f.away?.stringValue || "";
@@ -112,25 +99,19 @@ export default async function handler(req, res) {
       let isLive = false;
       let isFinished = false;
 
-      // 🔵 Ajuste absoluto para atravessar meia-noite
-      let adjustedNow = nowMinutes;
-      let adjustedMatch = matchMinutes;
-      let adjustedEnd = matchMinutes + 130;
+      // 🔥 Calcula diferença real usando Date completo (resolve meia-noite automaticamente)
+      const matchDateTime = new Date(`${gameDate}T${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:00-03:00`);
+      const diffMinutes = (nowSP - matchDateTime) / 60000;
 
-      if (adjustedEnd >= 1440) adjustedEnd -= 1440;
-      if (nowMinutes < 130) adjustedNow += 1440;
-      if (matchMinutes + 130 >= 1440) {
-        adjustedEnd = matchMinutes + 130;
+      if (diffMinutes >= 0 && diffMinutes < 130) {
+        isLive = true;
       }
 
-      isLive =
-        adjustedNow >= adjustedMatch &&
-        adjustedNow < adjustedEnd;
+      if (diffMinutes >= 130) {
+        isFinished = true;
+      }
 
-      isFinished =
-        adjustedNow >= adjustedEnd;
-
-      const minutesToStart = matchMinutes - nowMinutes;
+      const minutesToStart = -diffMinutes;
 
       const canShowButtons = isMaster
         ? true
@@ -155,6 +136,7 @@ export default async function handler(req, res) {
         is_live: isLive,
         is_finished: isFinished,
         start_minutes: matchMinutes,
+        game_date: gameDate,
         buttons:
           (canShowButtons || isLive || isFinished)
             ? allButtons
@@ -162,9 +144,13 @@ export default async function handler(req, res) {
       };
     });
 
-    games = games.filter(g => g !== null);
-
     games.sort((a, b) => {
+
+      // 🔥 Ordena por data DESC (mais recente primeiro)
+      if (a.game_date !== b.game_date) {
+        return b.game_date.localeCompare(a.game_date);
+      }
+
       if (a.is_live && !b.is_live) return -1;
       if (!a.is_live && b.is_live) return 1;
       if (a.is_live && b.is_live) return b.start_minutes - a.start_minutes;
