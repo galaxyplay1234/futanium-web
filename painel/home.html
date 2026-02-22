@@ -1235,19 +1235,27 @@ function renderGames() {
 
   gamesArr.sort((a, b) => {
 
-    // 🔔 Aviso sempre no topo
-    const aIsAviso = a.home?.toLowerCase() === "aviso" && a.away?.toLowerCase() === "aviso";
-    const bIsAviso = b.home?.toLowerCase() === "aviso" && b.away?.toLowerCase() === "aviso";
+  // 🔔 Aviso sempre no topo
+  const aIsAviso = a.home?.toLowerCase() === "aviso" && a.away?.toLowerCase() === "aviso";
+  const bIsAviso = b.home?.toLowerCase() === "aviso" && b.away?.toLowerCase() === "aviso";
 
-    if (aIsAviso && !bIsAviso) return -1;
-    if (!aIsAviso && bIsAviso) return 1;
+  if (aIsAviso && !bIsAviso) return -1;
+  if (!aIsAviso && bIsAviso) return 1;
 
-    // 🔥 Ordenar SOMENTE por horário (maior primeiro)
-    const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
-    const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
+  // 🔥 Ordenar por DATA (mais futura primeiro)
+  const dateA = a.date || "";
+  const dateB = b.date || "";
 
-    return timeB - timeA; // DESCENDENTE (igual antes)
-  });
+  if (dateA !== dateB) {
+    return dateB.localeCompare(dateA); // DESC
+  }
+
+  // 🔥 Dentro da mesma data → ordenar por HORÁRIO DESC
+  const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
+  const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
+
+  return timeB - timeA;
+});
 
   const ul = document.getElementById("games-list");
   ul.innerHTML = "";
