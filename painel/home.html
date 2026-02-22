@@ -1862,7 +1862,14 @@ function renderMoreGamesList() {
   });
 
   orderedGames.forEach(g => {
+    
+    // 🔥 Ignorar Aviso
+const isAviso =
+  g.home?.toLowerCase() === "aviso" &&
+  g.away?.toLowerCase() === "aviso";
 
+if (isAviso) return;
+    
     if (currentEditId && g.id === currentEditId) return;
 
     const gameChannels = (g.channels || []).map(c => c.url);
