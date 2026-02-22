@@ -73,16 +73,11 @@ export default async function handler(req, res) {
       return res.status(200).json([]);
     }
 
-    const now = new Date();
-    const formatter = new Intl.DateTimeFormat("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false
-    });
+    const nowSP = new Date(
+  new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+);
 
-    const [hourStr, minuteStr] = formatter.format(now).split(":");
-    const nowMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
+const nowMinutes = nowSP.getHours() * 60 + nowSP.getMinutes();
     
     // 🔥 DIA ESPORTIVO (reseta às 02:10)
 const nowSP = new Date(
