@@ -83,9 +83,29 @@ export default async function handler(req, res) {
 
     const [hourStr, minuteStr] = formatter.format(now).split(":");
     const nowMinutes = parseInt(hourStr) * 60 + parseInt(minuteStr);
+    
+    // 🔥 DIA ESPORTIVO (reseta às 02:10)
+const nowSP = new Date(
+  new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+);
+
+let sportDate = new Date(nowSP);
+
+// Se ainda não passou das 02:10 (130 minutos), continua no dia anterior
+if (nowMinutes < 130) {
+  sportDate.setDate(sportDate.getDate() - 1);
+}
+
+const sportDateString = sportDate.toISOString().split("T")[0];
 
     let games = data.documents.map(doc => {
       const f = doc.fields;
+      const gameDate = f.date?.stringValue || "";
+
+// 🔥 Se o jogo não for do dia esportivo, ignora
+if (gameDate !== sportDateString) {
+  return null;
+}
       const home = f.home?.stringValue || "";
       const away = f.away?.stringValue || "";
 
@@ -182,6 +202,9 @@ if (matchMinutes >= 1320) { // 22 * 60 = 1320
             : []
       };
     });
+    
+    
+    games = games.filter(g => g !== null);
 
     games.sort((a, b) => {
       if (a.is_live && !b.is_live) return -1;
