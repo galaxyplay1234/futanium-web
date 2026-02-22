@@ -73,34 +73,31 @@ export default async function handler(req, res) {
       return res.status(200).json([]);
     }
 
+    // 🔥 Hora São Paulo (DECLARADA UMA ÚNICA VEZ)
     const nowSP = new Date(
-  new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-);
+      new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+    );
 
-const nowMinutes = nowSP.getHours() * 60 + nowSP.getMinutes();
-    
+    const nowMinutes = nowSP.getHours() * 60 + nowSP.getMinutes();
+
     // 🔥 DIA ESPORTIVO (reseta às 02:10)
-const nowSP = new Date(
-  new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
-);
+    let sportDate = new Date(nowSP);
 
-let sportDate = new Date(nowSP);
+    if (nowMinutes < 130) {
+      sportDate.setDate(sportDate.getDate() - 1);
+    }
 
-// Se ainda não passou das 02:10 (130 minutos), continua no dia anterior
-if (nowMinutes < 130) {
-  sportDate.setDate(sportDate.getDate() - 1);
-}
-
-const sportDateString = sportDate.toISOString().split("T")[0];
+    const sportDateString = sportDate.toISOString().split("T")[0];
 
     let games = data.documents.map(doc => {
       const f = doc.fields;
       const gameDate = f.date?.stringValue || "";
 
-// 🔥 Se o jogo não for do dia esportivo, ignora
-if (gameDate !== sportDateString) {
-  return null;
-}
+      // 🔥 Se o jogo não for do dia esportivo, ignora
+      if (gameDate !== sportDateString) {
+        return null;
+      }
+
       const home = f.home?.stringValue || "";
       const away = f.away?.stringValue || "";
 
@@ -114,57 +111,52 @@ if (gameDate !== sportDateString) {
 
       const matchMinutes = h * 60 + m;
 
-let isLive = false;
-let isFinished = false;
+      let isLive = false;
+      let isFinished = false;
 
-// 🔵 Regra especial só para jogos que começam às 22:00 ou depois
-if (matchMinutes >= 1320) { // 22 * 60 = 1320
+      // 🔵 Regra especial só para jogos que começam às 22:00 ou depois
+      if (matchMinutes >= 1320) {
 
-  let adjustedNow = nowMinutes;
-  let adjustedMatch = matchMinutes;
-  let adjustedEnd = matchMinutes + 130; // duração padrão
+        let adjustedNow = nowMinutes;
+        let adjustedMatch = matchMinutes;
+        let adjustedEnd = matchMinutes + 130;
 
-  // Se passou da meia-noite, ajusta fim
-  if (adjustedEnd >= 1440) {
-    adjustedEnd -= 1440;
-  }
+        if (adjustedEnd >= 1440) {
+          adjustedEnd -= 1440;
+        }
 
-  // 🔵 Até 02:09 ainda pertence ao dia anterior
-  if (nowMinutes < 130) { // 130 minutos = 02:10
-    adjustedNow += 1440;
-  }
+        if (nowMinutes < 130) {
+          adjustedNow += 1440;
+        }
 
-  // Se o jogo atravessa meia-noite
-  if (matchMinutes + 130 >= 1440) {
-    adjustedMatch = matchMinutes;
-    adjustedEnd = matchMinutes + 130;
-  }
+        if (matchMinutes + 130 >= 1440) {
+          adjustedMatch = matchMinutes;
+          adjustedEnd = matchMinutes + 130;
+        }
 
-  // 🔴 Reset do dia acontece às 02:10
-  if (nowMinutes >= 130) {
-    isLive = false;
-    isFinished = false;
-  } else {
-    isLive =
-      adjustedNow >= adjustedMatch &&
-      adjustedNow < adjustedEnd;
+        if (nowMinutes >= 130) {
+          isLive = false;
+          isFinished = false;
+        } else {
+          isLive =
+            adjustedNow >= adjustedMatch &&
+            adjustedNow < adjustedEnd;
 
-    isFinished =
-      adjustedNow >= adjustedEnd;
-  }
+          isFinished =
+            adjustedNow >= adjustedEnd;
+        }
 
-} else {
+      } else {
 
-  // 🟢 Jogos normais (antes das 22:00)
-  const endMinutes = matchMinutes + 130;
+        const endMinutes = matchMinutes + 130;
 
-  isLive =
-    nowMinutes >= matchMinutes &&
-    nowMinutes < endMinutes;
+        isLive =
+          nowMinutes >= matchMinutes &&
+          nowMinutes < endMinutes;
 
-  isFinished =
-    nowMinutes >= endMinutes;
-}
+        isFinished =
+          nowMinutes >= endMinutes;
+      }
 
       const minutesToStart = matchMinutes - nowMinutes;
 
@@ -197,8 +189,7 @@ if (matchMinutes >= 1320) { // 22 * 60 = 1320
             : []
       };
     });
-    
-    
+
     games = games.filter(g => g !== null);
 
     games.sort((a, b) => {
