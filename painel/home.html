@@ -1844,7 +1844,7 @@ function renderMoreGamesList() {
   const container = document.getElementById("more-games-list");
   container.innerHTML = "";
 
-  // 🔥 canais atualmente selecionados no formulário
+  // 🔥 canais selecionados no formulário
   const selectedChannels = [
     document.getElementById("game-channel1").value,
     document.getElementById("game-channel2").value,
@@ -1852,18 +1852,26 @@ function renderMoreGamesList() {
     document.getElementById("game-channel4").value,
   ].filter(v => v);
 
-  gamesMemory.forEach(g => {
+  // 🔥 ordenar por horário crescente
+  const orderedGames = [...gamesMemory].sort((a, b) => {
+
+    const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
+    const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
+
+    return timeA - timeB; // crescente
+  });
+
+  orderedGames.forEach(g => {
 
     if (currentEditId && g.id === currentEditId) return;
 
     const gameChannels = (g.channels || []).map(c => c.url);
 
-    // 🔥 comparar canais
     const same =
       selectedChannels.length === gameChannels.length &&
       selectedChannels.every(ch => gameChannels.includes(ch));
 
-    if (same) return; // não mostra se já for igual
+    if (same) return;
 
     const div = document.createElement("div");
     div.className = "flex items-center gap-2";
