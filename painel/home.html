@@ -1844,9 +1844,26 @@ function renderMoreGamesList() {
   const container = document.getElementById("more-games-list");
   container.innerHTML = "";
 
+  // 🔥 canais atualmente selecionados no formulário
+  const selectedChannels = [
+    document.getElementById("game-channel1").value,
+    document.getElementById("game-channel2").value,
+    document.getElementById("game-channel3").value,
+    document.getElementById("game-channel4").value,
+  ].filter(v => v);
+
   gamesMemory.forEach(g => {
 
     if (currentEditId && g.id === currentEditId) return;
+
+    const gameChannels = (g.channels || []).map(c => c.url);
+
+    // 🔥 comparar canais
+    const same =
+      selectedChannels.length === gameChannels.length &&
+      selectedChannels.every(ch => gameChannels.includes(ch));
+
+    if (same) return; // não mostra se já for igual
 
     const div = document.createElement("div");
     div.className = "flex items-center gap-2";
