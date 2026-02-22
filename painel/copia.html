@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Painel Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Biblioteca Select2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -66,6 +66,10 @@
     
     <button onclick="showTab('addgame', false, true)"
         class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+    <button onclick="showTab('analytics')"
+  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Analytics
+</button>
     <button onclick="showTab('buttons')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
     <button onclick="showTab('import')"
@@ -118,46 +122,81 @@
                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
 
         <!-- Campos fixos para Canais -->
-        <label for="game-channel1" class="block text-sm font-semibold mt-2">Canal 1</label>
+        <label class="block text-sm font-semibold mt-2">Canal 1</label>
 <div class="flex items-center gap-2">
-  <select id="game-channel1" class="p-2 border rounded w-[85%]">
+  <select id="game-channel1" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel1')" 
-    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+
+  <div class="flex flex-col gap-1">
+    <button type="button" onclick="moveChannel(1, -1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
+    <button type="button" onclick="moveChannel(1, 1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
+  </div>
+
+  <button type="button" onclick="clearSelect('game-channel1')"
+    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
     ✕
   </button>
 </div>
 
-<label for="game-channel2" class="block text-sm font-semibold mt-2">Canal 2</label>
+
+<label class="block text-sm font-semibold mt-2">Canal 2</label>
 <div class="flex items-center gap-2">
-  <select id="game-channel2" class="p-2 border rounded w-[85%]">
+  <select id="game-channel2" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel2')" 
-    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+
+  <div class="flex flex-col gap-1">
+    <button type="button" onclick="moveChannel(2, -1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
+    <button type="button" onclick="moveChannel(2, 1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
+  </div>
+
+  <button type="button" onclick="clearSelect('game-channel2')"
+    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
     ✕
   </button>
 </div>
 
-<label for="game-channel3" class="block text-sm font-semibold mt-2">Canal 3</label>
+
+<label class="block text-sm font-semibold mt-2">Canal 3</label>
 <div class="flex items-center gap-2">
-  <select id="game-channel3" class="p-2 border rounded w-[85%]">
+  <select id="game-channel3" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel3')" 
-    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+
+  <div class="flex flex-col gap-1">
+    <button type="button" onclick="moveChannel(3, -1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
+    <button type="button" onclick="moveChannel(3, 1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
+  </div>
+
+  <button type="button" onclick="clearSelect('game-channel3')"
+    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
     ✕
   </button>
 </div>
 
-<label for="game-channel4" class="block text-sm font-semibold mt-2">Canal 4</label>
+
+<label class="block text-sm font-semibold mt-2">Canal 4</label>
 <div class="flex items-center gap-2">
-  <select id="game-channel4" class="p-2 border rounded w-[85%]">
+  <select id="game-channel4" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
   </select>
-  <button type="button" onclick="clearSelect('game-channel4')" 
-    class="bg-red-500 text-white px-2 py-[6px] rounded hover:bg-red-600 text-sm leading-none">
+
+  <div class="flex flex-col gap-1">
+    <button type="button" onclick="moveChannel(4, -1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
+    <button type="button" onclick="moveChannel(4, 1)"
+      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
+  </div>
+
+  <button type="button" onclick="clearSelect('game-channel4')"
+    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
     ✕
   </button>
 </div>
@@ -165,6 +204,28 @@
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
     </div>
+
+
+<!-- Analytics -->
+<div id="tab-analytics" class="tab-content hidden">
+  <h2 class="text-lg sm:text-xl font-semibold mb-4">Analytics do Dia</h2>
+
+  <div class="bg-white rounded shadow p-4 mb-4">
+    <div class="text-xl font-bold mb-2">
+      👥 Usuários únicos: <span id="analytics-users">0</span>
+    </div>
+    <div class="text-xl font-bold">
+      🔥 Total acessos: <span id="analytics-access">0</span>
+    </div>
+  </div>
+
+  <div class="bg-white rounded shadow p-4">
+    <h3 class="font-semibold mb-3">Acessos por hora</h3>
+    <div id="analytics-hours" class="flex flex-col gap-2 text-sm"></div>
+  </div>
+</div>
+
+
 
 
 <!-- Importar (imagem -> jogos) -->
@@ -396,6 +457,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+enableIndexedDbPersistence(db).catch((err) => {
+  console.log("Persistência não habilitada:", err.code);
+});
 
 const USER = "admin";
 const PASS = "12345";
@@ -403,6 +469,32 @@ let currentEditId = null;
 let currentButtonEditId = null;
 let currentChampEditId = null;
 let currentTeamEditId = null;
+let teamsMemory = [];
+let champsMemory = [];
+let buttonsMemory = [];
+let gamesMemory = [];
+
+import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
+let gamesUnsubscribe = null;
+
+function startGamesListener() {
+
+  if (gamesUnsubscribe) return; // evita criar múltiplos listeners
+
+  gamesUnsubscribe = onSnapshot(collection(db, "games"), snapshot => {
+    gamesMemory = [];
+
+    snapshot.forEach(docSnap => {
+      gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
+    });
+
+    renderGames(); // apenas renderiza
+  });
+
+}
+
+
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -492,12 +584,28 @@ document.getElementById("team-form").addEventListener("submit", async e => {
   const logo = logoEl.value.trim();
   if (!name || !logo) return;
 
-  if(currentTeamEditId){
-    await updateDoc(doc(db,"teams",currentTeamEditId), { name, logo });
+  if (currentTeamEditId) {
+    await updateDoc(doc(db, "teams", currentTeamEditId), { name, logo });
+
+    // 🔥 Atualiza apenas na memória
+    const index = teamsMemory.findIndex(t => t.id === currentTeamEditId);
+    if (index !== -1) {
+      teamsMemory[index].name = name;
+      teamsMemory[index].logo = logo;
+    }
+
     currentTeamEditId = null;
     document.getElementById("team-submit").innerText = "Adicionar";
+
   } else {
-    await addDoc(collection(db,"teams"),{name,logo});
+    const docRef = await addDoc(collection(db, "teams"), { name, logo });
+
+    // 🔥 Adiciona somente o novo time na memória
+    teamsMemory.push({
+      id: docRef.id,
+      name,
+      logo
+    });
   }
 
   nameEl.value = "";
@@ -506,25 +614,28 @@ document.getElementById("team-form").addEventListener("submit", async e => {
   autoResizeTextarea(nameEl);
   autoResizeTextarea(logoEl);
 
+  // 🔥 Apenas renderiza usando cache, sem nova leitura
   await loadTeams();
 });
 
 
 
-async function loadTeams(filter = ""){
-  const q = await getDocs(collection(db, "teams"));
-  let teamsArr = [];
+async function loadTeams(filter = "", force = false){
 
-  q.forEach(docSnap => 
-    teamsArr.push({ id: docSnap.id, ...docSnap.data() })
-  );
+  if(!teamsMemory.length || force){
+    const q = await getDocs(collection(db, "teams"));
+    teamsMemory = [];
+    q.forEach(docSnap => 
+      teamsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
 
-  // Ordena
+  let teamsArr = [...teamsMemory];
+
   teamsArr.sort((a, b) => 
     a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
   );
 
-  // 🔎 Aplica filtro se existir
   if(filter){
     const f = filter.toLowerCase();
     teamsArr = teamsArr.filter(t =>
@@ -545,22 +656,19 @@ async function loadTeams(filter = ""){
   teamsArr.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-  <td class="p-2">${t.name}</td>
-  <td class="p-2"><img src="${t.logo}" class="h-6"></td>
-  <td class="p-2 flex gap-2">
-    <button 
-      onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')" 
-      class="bg-yellow-500 text-white px-2 py-1 rounded">
-      Editar
-    </button>
-
-    <button 
-      onclick="deleteTeam('${t.id}')" 
-      class="bg-red-500 text-white px-2 py-1 rounded">
-      Excluir
-    </button>
-  </td>
-`;
+      <td class="p-2">${t.name}</td>
+      <td class="p-2"><img src="${t.logo}" class="h-6"></td>
+      <td class="p-2 flex gap-2">
+        <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteTeam('${t.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
+    `;
     tbody.appendChild(tr);
 
     homeSel.appendChild(new Option(t.name, t.name));
@@ -572,8 +680,14 @@ async function loadTeams(filter = ""){
     window.teamsCache[t.name] = t.logo; 
   });
 }
+
+
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
+
+  // 🔥 Remove só da memória
+  teamsMemory = teamsMemory.filter(t => t.id !== id);
+
   await loadTeams();
 };
   
@@ -670,28 +784,62 @@ clearTeamBtn.addEventListener("click", function() {
 document.getElementById("champ-form").addEventListener("submit", async e=>{
   e.preventDefault();
 
-  const name = document.getElementById("champ-name").value.trim();
-  const logo = document.getElementById("champ-logo").value.trim();
+  const nameEl = document.getElementById("champ-name");
+  const logoEl = document.getElementById("champ-logo");
+
+  const name = nameEl.value.trim();
+  const logo = logoEl.value.trim();
   if(!name || !logo) return;
 
   if(currentChampEditId){
+
     await updateDoc(doc(db,"championships",currentChampEditId), { name, logo });
+
+    // 🔥 Atualiza apenas na memória
+    const index = champsMemory.findIndex(c => c.id === currentChampEditId);
+    if(index !== -1){
+      champsMemory[index].name = name;
+      champsMemory[index].logo = logo;
+    }
+
     currentChampEditId = null;
     document.getElementById("champ-submit").innerText = "Adicionar";
+
   } else {
-    await addDoc(collection(db,"championships"), { name, logo });
+
+    const docRef = await addDoc(collection(db,"championships"), { name, logo });
+
+    // 🔥 Adiciona só o novo campeonato na memória
+    champsMemory.push({
+      id: docRef.id,
+      name,
+      logo
+    });
   }
 
-  document.getElementById("champ-form").reset();
-  await loadChamps();
-});
-async function loadChamps(){
-  const q = await getDocs(collection(db,"championships"));
-  const champsArr = [];
-  q.forEach(docSnap => champsArr.push({ id: docSnap.id, ...docSnap.data() }));
+  nameEl.value = "";
+  logoEl.value = "";
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(logoEl);
 
-  // ✅ Ordena em ordem alfabética pelo nome
-  champsArr.sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }));
+  await loadChamps(); // ⚡ SEM force
+});
+
+async function loadChamps(force = false){
+
+  if(!champsMemory.length || force){
+    const q = await getDocs(collection(db,"championships"));
+    champsMemory = [];
+    q.forEach(docSnap =>
+      champsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
+
+  const champsArr = [...champsMemory];
+
+  champsArr.sort((a, b) =>
+    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+  );
 
   const tbody = document.getElementById("champions-list");
   tbody.innerHTML = "";
@@ -699,34 +847,40 @@ async function loadChamps(){
   const champSel = document.getElementById("game-champ");
   resetSelect(champSel, "Selecione o Campeonato");
 
-  // ✅ Agora renderiza usando a lista ordenada
   champsArr.forEach(c => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">${c.name}</td>
       <td class="p-2"><img src="${c.logo}" class="h-6"></td>
       <td class="p-2 flex gap-2">
-  <button onclick="editChamp('${c.id}','${c.name.replace(/'/g,"\\'")}','${c.logo.replace(/'/g,"\\'")}')" 
-    class="bg-yellow-500 text-white px-2 py-1 rounded">
-    Editar
-  </button>
-
-  <button onclick="deleteChamp('${c.id}')" 
-    class="bg-red-500 text-white px-2 py-1 rounded">
-    Excluir
-  </button>
-</td>
+        <button onclick="editChamp('${c.id}','${c.name.replace(/'/g,"\\'")}','${c.logo.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteChamp('${c.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
 
     champSel.appendChild(new Option(c.name, c.name));
   });
-  // ao final de loadChamps()
-window.champsCache = {};
-champsArr.forEach(c => { window.champsCache[c.name] = c.logo; });
+
+  window.champsCache = {};
+  champsArr.forEach(c => {
+    window.champsCache[c.name] = c.logo;
+  });
 }
+
+
 window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
+
+  // 🔥 Remove só da memória
+  champsMemory = champsMemory.filter(c => c.id !== id);
+
   await loadChamps();
 };
 
@@ -793,31 +947,53 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
   if(!name || !link) return;
 
   if(currentButtonEditId){
+
     await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
+
+    // 🔥 Atualiza apenas na memória
+    const index = buttonsMemory.findIndex(b => b.id === currentButtonEditId);
+    if(index !== -1){
+      buttonsMemory[index].name = name;
+      buttonsMemory[index].link = link;
+    }
+
     currentButtonEditId = null;
     document.getElementById("button-submit").innerText = "Adicionar";
+
   } else {
-    await addDoc(collection(db,"buttons"), { name, link });
+
+    const docRef = await addDoc(collection(db,"buttons"), { name, link });
+
+    // 🔥 Adiciona só o novo botão na memória
+    buttonsMemory.push({
+      id: docRef.id,
+      name,
+      link
+    });
   }
 
-  // 🔥 limpa campos
+  // limpa campos
   nameEl.value = "";
   linkEl.value = "";
-
-  // 🔥 volta tamanho pro padrão
   autoResizeTextarea(nameEl);
-autoResizeTextarea(linkEl);
+  autoResizeTextarea(linkEl);
 
+  // 🔥 Apenas renderiza usando cache
   await loadButtons();
 });
-async function loadButtons(filter = ""){
 
-  const q = await getDocs(collection(db,"buttons"));
-  let buttonsArr = [];
 
-  q.forEach(docSnap => 
-    buttonsArr.push({ id: docSnap.id, ...docSnap.data() })
-  );
+async function loadButtons(filter = "", force = false){
+
+  if(!buttonsMemory.length || force){
+    const q = await getDocs(collection(db,"buttons"));
+    buttonsMemory = [];
+    q.forEach(docSnap => 
+      buttonsMemory.push({ id: docSnap.id, ...docSnap.data() })
+    );
+  }
+
+  let buttonsArr = [...buttonsMemory];
 
   buttonsArr.sort((a, b) => 
     a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
@@ -838,22 +1014,26 @@ async function loadButtons(filter = ""){
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">
-  <span 
-  class="cursor-pointer text-black hover:text-gray-600"
-  onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
-  ${b.name}
-</span>
-</td>
+        <span class="cursor-pointer text-black hover:text-gray-600"
+          onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+          ${b.name}
+        </span>
+      </td>
       <td class="p-2">
-        <a href="${b.link}" target="_blank" class="text-blue-600 underline break-all">
+        <a href="${b.link}" target="_blank"
+          class="text-blue-600 underline break-all">
           ${b.link}
         </a>
       </td>
       <td class="p-2 flex gap-2">
-        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')" 
-          class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
-        <button onclick="deleteButton('${b.id}')" 
-          class="bg-red-500 text-white px-2 py-1 rounded">Excluir</button>
+        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteButton('${b.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
       </td>
     `;
     tbody.appendChild(tr);
@@ -861,8 +1041,15 @@ async function loadButtons(filter = ""){
 
   populateChannelSelects(buttonsArr);
 }
+
+
+
 window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
+
+  // 🔥 Remove só da memória
+  buttonsMemory = buttonsMemory.filter(b => b.id !== id);
+
   await loadButtons();
 };
 
@@ -963,19 +1150,18 @@ const selected = [
 
   // Buscar logo do campeonato
   let champLogo = "";
-  const champsSnap = await getDocs(collection(db,"championships"));
-  champsSnap.forEach(docSnap => {
-    if(docSnap.data().name === champ) champLogo = docSnap.data().logo;
-  });
+champsMemory.forEach(c => {
+  if(c.name === champ) champLogo = c.logo;
+});
 
   // Buscar logo dos times
   let homeLogo = "";
-  let awayLogo = "";
-  const teamsSnap = await getDocs(collection(db,"teams"));
-  teamsSnap.forEach(docSnap => {
-    if(docSnap.data().name === home) homeLogo = docSnap.data().logo;
-    if(docSnap.data().name === away) awayLogo = docSnap.data().logo;
-  });
+let awayLogo = "";
+
+teamsMemory.forEach(t => {
+  if(t.name === home) homeLogo = t.logo;
+  if(t.name === away) awayLogo = t.logo;
+});
 
   const payload = {
     champ,
@@ -997,26 +1183,30 @@ const selected = [
   }
 
   document.getElementById("game-form").reset();
-  await loadGames();
+  
   showTab('home');
 });
 
-async function loadGames() {
-  const q = await getDocs(collection(db, "games"));
-  const gamesArr = [];
+function renderGames() {
 
-  q.forEach(docSnap => gamesArr.push({ id: docSnap.id, ...docSnap.data() }));
+  const gamesArr = [...gamesMemory];
 
   gamesArr.sort((a, b) => {
-  const timeA = parseInt(a.time.replace(":", "").replace("h", ""));
-  const timeB = parseInt(b.time.replace(":", "").replace("h", ""));
-  return timeB - timeA;
-});
+    const timeA = parseInt(a.time.replace(":", "").replace("h", ""));
+    const timeB = parseInt(b.time.replace(":", "").replace("h", ""));
+    return timeB - timeA;
+  });
 
   const ul = document.getElementById("games-list");
   ul.innerHTML = "";
 
   gamesArr.forEach(g => {
+    
+    
+    const isAviso =
+  g.home?.toLowerCase() === "aviso" &&
+  g.away?.toLowerCase() === "aviso";
+
     const canaisLabel = (g.channels && g.channels.length)
       ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
            ${g.channels.map(c => `${c.name}`).join("<br>")}
@@ -1024,31 +1214,69 @@ async function loadGames() {
       : "";
 
     const li = document.createElement("li");
-    li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
+li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
 
-    li.innerHTML = `
-  <div class="flex justify-between items-start">
-    <div class="flex items-center gap-2">
-      <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
-      <span class="text-[12px] text-gray-500">${g.champ}</span>
+if (isAviso) {
+
+  li.innerHTML = `
+    <div class="cursor-pointer font-semibold text-black flex justify-between items-center">
+  <span>📢 Aviso</span>
+</div>
+
+    <div class="hidden aviso-content mt-2">
+      <div class="flex justify-between items-start">
+        <div class="flex items-center gap-2">
+          <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
+          <span class="text-[12px] text-gray-500">${g.champ}</span>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
+          <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
+        </div>
+      </div>
+
+      <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
+
+      ${canaisLabel}
     </div>
-    <div class="flex gap-2">
-      <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
-      <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
+  `;
+
+  const header = li.querySelector("div");
+  const content = li.querySelector(".aviso-content");
+
+  header.addEventListener("click", () => {
+    content.classList.toggle("hidden");
+  });
+
+} else {
+
+  li.innerHTML = `
+    <div class="flex justify-between items-start">
+      <div class="flex items-center gap-2">
+        <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
+        <span class="text-[12px] text-gray-500">${g.champ}</span>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
+        <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
+      </div>
     </div>
-  </div>
 
-  <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
+    <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
 
-  ${canaisLabel}
-`;
+    ${canaisLabel}
+  `;
+}
+
     ul.appendChild(li);
   });
+
 }
+
+  
 
 window.deleteGame = async function(id){
   await deleteDoc(doc(db,"games",id));
-  await loadGames();
 };
 
 window.editGame = async function(id){
@@ -1084,7 +1312,8 @@ async function loadData(){
   await loadTeams();
   await loadChamps();
   await loadButtons();
-  await loadGames();
+  startGamesListener(); // 👈 aqui
+  listenAnalytics();
 }
 
 // ✅ Limpa qualquer select individualmente ao clicar no "✕"
@@ -1420,7 +1649,7 @@ btnSaveAll.addEventListener('click', async () => {
       };
       await addDoc(collection(db,'games'), payload);
     }
-    await loadGames();
+    
 
     importedRows = [];
     preview.classList.add('hidden');
@@ -1463,6 +1692,121 @@ setupAutoResize("button-name");
 setupAutoResize("button-link");
 setupAutoResize("team-name");
 setupAutoResize("team-logo");
+
+
+
+window.moveChannel = function(position, direction){
+
+  const current = document.getElementById(`game-channel${position}`);
+  if(!current) return;
+
+  const targetPosition = position + direction;
+
+  // Limites (1 a 4)
+  if(targetPosition < 1 || targetPosition > 4) return;
+
+  const target = document.getElementById(`game-channel${targetPosition}`);
+  if(!target) return;
+
+  // Troca os valores
+  const tempValue = current.value;
+  current.value = target.value;
+  target.value = tempValue;
+
+  // Atualiza Select2
+  $(`#game-channel${position}`).trigger('change.select2');
+  $(`#game-channel${targetPosition}`).trigger('change.select2');
+};
+
+
+
+
+
+let analyticsUnsubscribe = null;
+let currentListeningDay = null;
+
+function listenAnalytics() {
+
+  function getTodaySP() {
+  return new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo"
+  });
+}
+
+  function startListening() {
+
+    const today = getTodaySP();
+
+    // Se já está ouvindo esse dia, não recria
+    if (today === currentListeningDay) return;
+
+    currentListeningDay = today;
+
+    // Remove listener antigo
+    if (analyticsUnsubscribe) analyticsUnsubscribe();
+
+    const analyticsRef = ref(rtdb, `analytics/${today}`);
+
+    analyticsUnsubscribe = onValue(analyticsRef, snapshot => {
+
+      const data = snapshot.val() || {};
+
+      document.getElementById("analytics-users").textContent =
+        data.activeUsers || 0;
+
+      document.getElementById("analytics-access").textContent =
+        data.totalAccess || 0;
+
+      renderHours(data.hours || {});
+    });
+  }
+
+  function renderHours(hoursData) {
+
+  const hoursDiv = document.getElementById("analytics-hours");
+  hoursDiv.innerHTML = "";
+
+  const nowSP = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
+  );
+
+  const currentHourNumber = nowSP.getHours();
+  const currentHour =
+    currentHourNumber.toString().padStart(2, "0") + ":00";
+
+  // 🔥 Começa pela hora atual
+  for (let offset = 0; offset < 24; offset++) {
+
+    const hourNumber = (currentHourNumber + offset) % 24;
+    const hourKey = hourNumber.toString().padStart(2, "0") + ":00";
+    const value = hoursData[hourKey] || 0;
+
+    const div = document.createElement("div");
+
+    div.className = `
+      p-2 rounded flex justify-between
+      ${hourKey === currentHour
+        ? "bg-green-100 border border-green-300"
+        : "bg-gray-100"}
+    `;
+
+    div.innerHTML = `
+      <span>${hourKey}</span>
+      <span class="${hourKey === currentHour ? 'font-bold text-green-700' : ''}">
+        ${value}
+      </span>
+    `;
+
+    hoursDiv.appendChild(div);
+  }
+}
+
+  // Inicia imediatamente
+  startListening();
+
+  // Verifica a cada 30 segundos se virou o dia
+  setInterval(startListening, 30000);
+}
 
 
 
