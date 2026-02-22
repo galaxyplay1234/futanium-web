@@ -1877,16 +1877,30 @@ function renderMoreGamesList() {
     document.getElementById("game-channel4").value,
   ].filter(v => v);
 
-  gamesMemory.forEach(g => {
+  // 🔥 ordenar por DATA (desc) e depois por HORA (desc)
+  const orderedGames = [...gamesMemory].sort((a, b) => {
 
-    // 🔥 Ignorar Aviso
+    const dateA = a.date || "";
+    const dateB = b.date || "";
+
+    if (dateA !== dateB) {
+      return dateB.localeCompare(dateA); // data mais recente primeiro
+    }
+
+    const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
+    const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
+
+    return timeB - timeA; // horário maior primeiro
+  });
+
+  orderedGames.forEach(g => {
+
     const isAviso =
       g.home?.toLowerCase() === "aviso" &&
       g.away?.toLowerCase() === "aviso";
 
     if (isAviso) return;
 
-    // 🔥 Ignorar jogo em edição
     if (currentEditId && g.id === currentEditId) return;
 
     const gameChannels = (g.channels || []).map(c => c.url);
@@ -1902,7 +1916,7 @@ function renderMoreGamesList() {
 
     div.innerHTML = `
       <input type="checkbox" value="${g.id}" class="copy-game-checkbox">
-      <span>${g.time} - ${g.home} x ${g.away}</span>
+      <span>${g.date || ""} - ${g.time} - ${g.home} x ${g.away}</span>
     `;
 
     container.appendChild(div);
