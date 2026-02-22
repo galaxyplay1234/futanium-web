@@ -73,7 +73,7 @@ export default async function handler(req, res) {
       return res.status(200).json([]);
     }
 
-    // 🔥 Hora São Paulo (DECLARADA UMA ÚNICA VEZ)
+    // 🔥 Hora São Paulo
     const nowSP = new Date(
       new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
     );
@@ -93,7 +93,6 @@ export default async function handler(req, res) {
       const f = doc.fields;
       const gameDate = f.date?.stringValue || "";
 
-      // 🔥 Se o jogo não for do dia esportivo, ignora
       if (gameDate !== sportDateString) {
         return null;
       }
@@ -114,7 +113,7 @@ export default async function handler(req, res) {
       let isLive = false;
       let isFinished = false;
 
-      // 🔵 Regra especial só para jogos que começam às 22:00 ou depois
+      // 🔵 Regra especial para jogos 22h+
       if (matchMinutes >= 1320) {
 
         let adjustedNow = nowMinutes;
@@ -134,17 +133,13 @@ export default async function handler(req, res) {
           adjustedEnd = matchMinutes + 130;
         }
 
-        if (nowMinutes >= 130) {
-          isLive = false;
-          isFinished = false;
-        } else {
-          isLive =
-            adjustedNow >= adjustedMatch &&
-            adjustedNow < adjustedEnd;
+        // 🔥 CORRIGIDO: remove bloqueio das 02:10
+        isLive =
+          adjustedNow >= adjustedMatch &&
+          adjustedNow < adjustedEnd;
 
-          isFinished =
-            adjustedNow >= adjustedEnd;
-        }
+        isFinished =
+          adjustedNow >= adjustedEnd;
 
       } else {
 
