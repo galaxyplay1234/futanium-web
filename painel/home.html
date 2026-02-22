@@ -1214,21 +1214,22 @@ teamsMemory.forEach(t => {
   channels: selected
 };
 
-  if(currentEditId){
-    await updateDoc(doc(db,"games",currentEditId), payload);
-    currentEditId = null;
-    document.getElementById("form-title").innerText = "Adicionar Jogo";
-  } else {
-    await addDoc(collection(db,"games"), payload);
-  }
+  // 🔥 PEGA OS IDS MARCADOS ANTES DE SALVAR
+const checkedIds = Array.from(
+  document.querySelectorAll(".copy-game-checkbox:checked")
+).map(cb => cb.value);
 
-// 🔥 COPIAR CANAIS PARA OUTROS JOGOS
-const checked = document.querySelectorAll(".copy-game-checkbox:checked");
+// 🔥 SALVA O JOGO ATUAL
+if(currentEditId){
+  await updateDoc(doc(db,"games",currentEditId), payload);
+  currentEditId = null;
+  document.getElementById("form-title").innerText = "Adicionar Jogo";
+} else {
+  await addDoc(collection(db,"games"), payload);
+}
 
-for (const checkbox of checked) {
-
-  const gameId = checkbox.value;
-
+// 🔥 AGORA COPIA PARA OS OUTROS
+for (const gameId of checkedIds) {
   await updateDoc(doc(db, "games", gameId), {
     channels: selected
   });
