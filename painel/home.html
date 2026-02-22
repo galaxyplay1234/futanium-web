@@ -1242,19 +1242,11 @@ function renderGames() {
     if (aIsAviso && !bIsAviso) return -1;
     if (!aIsAviso && bIsAviso) return 1;
 
-    // 🔥 Ordenar por data (mais recente primeiro)
-    const dateA = a.date || "";
-    const dateB = b.date || "";
-
-    if (dateA !== dateB) {
-      return dateB.localeCompare(dateA);
-    }
-
-    // 🔥 Ordenar por hora crescente
+    // 🔥 Ordenar SOMENTE por horário (maior primeiro)
     const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
     const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
 
-    return timeA - timeB;
+    return timeB - timeA; // DESCENDENTE (igual antes)
   });
 
   const ul = document.getElementById("games-list");
