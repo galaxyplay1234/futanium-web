@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     const MASTER_IPS = [
       "177.75.111.25",
       "181.77.207.80",
-      "MAIS_UM_IP_SE_PRECISAR"
+      "177.75.111.148"
     ];
 
     const forwarded = req.headers["x-forwarded-for"];
@@ -62,7 +62,7 @@ export default async function handler(req, res) {
     }
 
     // ===============================
-    // 🔥 BUSCA DIRETO DO FIRESTORE
+    // 🔥 BUSCA FIRESTORE
     // ===============================
 
     const url = "https://firestore.googleapis.com/v1/projects/futanium-web/databases/(default)/documents/games";
@@ -96,14 +96,61 @@ export default async function handler(req, res) {
       const matchTimeStr = f.time?.stringValue || "";
       const cleanTime = matchTimeStr.replace("h", ":");
       const [h, m] = cleanTime.split(":").map(v => parseInt(v) || 0);
+
       const matchMinutes = h * 60 + m;
-      const endMinutes = matchMinutes + 130;
 
-      const isLive =
-        nowMinutes >= matchMinutes &&
-        nowMinutes < endMinutes;
+let isLive = false;
+let isFinished = false;
 
-      const isFinished = nowMinutes >= endMinutes;
+// 🔵 Regra especial só para jogos que começam às 22:00 ou depois
+if (matchMinutes >= 1320) { // 22 * 60 = 1320
+
+  let adjustedNow = nowMinutes;
+  let adjustedMatch = matchMinutes;
+  let adjustedEnd = matchMinutes + 130; // duração padrão
+
+  // Se passou da meia-noite, ajusta fim
+  if (adjustedEnd >= 1440) {
+    adjustedEnd -= 1440;
+  }
+
+  // 🔵 Até 02:09 ainda pertence ao dia anterior
+  if (nowMinutes < 130) { // 130 minutos = 02:10
+    adjustedNow += 1440;
+  }
+
+  // Se o jogo atravessa meia-noite
+  if (matchMinutes + 130 >= 1440) {
+    adjustedMatch = matchMinutes;
+    adjustedEnd = matchMinutes + 130;
+  }
+
+  // 🔴 Reset do dia acontece às 02:10
+  if (nowMinutes >= 130) {
+    isLive = false;
+    isFinished = false;
+  } else {
+    isLive =
+      adjustedNow >= adjustedMatch &&
+      adjustedNow < adjustedEnd;
+
+    isFinished =
+      adjustedNow >= adjustedEnd;
+  }
+
+} else {
+
+  // 🟢 Jogos normais (antes das 22:00)
+  const endMinutes = matchMinutes + 130;
+
+  isLive =
+    nowMinutes >= matchMinutes &&
+    nowMinutes < endMinutes;
+
+  isFinished =
+    nowMinutes >= endMinutes;
+}
+
       const minutesToStart = matchMinutes - nowMinutes;
 
       const canShowButtons = isMaster
@@ -149,7 +196,6 @@ export default async function handler(req, res) {
       return 0;
     });
 
-    // 🚫 sem cache
     res.setHeader("Cache-Control", "no-store");
     res.status(200).json(games);
 
