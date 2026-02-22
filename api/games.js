@@ -76,9 +76,6 @@ export default async function handler(req, res) {
       new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
     );
 
-    const nowDateString = nowSP.toISOString().split("T")[0];
-    const nowMinutes = nowSP.getHours() * 60 + nowSP.getMinutes();
-
     let games = data.documents.map(doc => {
 
       const f = doc.fields;
@@ -99,19 +96,58 @@ export default async function handler(req, res) {
       let isLive = false;
       let isFinished = false;
 
-      // 🔥 Calcula diferença real usando Date completo (resolve meia-noite automaticamente)
-      const matchDateTime = new Date(`${gameDate}T${h.toString().padStart(2,"0")}:${m.toString().padStart(2,"0")}:00-03:00`);
-      const diffMinutes = (nowSP - matchDateTime) / 60000;
+      // 🔥 CÁLCULO ABSOLUTO SEGURO (SEM BUG DE TIMEZONE)
 
-      if (diffMinutes >= 0 && diffMinutes < 130) {
-        isLive = true;
+      if (gameDate) {
+
+        const [year, month, day] = gameDate.split("-").map(Number);
+
+        const matchDateTime = new Date(
+          year,
+          month - 1,
+          day,
+          h,
+          m,
+          0
+        );
+
+        const nowDateTime = new Date(
+          nowSP.getFullYear(),
+          nowSP.getMonth(),
+          nowSP.getDate(),
+          nowSP.getHours(),
+          nowSP.getMinutes(),
+          0
+        );
+
+        const diffMinutes = (nowDateTime - matchDateTime) / 60000;
+
+        if (diffMinutes >= 0 && diffMinutes < 130) {
+          isLive = true;
+        }
+
+        if (diffMinutes >= 130) {
+          isFinished = true;
+        }
       }
 
-      if (diffMinutes >= 130) {
-        isFinished = true;
-      }
-
-      const minutesToStart = -diffMinutes;
+      const minutesToStart =
+        gameDate
+          ? ((new Date(
+                nowSP.getFullYear(),
+                nowSP.getMonth(),
+                nowSP.getDate(),
+                nowSP.getHours(),
+                nowSP.getMinutes(),
+                0
+            ) -
+            new Date(
+                ...gameDate.split("-").map(Number).map((v, i) => i === 1 ? v - 1 : v),
+                h,
+                m,
+                0
+            )) / -60000)
+          : 0;
 
       const canShowButtons = isMaster
         ? true
@@ -146,7 +182,6 @@ export default async function handler(req, res) {
 
     games.sort((a, b) => {
 
-      // 🔥 Ordena por data DESC (mais recente primeiro)
       if (a.game_date !== b.game_date) {
         return b.game_date.localeCompare(a.game_date);
       }
