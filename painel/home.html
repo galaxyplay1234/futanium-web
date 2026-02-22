@@ -497,29 +497,29 @@ import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-f
 
 let gamesUnsubscribe = null;
 
+import { query, orderBy } from 
+"https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+
 function startGamesListener() {
 
   if (gamesUnsubscribe) return;
 
-  gamesUnsubscribe = onSnapshot(
+  const q = query(
     collection(db, "games"),
-    { includeMetadataChanges: true },
-    snapshot => {
-
-      // 🔥 IGNORA snapshot vindo do cache
-      if (snapshot.metadata.fromCache) {
-        return;
-      }
-
-      gamesMemory = [];
-
-      snapshot.forEach(docSnap => {
-        gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
-      });
-
-      renderGames();
-    }
+    orderBy("date", "desc"),
+    orderBy("time", "desc")
   );
+
+  gamesUnsubscribe = onSnapshot(q, snapshot => {
+
+    gamesMemory = [];
+
+    snapshot.forEach(docSnap => {
+      gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
+    });
+
+    renderGames();
+  });
 }
 
 
