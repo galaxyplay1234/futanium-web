@@ -121,6 +121,13 @@
         <input id="game-time" type="text" placeholder="Hora do Jogo (ex: 19:00)" 
                class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
 
+        <input 
+  id="game-date" 
+  type="date"
+  class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+
+
         <!-- Campos fixos para Canais -->
         <label class="block text-sm font-semibold mt-2">Canal 1</label>
 <div class="flex items-center gap-2">
@@ -552,6 +559,9 @@ window.showTab = function(tab, forceActive = false, resetForm = false) {
     currentEditId = null;
     document.getElementById("form-title").innerText = "Adicionar Jogo";
     document.getElementById("game-form").reset();
+
+    setTodayDate();
+
 
     // Reseta selects manualmente
     $('#game-champ').val(null).trigger('change');
@@ -1153,6 +1163,7 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
   const home  = document.getElementById("game-home-team").value;
   const away  = document.getElementById("game-away-team").value;
   const time  = document.getElementById("game-time").value;
+  const date  = document.getElementById("game-date").value;
 
   // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
   // coleta canais selecionados (valor = link, nome = texto real do botão)
@@ -1181,15 +1192,16 @@ teamsMemory.forEach(t => {
 });
 
   const payload = {
-    champ,
-    champ_logo: champLogo,
-    home,
-    home_logo: homeLogo,
-    away,
-    away_logo: awayLogo,
-    time,
-    channels: selected
-  };
+  champ,
+  champ_logo: champLogo,
+  home,
+  home_logo: homeLogo,
+  away,
+  away_logo: awayLogo,
+  time,
+  date, // 🔥 NOVO CAMPO
+  channels: selected
+};
 
   if(currentEditId){
     await updateDoc(doc(db,"games",currentEditId), payload);
@@ -1331,6 +1343,7 @@ $('#game-channel3').val(ch[2]?.url || null).trigger('change.select2');
 $('#game-channel4').val(ch[3]?.url || null).trigger('change.select2');
 
   document.getElementById("game-time").value = g.time || "";
+  document.getElementById("game-date").value = g.date || "";
 
   currentEditId = id;
   document.getElementById("form-title").innerText = "Editar Jogo";
@@ -1890,6 +1903,14 @@ if (isAviso) return;
 
     container.appendChild(div);
   });
+}
+
+
+function setTodayDate() {
+  const today = new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo"
+  });
+  document.getElementById("game-date").value = today;
 }
 
 
