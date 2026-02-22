@@ -499,18 +499,27 @@ let gamesUnsubscribe = null;
 
 function startGamesListener() {
 
-  if (gamesUnsubscribe) return; // evita criar múltiplos listeners
+  if (gamesUnsubscribe) return;
 
-  gamesUnsubscribe = onSnapshot(collection(db, "games"), snapshot => {
-    gamesMemory = [];
+  gamesUnsubscribe = onSnapshot(
+    collection(db, "games"),
+    { includeMetadataChanges: true },
+    snapshot => {
 
-    snapshot.forEach(docSnap => {
-      gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
-    });
+      // 🔥 IGNORA snapshot vindo do cache
+      if (snapshot.metadata.fromCache) {
+        return;
+      }
 
-    renderGames(); // apenas renderiza
-  });
+      gamesMemory = [];
 
+      snapshot.forEach(docSnap => {
+        gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
+      });
+
+      renderGames();
+    }
+  );
 }
 
 
