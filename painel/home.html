@@ -1877,20 +1877,20 @@ function renderMoreGamesList() {
     document.getElementById("game-channel4").value,
   ].filter(v => v);
 
-  // 🔥 ordenar por DATA (desc) e depois por HORA (desc)
+  // 🔥 Ordenar por DATA (desc) e HORA (desc)
   const orderedGames = [...gamesMemory].sort((a, b) => {
 
     const dateA = a.date || "";
     const dateB = b.date || "";
 
     if (dateA !== dateB) {
-      return dateB.localeCompare(dateA); // data mais recente primeiro
+      return dateB.localeCompare(dateA);
     }
 
     const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
     const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
 
-    return timeB - timeA; // horário maior primeiro
+    return timeB - timeA;
   });
 
   orderedGames.forEach(g => {
@@ -1900,7 +1900,6 @@ function renderMoreGamesList() {
       g.away?.toLowerCase() === "aviso";
 
     if (isAviso) return;
-
     if (currentEditId && g.id === currentEditId) return;
 
     const gameChannels = (g.channels || []).map(c => c.url);
@@ -1916,12 +1915,14 @@ function renderMoreGamesList() {
 
     div.innerHTML = `
       <input type="checkbox" value="${g.id}" class="copy-game-checkbox">
-      <span>${g.date || ""} - ${g.time} - ${g.home} x ${g.away}</span>
+      <span>${g.time} - ${g.home} x ${g.away}</span>
     `;
 
     container.appendChild(div);
   });
 }
+
+
 
 function setTodayDate() {
   const today = new Date().toLocaleDateString("en-CA", {
