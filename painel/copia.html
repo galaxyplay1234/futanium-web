@@ -201,6 +201,18 @@
   </button>
 </div>
 
+
+<hr class="my-4">
+
+<label class="block text-sm font-semibold mb-2">
+  Mais jogos (copiar canais)
+</label>
+
+<div id="more-games-list" 
+     class="bg-gray-50 border rounded p-2 max-h-40 overflow-y-auto text-sm space-y-1">
+  <!-- lista dinâmica -->
+</div>
+
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
     </div>
@@ -514,6 +526,11 @@ window.showTab = function(tab, forceActive = false, resetForm = false) {
   // Esconde todas as abas
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
   document.getElementById("tab-" + tab).classList.remove("hidden");
+  
+  
+  if (tab === "addgame") {
+  renderMoreGamesList();
+}
 
   // Reseta estilos dos botões
   document.querySelectorAll(".tab-btn").forEach(el => {
@@ -1182,6 +1199,19 @@ teamsMemory.forEach(t => {
     await addDoc(collection(db,"games"), payload);
   }
 
+// 🔥 COPIAR CANAIS PARA OUTROS JOGOS
+const checked = document.querySelectorAll(".copy-game-checkbox:checked");
+
+for (const checkbox of checked) {
+
+  const gameId = checkbox.value;
+
+  await updateDoc(doc(db, "games", gameId), {
+    channels: selected
+  });
+}
+
+
   document.getElementById("game-form").reset();
   
   showTab('home');
@@ -1806,6 +1836,60 @@ function listenAnalytics() {
 
   // Verifica a cada 30 segundos se virou o dia
   setInterval(startListening, 30000);
+}
+
+
+function renderMoreGamesList() {
+
+  const container = document.getElementById("more-games-list");
+  container.innerHTML = "";
+
+  // 🔥 canais selecionados no formulário
+  const selectedChannels = [
+    document.getElementById("game-channel1").value,
+    document.getElementById("game-channel2").value,
+    document.getElementById("game-channel3").value,
+    document.getElementById("game-channel4").value,
+  ].filter(v => v);
+
+  // 🔥 ordenar por horário crescente
+  const orderedGames = [...gamesMemory].sort((a, b) => {
+
+    const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
+    const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
+
+    return timeA - timeB; // crescente
+  });
+
+  orderedGames.forEach(g => {
+    
+    // 🔥 Ignorar Aviso
+const isAviso =
+  g.home?.toLowerCase() === "aviso" &&
+  g.away?.toLowerCase() === "aviso";
+
+if (isAviso) return;
+    
+    if (currentEditId && g.id === currentEditId) return;
+
+    const gameChannels = (g.channels || []).map(c => c.url);
+
+    const same =
+      selectedChannels.length === gameChannels.length &&
+      selectedChannels.every(ch => gameChannels.includes(ch));
+
+    if (same) return;
+
+    const div = document.createElement("div");
+    div.className = "flex items-center gap-2";
+
+    div.innerHTML = `
+      <input type="checkbox" value="${g.id}" class="copy-game-checkbox">
+      <span>${g.time} - ${g.home} x ${g.away}</span>
+    `;
+
+    container.appendChild(div);
+  });
 }
 
 
