@@ -1749,19 +1749,27 @@ btnSaveAll.addEventListener('click', async () => {
   btnSaveAll.textContent = 'Salvando…';
 
   try {
-    for (const r of importedRows) {
-      const payload = {
-        champ: r.champ,                                 // já vem “casado” ou o lido do 365
-        champ_logo: window.champsCache[r.champ] || '',
-        home: r.home,
-        home_logo: window.teamsCache[r.home] || '',
-        away: r.away,
-        away_logo: window.teamsCache[r.away] || '',
-        time: r.time,
-        channels: []
-      };
-      await addDoc(collection(db,'games'), payload);
-    }
+
+  const today = new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo"
+  });
+
+  for (const r of importedRows) {
+
+    const payload = {
+      champ: r.champ,
+      champ_logo: window.champsCache[r.champ] || '',
+      home: r.home,
+      home_logo: window.teamsCache[r.home] || '',
+      away: r.away,
+      away_logo: window.teamsCache[r.away] || '',
+      time: r.time,
+      date: today, // 🔥 AGORA SALVA A DATA
+      channels: []
+    };
+
+    await addDoc(collection(db,'games'), payload);
+  }
     
 
     importedRows = [];
