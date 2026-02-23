@@ -712,9 +712,11 @@ async function loadTeams(filter = "", force = false){
     `;
     tbody.appendChild(tr);
 
-    homeSel.appendChild(new Option(t.name, t.name));
-    awaySel.appendChild(new Option(t.name, t.name));
-  });
+    // 🟢 SELECTS sempre com todos os times
+teamsMemory.forEach(t => {
+  homeSel.appendChild(new Option(t.name, t.name));
+  awaySel.appendChild(new Option(t.name, t.name));
+});
 
   window.teamsCache = {};
   teamsArr.forEach(t => { 
@@ -1080,7 +1082,7 @@ async function loadButtons(filter = "", force = false){
     tbody.appendChild(tr);
   });
 
-  populateChannelSelects(buttonsArr);
+  populateChannelSelects(buttonsMemory);
 }
 
 
