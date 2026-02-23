@@ -12,19 +12,18 @@
   <style>
   /* remove o padding-top do body */
   body {
-    margin: 0;
-  }
+  margin: 0;
+}
 
-  /* remove o "x" padrão do Select2 */
+/* remove o "x" padrão do Select2 */
 .select2-selection__clear {
   display: none !important;
 }
 
-
-  /* aplica apenas no dashboard */
-  #dashboard {
-    padding-top: calc(56px + 48px); /* topbar + tabs */
-  }
+/* compensação exata topbar + tabs */
+#dashboard {
+  padding-top: 104px; /* 56 + 48 */
+}
   
   textarea {
   line-height: 1.4;
@@ -84,7 +83,8 @@
   </div>
 
   <!-- Conteúdo (abaixo da barra + tabs) -->
-  <div class="mt-[104px]">
+  <!-- Conteúdo (abaixo da barra + tabs) -->
+<div>
     <!-- 56px (h-14 da topbar) + 48px (tabs) = 104px -->
 
 
