@@ -695,7 +695,6 @@ async function loadTeams(filter = "", force = false){
   resetSelect(awaySel, "Selecione o Time Visitante");
 
   teamsArr.forEach(t => {
-
   const tr = document.createElement("tr");
   tr.innerHTML = `
     <td class="p-2">${t.name}</td>
@@ -1389,6 +1388,7 @@ async function loadData(){
   await loadButtons();
   startGamesListener(); // 👈 aqui
   listenAnalytics();
+  listenRealtimeCounters();
 }
 
 // ✅ Limpa qualquer select individualmente ao clicar no "✕"
@@ -1442,7 +1442,7 @@ function listenRealtimeCounters() {
 }
 
 // ⏱️ Inicia a escuta assim que o painel carregar
-listenRealtimeCounters();
+
 
 
 
