@@ -329,17 +329,10 @@
 
   <!-- Botão limpar -->
   <button 
-  id="clear-team-search" 
-  class="absolute right-2 top-1/2 -translate-y-1/2 
-         w-8 h-8 flex items-center justify-center
-         text-lg font-bold text-gray-400 
-         hover:text-red-500 
-         rounded-full 
-         hover:bg-gray-200 
-         active:bg-gray-300
-         hidden">
-  ✕
-</button>
+    id="clear-team-search" 
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hidden">
+    ✕
+  </button>
 
 </div>
 
@@ -444,17 +437,10 @@
 
   <!-- Botão limpar -->
   <button 
-  id="clear-search" 
-  class="absolute right-2 top-1/2 -translate-y-1/2 
-         w-8 h-8 flex items-center justify-center
-         text-lg font-bold text-gray-400 
-         hover:text-red-500 
-         rounded-full 
-         hover:bg-gray-200 
-         active:bg-gray-300
-         hidden">
-  ✕
-</button>
+    id="clear-search" 
+    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 hidden">
+    ✕
+  </button>
 
 </div>
         </form>
@@ -561,23 +547,6 @@ window.showTab = function(tab, forceActive = false, resetForm = false) {
   // Esconde todas as abas
   document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
   document.getElementById("tab-" + tab).classList.remove("hidden");
-  
-  // 🔥 Limpa pesquisas ao trocar de aba
-const teamSearch = document.getElementById("team-search");
-const buttonSearch = document.getElementById("button-search");
-
-if (tab === "times") {
-  teamSearch.value = "";
-  document.getElementById("clear-team-search")?.classList.add("hidden");
-  loadTeams();
-}
-
-if (tab === "buttons") {
-  buttonSearch.value = "";
-  document.getElementById("clear-search")?.classList.add("hidden");
-  loadButtons();
-}
-  
   
   
   if (tab === "addgame") {
@@ -725,31 +694,24 @@ async function loadTeams(filter = "", force = false){
   resetSelect(homeSel, "Selecione o Time da Casa");
   resetSelect(awaySel, "Selecione o Time Visitante");
 
-  // 🔥 TABELA usa filtrado
-teamsArr.forEach(t => {
+  teamsArr.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2">${t.name}</td>
+      <td class="p-2"><img src="${t.logo}" class="h-6"></td>
+      <td class="p-2 flex gap-2">
+        <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteTeam('${t.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
 
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td class="p-2">${t.name}</td>
-    <td class="p-2"><img src="${t.logo}" class="h-6"></td>
-    <td class="p-2 flex gap-2">
-      <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')"
-        class="bg-yellow-500 text-white px-2 py-1 rounded">
-        Editar
-      </button>
-      <button onclick="deleteTeam('${t.id}')"
-        class="bg-red-500 text-white px-2 py-1 rounded">
-        Excluir
-      </button>
-    </td>
-  `;
-  tbody.appendChild(tr);
-});
-
-// 🔥 SELECTS usam memória COMPLETA (sem filtro)
-teamsMemory
-  .sort((a, b) => a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' }))
-  .forEach(t => {
     homeSel.appendChild(new Option(t.name, t.name));
     awaySel.appendChild(new Option(t.name, t.name));
   });
@@ -1118,11 +1080,7 @@ async function loadButtons(filter = "", force = false){
     tbody.appendChild(tr);
   });
 
-  const orderedButtons = [...buttonsMemory].sort((a, b) =>
-  a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
-);
-
-populateChannelSelects(orderedButtons);
+  populateChannelSelects(buttonsArr);
 }
 
 
@@ -1749,27 +1707,19 @@ btnSaveAll.addEventListener('click', async () => {
   btnSaveAll.textContent = 'Salvando…';
 
   try {
-
-  const today = new Date().toLocaleDateString("en-CA", {
-    timeZone: "America/Sao_Paulo"
-  });
-
-  for (const r of importedRows) {
-
-    const payload = {
-      champ: r.champ,
-      champ_logo: window.champsCache[r.champ] || '',
-      home: r.home,
-      home_logo: window.teamsCache[r.home] || '',
-      away: r.away,
-      away_logo: window.teamsCache[r.away] || '',
-      time: r.time,
-      date: today, // 🔥 AGORA SALVA A DATA
-      channels: []
-    };
-
-    await addDoc(collection(db,'games'), payload);
-  }
+    for (const r of importedRows) {
+      const payload = {
+        champ: r.champ,                                 // já vem “casado” ou o lido do 365
+        champ_logo: window.champsCache[r.champ] || '',
+        home: r.home,
+        home_logo: window.teamsCache[r.home] || '',
+        away: r.away,
+        away_logo: window.teamsCache[r.away] || '',
+        time: r.time,
+        channels: []
+      };
+      await addDoc(collection(db,'games'), payload);
+    }
     
 
     importedRows = [];
