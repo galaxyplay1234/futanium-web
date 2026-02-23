@@ -1087,7 +1087,11 @@ async function loadButtons(filter = "", force = false){
     tbody.appendChild(tr);
   });
 
-  populateChannelSelects(buttonsMemory);
+  const orderedButtons = [...buttonsMemory].sort((a, b) =>
+  a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+);
+
+populateChannelSelects(orderedButtons);
 }
 
 
