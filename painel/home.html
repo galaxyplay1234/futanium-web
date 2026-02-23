@@ -566,13 +566,13 @@ window.showTab = function(tab, forceActive = false, resetForm = false) {
 const teamSearch = document.getElementById("team-search");
 const buttonSearch = document.getElementById("button-search");
 
-if (teamSearch) {
+if (tab === "times") {
   teamSearch.value = "";
   document.getElementById("clear-team-search")?.classList.add("hidden");
   loadTeams();
 }
 
-if (buttonSearch) {
+if (tab === "buttons") {
   buttonSearch.value = "";
   document.getElementById("clear-search")?.classList.add("hidden");
   loadButtons();
