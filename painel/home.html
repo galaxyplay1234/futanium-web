@@ -695,35 +695,32 @@ async function loadTeams(filter = "", force = false){
   resetSelect(awaySel, "Selecione o Time Visitante");
 
   teamsArr.forEach(t => {
-  const tr = document.createElement("tr");
-  tr.innerHTML = `
-    <td class="p-2">${t.name}</td>
-    <td class="p-2"><img src="${t.logo}" class="h-6"></td>
-    <td class="p-2 flex gap-2">
-      <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')"
-        class="bg-yellow-500 text-white px-2 py-1 rounded">
-        Editar
-      </button>
-      <button onclick="deleteTeam('${t.id}')"
-        class="bg-red-500 text-white px-2 py-1 rounded">
-        Excluir
-      </button>
-    </td>
-  `;
-  tbody.appendChild(tr);
-});
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="p-2">${t.name}</td>
+      <td class="p-2"><img src="${t.logo}" class="h-6"></td>
+      <td class="p-2 flex gap-2">
+        <button onclick="editTeam('${t.id}','${t.name.replace(/'/g,"\\'")}','${t.logo.replace(/'/g,"\\'")}')"
+          class="bg-yellow-500 text-white px-2 py-1 rounded">
+          Editar
+        </button>
+        <button onclick="deleteTeam('${t.id}')"
+          class="bg-red-500 text-white px-2 py-1 rounded">
+          Excluir
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
 
-// 🟢 AGORA SIM — fora do loop
-teamsMemory.forEach(t => {
-  homeSel.appendChild(new Option(t.name, t.name));
-  awaySel.appendChild(new Option(t.name, t.name));
-});
+    homeSel.appendChild(new Option(t.name, t.name));
+    awaySel.appendChild(new Option(t.name, t.name));
+  });
 
-// 🔥 Cache correto
-window.teamsCache = {};
-teamsMemory.forEach(t => { 
-  window.teamsCache[t.name] = t.logo; 
-});
+  window.teamsCache = {};
+  teamsArr.forEach(t => { 
+    window.teamsCache[t.name] = t.logo; 
+  });
+}
 
 
 window.deleteTeam = async function(id){
@@ -1083,7 +1080,7 @@ async function loadButtons(filter = "", force = false){
     tbody.appendChild(tr);
   });
 
-  populateChannelSelects(buttonsMemory);
+  populateChannelSelects(buttonsArr);
 }
 
 
@@ -1388,7 +1385,6 @@ async function loadData(){
   await loadButtons();
   startGamesListener(); // 👈 aqui
   listenAnalytics();
-  listenRealtimeCounters();
 }
 
 // ✅ Limpa qualquer select individualmente ao clicar no "✕"
@@ -1442,7 +1438,7 @@ function listenRealtimeCounters() {
 }
 
 // ⏱️ Inicia a escuta assim que o painel carregar
-
+listenRealtimeCounters();
 
 
 
