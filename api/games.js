@@ -77,10 +77,17 @@ export default async function handler(req, res) {
       new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" })
     );
 
+    const todaySP = nowSP.toISOString().split("T")[0];
+
     let games = data.documents.map(doc => {
 
       const f = doc.fields;
       const gameDate = f.date?.stringValue || "";
+
+      // 🔥 FILTRO: NÃO mostrar jogos do futuro
+      if (gameDate > todaySP) {
+        return null;
+      }
 
       const home = f.home?.stringValue || "";
       const away = f.away?.stringValue || "";
@@ -96,8 +103,6 @@ export default async function handler(req, res) {
 
       let isLive = false;
       let isFinished = false;
-
-      // 🔥 CÁLCULO ABSOLUTO SEGURO (SEM BUG DE TIMEZONE)
 
       if (gameDate) {
 
@@ -180,6 +185,9 @@ export default async function handler(req, res) {
             : []
       };
     });
+
+    // 🔥 Remove jogos null (futuros)
+    games = games.filter(Boolean);
 
     games.sort((a, b) => {
 
