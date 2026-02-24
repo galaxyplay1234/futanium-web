@@ -382,25 +382,31 @@ function renderList(items){
 
 // Selecionar jogo
 function selectMatch(match){
+
   const home = match.home_team || '';
   const away = match.visiting_team || '';
-  
-  // mostra o texto abaixo do player
+
   const matchInfo = document.getElementById('matchInfo');
   matchInfo.innerHTML = `Escolha um canal para assistir: <strong>${home} x ${away}</strong>`;
 
-  const buttons = match.buttons || [];
+  const buttons = match.buttons && match.buttons.length
+    ? match.buttons
+    : [{ name: "Canal 1", url: match.default_url || "" }];
+
   channelButtons.innerHTML = "";
-  if(buttons.length){
-    buttons.forEach((btn,i)=>{
-      const b = document.createElement("button");
-      b.textContent = btn.name || `Canal ${i+1}`;
-      b.onclick = ()=>{
-  loadChannel(btn.url);
-};
-      channelButtons.appendChild(b);
-    });
-  }
+
+  buttons.forEach((btn,i)=>{
+    const b = document.createElement("button");
+    b.textContent = btn.name || `Canal ${i+1}`;
+    b.onclick = ()=>{
+      if(btn.url){
+        loadChannel(btn.url);
+      } else {
+        alert("Canal indisponível");
+      }
+    };
+    channelButtons.appendChild(b);
+  });
 }
 
 // Carregar canal
