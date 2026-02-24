@@ -396,7 +396,7 @@ function selectMatch(match){
     buttons.forEach((btn,i)=>{
       const b = document.createElement("button");
       b.textContent = btn.name || `Canal ${i+1}`;
-      bb.onclick = ()=>{
+      b.onclick = ()=>{
   loadChannel(btn.url);
 };
       channelButtons.appendChild(b);
