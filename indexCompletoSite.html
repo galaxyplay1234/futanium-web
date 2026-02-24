@@ -431,7 +431,15 @@ async function load(){
     icoRef.classList.add('spin');
     const res = await fetch(API_HTTP, {cache:'no-store'});
     const data = await res.json();
-    renderList(data.filter(x=>x && (x.home_team || x.visiting_team || x.championship)));
+    renderList(
+  data.filter(x =>
+    x &&
+    x.home_team &&
+    x.visiting_team &&
+    x.home_team.toLowerCase() !== "aviso" &&
+    x.visiting_team.toLowerCase() !== "aviso"
+  )
+);
   }catch(e){
     listEl.innerHTML = "<p style='padding:12px'>Erro ao carregar jogos.</p>";
   }finally{
