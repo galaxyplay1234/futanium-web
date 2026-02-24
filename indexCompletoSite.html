@@ -389,21 +389,17 @@ function selectMatch(match){
   const matchInfo = document.getElementById('matchInfo');
   matchInfo.innerHTML = `Escolha um canal para assistir: <strong>${home} x ${away}</strong>`;
 
-  const buttons = match.buttons && match.buttons.length
-    ? match.buttons
-    : [{ name: "Canal 1", url: match.default_url || "" }];
-
   channelButtons.innerHTML = "";
 
-  buttons.forEach((btn,i)=>{
+  if (!match.buttons || !match.buttons.length) {
+    return; // 👈 Se não tem botão na API, não mostra nada
+  }
+
+  match.buttons.forEach((btn,i)=>{
     const b = document.createElement("button");
     b.textContent = btn.name || `Canal ${i+1}`;
     b.onclick = ()=>{
-      if(btn.url){
-        loadChannel(btn.url);
-      } else {
-        alert("Canal indisponível");
-      }
+      loadChannel(btn.url);
     };
     channelButtons.appendChild(b);
   });
