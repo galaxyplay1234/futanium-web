@@ -79,7 +79,8 @@
   /* Bloqueia overlays ou popups que aparecem sobre o vídeo */
   #playerFrame::-webkit-scrollbar { display: none; }
   .ad-blocker {
-    pointer-events: none;
+    pointer-events: auto;
+  background: transparent;
     position: absolute;
     top: 0;
     left: 0;
@@ -433,6 +434,13 @@ async function load(){
 }
 btnRef.onclick = load;
 load();
+
+
+// 🚫 Bloqueia tentativas de abrir novas abas
+window.open = function() {
+  return null;
+};
+
 
 </script>
 </body>
