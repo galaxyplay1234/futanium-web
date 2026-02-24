@@ -442,6 +442,18 @@ window.open = function() {
 };
 
 
+playerFrame.onload = () => {
+  try {
+    const iframeWindow = playerFrame.contentWindow;
+
+    iframeWindow.open = function() {
+      return null;
+    };
+
+  } catch (e) {}
+};
+
+
 </script>
 </body>
 </html>
