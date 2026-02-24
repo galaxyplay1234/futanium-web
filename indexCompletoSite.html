@@ -408,8 +408,13 @@ function selectMatch(match){
 function loadChannel(url){
   const sep = url.includes('?') ? '&' : '?';
   const flags = 'autoplay=1&muted=0&volume=1&playsinline=1';
+  
   playerFrame.src = `${url}${sep}${flags}`;
   playerMsg.style.display = "none";
+
+  // ✅ LIBERA clique no player
+  document.querySelector(".ad-blocker").style.pointerEvents = "none";
+
   playerFrame.onload = ()=>{
     try{
       playerFrame.contentWindow.postMessage({type:'unmute'}, '*');
@@ -440,6 +445,11 @@ load();
 window.open = function() {
   return null;
 };
+
+
+Object.defineProperty(window, 'location', {
+  writable: false
+});
 
 
 playerFrame.onload = () => {
