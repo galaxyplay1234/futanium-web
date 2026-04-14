@@ -8,7 +8,7 @@ export default async function handler(req, res) {
       "177.54.94.158",
       "177.54.84.215",
       "177.75.110.183",
-      "189.40.70.176"
+      "177.23.116.38"
     ];
 
     const forwarded = req.headers["x-forwarded-for"];
