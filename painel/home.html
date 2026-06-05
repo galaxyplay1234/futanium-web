@@ -101,6 +101,11 @@
   <div id="m3u8Count">🔴 0</div>
   <div id="instaladosCount">📥 0</div>
 </div>
+
+<div id="versionStats"
+     class="bg-white rounded shadow p-3 mb-4 text-center text-sm font-semibold">
+  Carregando versões...
+</div>
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
       <ul id="games-list" class="space-y-2"></ul>
     </div>
@@ -1476,6 +1481,31 @@ function listenRealtimeCounters() {
         if (node === "instalados") elements[node].textContent = `📥 ${total}`;
       }
     });
+  });
+
+  // 🔥 Contagem por versão
+  const installsRef = ref(rtdb, "instalados");
+
+  onValue(installsRef, snap => {
+
+    const data = snap.val() || {};
+    const versions = {};
+
+    Object.values(data).forEach(item => {
+      const version = item.version || "Desconhecida";
+      versions[version] = (versions[version] || 0) + 1;
+    });
+
+    let html = "";
+
+    Object.entries(versions)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .forEach(([version, total]) => {
+        html += `<span style="margin-right:20px">${total} 🔄 ${version}</span>`;
+      });
+
+    document.getElementById("versionStats").innerHTML =
+      html || "Nenhuma instalação";
   });
 }
 
