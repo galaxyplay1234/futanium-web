@@ -1617,9 +1617,6 @@ window.clearSelect = function(id) {
 
 window.editSelectedButton = function(channelNumber){
 
-  // limpa qualquer edição anterior
-  currentButtonEditId = null;
-
   const select =
     document.getElementById(
       `game-channel${channelNumber}`
@@ -1647,6 +1644,7 @@ window.editSelectedButton = function(channelNumber){
     button.link,
     button.captureM3u8 || false
   );
+};
 };
 
 // Ativa busca nos selects
