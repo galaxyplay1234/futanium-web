@@ -9,6 +9,8 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
   /* remove o padding-top do body */
   body {
@@ -144,16 +146,28 @@
   </select>
 
   <div class="flex flex-col gap-1">
-    <button type="button" onclick="moveChannel(1, -1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
-    <button type="button" onclick="moveChannel(1, 1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
-  </div>
-
-  <button type="button" onclick="clearSelect('game-channel1')"
-    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-    ✕
+  <button type="button" onclick="moveChannel(1, -1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▲
   </button>
+
+  <button type="button" onclick="moveChannel(1, 1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▼
+  </button>
+</div>
+
+<button type="button"
+  onclick="editSelectedButton(1)"
+  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="clearSelect('game-channel1')"
+  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+  ✕
+</button>
 </div>
 
 
@@ -164,16 +178,28 @@
   </select>
 
   <div class="flex flex-col gap-1">
-    <button type="button" onclick="moveChannel(2, -1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
-    <button type="button" onclick="moveChannel(2, 1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
-  </div>
-
-  <button type="button" onclick="clearSelect('game-channel2')"
-    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-    ✕
+  <button type="button" onclick="moveChannel(1, -1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▲
   </button>
+
+  <button type="button" onclick="moveChannel(1, 1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▼
+  </button>
+</div>
+
+<button type="button"
+  onclick="editSelectedButton(1)"
+  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="clearSelect('game-channel1')"
+  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+  ✕
+</button>
 </div>
 
 
@@ -184,16 +210,28 @@
   </select>
 
   <div class="flex flex-col gap-1">
-    <button type="button" onclick="moveChannel(3, -1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
-    <button type="button" onclick="moveChannel(3, 1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
-  </div>
-
-  <button type="button" onclick="clearSelect('game-channel3')"
-    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-    ✕
+  <button type="button" onclick="moveChannel(1, -1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▲
   </button>
+
+  <button type="button" onclick="moveChannel(1, 1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▼
+  </button>
+</div>
+
+<button type="button"
+  onclick="editSelectedButton(1)"
+  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="clearSelect('game-channel1')"
+  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+  ✕
+</button>
 </div>
 
 
@@ -204,16 +242,28 @@
   </select>
 
   <div class="flex flex-col gap-1">
-    <button type="button" onclick="moveChannel(4, -1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
-    <button type="button" onclick="moveChannel(4, 1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
-  </div>
-
-  <button type="button" onclick="clearSelect('game-channel4')"
-    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-    ✕
+  <button type="button" onclick="moveChannel(1, -1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▲
   </button>
+
+  <button type="button" onclick="moveChannel(1, 1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▼
+  </button>
+</div>
+
+<button type="button"
+  onclick="editSelectedButton(1)"
+  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="clearSelect('game-channel1')"
+  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+  ✕
+</button>
 </div>
 
 
@@ -1563,6 +1613,37 @@ window.clearSelect = function(id) {
   $('#' + id).val(null).trigger('change');
 };
 
+
+window.editSelectedButton = function(channelNumber){
+
+  const select =
+    document.getElementById(
+      `game-channel${channelNumber}`
+    );
+
+  const selectedLink = select.value;
+
+  if(!selectedLink){
+    alert("Selecione um botão");
+    return;
+  }
+
+  const button = buttonsMemory.find(
+    b => b.link === selectedLink
+  );
+
+  if(!button){
+    alert("Botão não encontrado");
+    return;
+  }
+
+  editButton(
+    button.id,
+    button.name,
+    button.link,
+    button.captureM3u8 || false
+  );
+};
 
 // Ativa busca nos selects
 $(document).ready(function () {
