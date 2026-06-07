@@ -1616,6 +1616,9 @@ window.clearSelect = function(id) {
 
 window.editSelectedButton = function(channelNumber){
 
+  // limpa qualquer edição anterior
+  currentButtonEditId = null;
+
   const select =
     document.getElementById(
       `game-channel${channelNumber}`
