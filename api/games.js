@@ -167,8 +167,9 @@ export default async function handler(req, res) {
       c.mapValue.fields.url?.stringValue || "",
 
     name:
-      c.mapValue.fields.name?.stringValue ||
-      `Canal ${i + 1}`,
+      isAviso
+        ? c.mapValue.fields.name?.stringValue || `Canal ${i + 1}`
+        : `Canal ${i + 1}`,
 
     captureM3u8:
       c.mapValue.fields.captureM3u8?.booleanValue || false
