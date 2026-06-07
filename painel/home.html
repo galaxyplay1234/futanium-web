@@ -420,6 +420,19 @@
   rows="1"
   placeholder="Link do botão"
   class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+  <div>
+  <label class="block text-sm font-semibold mb-1">
+    Capturar m3u8
+  </label>
+
+  <select id="button-capture"
+    class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+    <option value="false">Não</option>
+    <option value="true">Sim</option>
+
+  </select>
+</div>
         <div class="flex gap-2">
   <button id="button-submit"
     type="submit"
@@ -1028,11 +1041,18 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
 
   const name = nameEl.value.trim();
   const link = linkEl.value.trim();
+
+const captureM3u8 =
+  document.getElementById("button-capture").value === "true";
   if(!name || !link) return;
 
   if(currentButtonEditId){
 
-    await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
+    await updateDoc(doc(db,"buttons",currentButtonEditId), {
+  name,
+  link,
+  captureM3u8
+});
 
     // 🔥 Atualiza apenas na memória
     const index = buttonsMemory.findIndex(b => b.id === currentButtonEditId);
@@ -1046,7 +1066,11 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
 
   } else {
 
-    const docRef = await addDoc(collection(db,"buttons"), { name, link });
+    const docRef = await addDoc(collection(db,"buttons"), {
+  name,
+  link,
+  captureM3u8
+});
 
     // 🔥 Adiciona só o novo botão na memória
     buttonsMemory.push({
@@ -1098,11 +1122,24 @@ async function loadButtons(filter = "", force = false){
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">
-        <span class="cursor-pointer text-black hover:text-gray-600"
-          onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
-          ${b.name}
-        </span>
-      </td>
+
+  <div
+    class="cursor-pointer text-black hover:text-gray-600 font-medium"
+    onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+
+    ${b.name}
+
+  </div>
+
+  <div
+    class="inline-block mt-1 px-2 py-0.5 text-[11px]
+    bg-gray-200 text-gray-700 rounded-full">
+
+    ${b.captureM3u8 ? "SIM" : "NÃO"}
+
+  </div>
+
+</td>
       <td class="p-2">
         <a href="${b.link}" target="_blank"
           class="text-blue-600 underline break-all">
@@ -1110,7 +1147,12 @@ async function loadButtons(filter = "", force = false){
         </a>
       </td>
       <td class="p-2 flex gap-2">
-        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')"
+        <button onclick="editButton(
+'${b.id}',
+'${b.name.replace(/'/g,"\\'")}',
+'${b.link.replace(/'/g,"\\'")}',
+${b.captureM3u8 ? "true" : "false"}
+)"
           class="bg-yellow-500 text-white px-2 py-1 rounded">
           Editar
         </button>
@@ -1141,7 +1183,12 @@ window.deleteButton = async function(id){
   await loadButtons();
 };
 
-window.editButton = function(id, name, link){
+window.editButton = function(
+  id,
+  name,
+  link,
+  captureM3u8
+){
 
   showTab('buttons'); // 🔥 ativa primeiro
 
@@ -1152,6 +1199,9 @@ window.editButton = function(id, name, link){
 
     nameEl.value = name;
     linkEl.value = link;
+    
+    document.getElementById("button-capture").value =
+  captureM3u8 ? "true" : "false";
 
     nameEl.style.height = "auto";
     nameEl.style.height = nameEl.scrollHeight + "px";
