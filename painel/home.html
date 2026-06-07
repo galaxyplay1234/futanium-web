@@ -641,8 +641,22 @@ if (tab === "times") {
 }
 
 if (tab === "buttons") {
+
   buttonSearch.value = "";
   document.getElementById("clear-search")?.classList.add("hidden");
+
+  // 🔥 limpa formulário
+  currentButtonEditId = null;
+
+  document.getElementById("button-name").value = "";
+  document.getElementById("button-link").value = "";
+  document.getElementById("button-capture").value = "false";
+
+  autoResizeTextarea(document.getElementById("button-name"));
+  autoResizeTextarea(document.getElementById("button-link"));
+
+  document.getElementById("button-submit").innerText = "Adicionar";
+
   loadButtons();
 }
   
