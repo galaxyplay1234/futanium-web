@@ -1057,9 +1057,10 @@ const captureM3u8 =
     // 🔥 Atualiza apenas na memória
     const index = buttonsMemory.findIndex(b => b.id === currentButtonEditId);
     if(index !== -1){
-      buttonsMemory[index].name = name;
-      buttonsMemory[index].link = link;
-    }
+  buttonsMemory[index].name = name;
+  buttonsMemory[index].link = link;
+  buttonsMemory[index].captureM3u8 = captureM3u8;
+}
 
     currentButtonEditId = null;
     document.getElementById("button-submit").innerText = "Adicionar";
@@ -1074,10 +1075,11 @@ const captureM3u8 =
 
     // 🔥 Adiciona só o novo botão na memória
     buttonsMemory.push({
-      id: docRef.id,
-      name,
-      link
-    });
+  id: docRef.id,
+  name,
+  link,
+  captureM3u8
+});
   }
 
   // limpa campos
