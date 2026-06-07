@@ -1048,24 +1048,71 @@ const captureM3u8 =
 
   if(currentButtonEditId){
 
-    await updateDoc(doc(db,"buttons",currentButtonEditId), {
-  name,
-  link,
-  captureM3u8
-});
+  // nome antigo antes da edição
+  const oldButton =
+    buttonsMemory.find(
+      b => b.id === currentButtonEditId
+    );
 
-    // 🔥 Atualiza apenas na memória
-    const index = buttonsMemory.findIndex(b => b.id === currentButtonEditId);
-    if(index !== -1){
-  buttonsMemory[index].name = name;
-  buttonsMemory[index].link = link;
-  buttonsMemory[index].captureM3u8 = captureM3u8;
+  const oldName = oldButton?.name || name;
+
+  await updateDoc(doc(db,"buttons",currentButtonEditId), {
+    name,
+    link,
+    captureM3u8
+  });
+
+  // atualiza cache
+  const index = buttonsMemory.findIndex(
+    b => b.id === currentButtonEditId
+  );
+
+  if(index !== -1){
+    buttonsMemory[index].name = name;
+    buttonsMemory[index].link = link;
+    buttonsMemory[index].captureM3u8 = captureM3u8;
+  }
+
+  // 🔥 atualiza todos os jogos automaticamente
+  for (const game of gamesMemory) {
+
+    let changed = false;
+
+    const channels = (game.channels || []).map(ch => {
+
+      if (ch.name === oldName) {
+
+        changed = true;
+
+        return {
+          ...ch,
+          name,
+          url: link,
+          captureM3u8
+        };
+      }
+
+      return ch;
+    });
+
+    if (changed) {
+
+      await updateDoc(
+        doc(db, "games", game.id),
+        { channels }
+      );
+
+    }
+  }
+
+  currentButtonEditId = null;
+
+  document.getElementById("button-submit").innerText =
+    "Adicionar";
+
 }
 
-    currentButtonEditId = null;
-    document.getElementById("button-submit").innerText = "Adicionar";
-
-  } else {
+ else {
 
     const docRef = await addDoc(collection(db,"buttons"), {
   name,
