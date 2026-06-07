@@ -161,12 +161,19 @@ export default async function handler(req, res) {
         : (minutesToStart <= 15);
 
       const allButtons =
-        (f.channels?.arrayValue?.values || []).map((c, i) => ({
-          url: c.mapValue.fields.url.stringValue,
-          name: isAviso
-            ? c.mapValue.fields.name?.stringValue || `Canal ${i + 1}`
-            : `Canal ${i + 1}`
-        }));
+  (f.channels?.arrayValue?.values || []).map((c, i) => ({
+
+    url:
+      c.mapValue.fields.url?.stringValue || "",
+
+    name:
+      c.mapValue.fields.name?.stringValue ||
+      `Canal ${i + 1}`,
+
+    captureM3u8:
+      c.mapValue.fields.captureM3u8?.booleanValue || false
+
+  }));
 
       return {
         championship: f.champ?.stringValue || "",
