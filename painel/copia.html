@@ -9,6 +9,8 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
   /* remove o padding-top do body */
   body {
@@ -144,16 +146,28 @@
   </select>
 
   <div class="flex flex-col gap-1">
-    <button type="button" onclick="moveChannel(1, -1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
-    <button type="button" onclick="moveChannel(1, 1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
-  </div>
-
-  <button type="button" onclick="clearSelect('game-channel1')"
-    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-    ✕
+  <button type="button" onclick="moveChannel(1, -1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▲
   </button>
+
+  <button type="button" onclick="moveChannel(1, 1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▼
+  </button>
+</div>
+
+<button type="button"
+  onclick="editSelectedButton(1)"
+  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="clearSelect('game-channel1')"
+  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+  ✕
+</button>
 </div>
 
 
@@ -164,16 +178,28 @@
   </select>
 
   <div class="flex flex-col gap-1">
-    <button type="button" onclick="moveChannel(2, -1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
-    <button type="button" onclick="moveChannel(2, 1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
-  </div>
-
-  <button type="button" onclick="clearSelect('game-channel2')"
-    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-    ✕
+  <button type="button" onclick="moveChannel(2, -1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▲
   </button>
+
+  <button type="button" onclick="moveChannel(2, 1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▼
+  </button>
+</div>
+
+<button type="button"
+  onclick="editSelectedButton(2)"
+  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="clearSelect('game-channel2')"
+  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+  ✕
+</button>
 </div>
 
 
@@ -184,16 +210,28 @@
   </select>
 
   <div class="flex flex-col gap-1">
-    <button type="button" onclick="moveChannel(3, -1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
-    <button type="button" onclick="moveChannel(3, 1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
-  </div>
-
-  <button type="button" onclick="clearSelect('game-channel3')"
-    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-    ✕
+  <button type="button" onclick="moveChannel(3, -1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▲
   </button>
+
+  <button type="button" onclick="moveChannel(3, 1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▼
+  </button>
+</div>
+
+<button type="button"
+  onclick="editSelectedButton(3)"
+  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="clearSelect('game-channel3')"
+  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+  ✕
+</button>
 </div>
 
 
@@ -204,16 +242,28 @@
   </select>
 
   <div class="flex flex-col gap-1">
-    <button type="button" onclick="moveChannel(4, -1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▲</button>
-    <button type="button" onclick="moveChannel(4, 1)"
-      class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">▼</button>
-  </div>
-
-  <button type="button" onclick="clearSelect('game-channel4')"
-    class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-    ✕
+  <button type="button" onclick="moveChannel(4, -1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▲
   </button>
+
+  <button type="button" onclick="moveChannel(4, 1)"
+    class="bg-gray-300 hover:bg-gray-400 px-2 rounded text-xs">
+    ▼
+  </button>
+</div>
+
+<button type="button"
+  onclick="editSelectedButton(4)"
+  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="clearSelect('game-channel4')"
+  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
+  ✕
+</button>
 </div>
 
 
@@ -420,6 +470,19 @@
   rows="1"
   placeholder="Link do botão"
   class="w-full p-2 border rounded resize-none overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-400"></textarea>
+  <div>
+  <label class="block text-sm font-semibold mb-1">
+    Capturar m3u8
+  </label>
+
+  <select id="button-capture"
+    class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+    <option value="false">Não</option>
+    <option value="true">Sim</option>
+
+  </select>
+</div>
         <div class="flex gap-2">
   <button id="button-submit"
     type="submit"
@@ -578,8 +641,22 @@ if (tab === "times") {
 }
 
 if (tab === "buttons") {
+
   buttonSearch.value = "";
   document.getElementById("clear-search")?.classList.add("hidden");
+
+  // 🔥 limpa formulário
+  currentButtonEditId = null;
+
+  document.getElementById("button-name").value = "";
+  document.getElementById("button-link").value = "";
+  document.getElementById("button-capture").value = "false";
+
+  autoResizeTextarea(document.getElementById("button-name"));
+  autoResizeTextarea(document.getElementById("button-link"));
+
+  document.getElementById("button-submit").innerText = "Adicionar";
+
   loadButtons();
 }
   
@@ -1028,32 +1105,92 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
 
   const name = nameEl.value.trim();
   const link = linkEl.value.trim();
+
+const captureM3u8 =
+  document.getElementById("button-capture").value === "true";
   if(!name || !link) return;
 
   if(currentButtonEditId){
 
-    await updateDoc(doc(db,"buttons",currentButtonEditId), { name, link });
+  // nome antigo antes da edição
+  const oldButton =
+    buttonsMemory.find(
+      b => b.id === currentButtonEditId
+    );
 
-    // 🔥 Atualiza apenas na memória
-    const index = buttonsMemory.findIndex(b => b.id === currentButtonEditId);
-    if(index !== -1){
-      buttonsMemory[index].name = name;
-      buttonsMemory[index].link = link;
+  const oldName = oldButton?.name || name;
+
+  await updateDoc(doc(db,"buttons",currentButtonEditId), {
+    name,
+    link,
+    captureM3u8
+  });
+
+  // atualiza cache
+  const index = buttonsMemory.findIndex(
+    b => b.id === currentButtonEditId
+  );
+
+  if(index !== -1){
+    buttonsMemory[index].name = name;
+    buttonsMemory[index].link = link;
+    buttonsMemory[index].captureM3u8 = captureM3u8;
+  }
+
+  // 🔥 atualiza todos os jogos automaticamente
+  for (const game of gamesMemory) {
+
+    let changed = false;
+
+    const channels = (game.channels || []).map(ch => {
+
+      if (ch.name === oldName) {
+
+        changed = true;
+
+        return {
+          ...ch,
+          name,
+          url: link,
+          captureM3u8
+        };
+      }
+
+      return ch;
+    });
+
+    if (changed) {
+
+      await updateDoc(
+        doc(db, "games", game.id),
+        { channels }
+      );
+
     }
+  }
 
-    currentButtonEditId = null;
-    document.getElementById("button-submit").innerText = "Adicionar";
+  currentButtonEditId = null;
 
-  } else {
+  document.getElementById("button-submit").innerText =
+    "Adicionar";
 
-    const docRef = await addDoc(collection(db,"buttons"), { name, link });
+}
+
+ else {
+
+    const docRef = await addDoc(collection(db,"buttons"), {
+  name,
+  link,
+  captureM3u8
+});
 
     // 🔥 Adiciona só o novo botão na memória
     buttonsMemory.push({
-      id: docRef.id,
-      name,
-      link
-    });
+  id: docRef.id,
+  name,
+  link,
+  captureM3u8
+});
   }
 
   // limpa campos
@@ -1098,11 +1235,24 @@ async function loadButtons(filter = "", force = false){
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="p-2">
-        <span class="cursor-pointer text-black hover:text-gray-600"
-          onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
-          ${b.name}
-        </span>
-      </td>
+
+  <div
+    class="cursor-pointer text-black hover:text-gray-600 font-medium"
+    onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+
+    ${b.name}
+
+  </div>
+
+  <div
+    class="inline-block mt-1 px-2 py-0.5 text-[11px]
+    bg-gray-200 text-gray-700 rounded-full">
+
+    ${b.captureM3u8 ? "SIM" : "NÃO"}
+
+  </div>
+
+</td>
       <td class="p-2">
         <a href="${b.link}" target="_blank"
           class="text-blue-600 underline break-all">
@@ -1110,7 +1260,12 @@ async function loadButtons(filter = "", force = false){
         </a>
       </td>
       <td class="p-2 flex gap-2">
-        <button onclick="editButton('${b.id}','${b.name.replace(/'/g,"\\'")}','${b.link.replace(/'/g,"\\'")}')"
+        <button onclick="editButton(
+'${b.id}',
+'${b.name.replace(/'/g,"\\'")}',
+'${b.link.replace(/'/g,"\\'")}',
+${b.captureM3u8 ? "true" : "false"}
+)"
           class="bg-yellow-500 text-white px-2 py-1 rounded">
           Editar
         </button>
@@ -1141,8 +1296,14 @@ window.deleteButton = async function(id){
   await loadButtons();
 };
 
-window.editButton = function(id, name, link){
+window.editButton = function(
+  id,
+  name,
+  link,
+  captureM3u8
+){
 
+  currentButtonEditId = null;
   showTab('buttons'); // 🔥 ativa primeiro
 
   setTimeout(() => {
@@ -1152,6 +1313,9 @@ window.editButton = function(id, name, link){
 
     nameEl.value = name;
     linkEl.value = link;
+    
+    document.getElementById("button-capture").value =
+  captureM3u8 ? "true" : "false";
 
     nameEl.style.height = "auto";
     nameEl.style.height = nameEl.scrollHeight + "px";
@@ -1228,12 +1392,25 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
 
   // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
   // coleta canais selecionados (valor = link, nome = texto real do botão)
-const selected = [
-  { name: document.getElementById("game-channel1").selectedOptions[0]?.text || "", url: document.getElementById("game-channel1").value },
-  { name: document.getElementById("game-channel2").selectedOptions[0]?.text || "", url: document.getElementById("game-channel2").value },
-  { name: document.getElementById("game-channel3").selectedOptions[0]?.text || "", url: document.getElementById("game-channel3").value },
-  { name: document.getElementById("game-channel4").selectedOptions[0]?.text || "", url: document.getElementById("game-channel4").value },
-].filter(c => c.url && c.name && c.name.trim() !== "");
+const selected = [1, 2, 3, 4]
+.map(n => {
+
+  const select =
+    document.getElementById(`game-channel${n}`);
+
+  const btn =
+    buttonsMemory.find(
+      b => b.link === select.value
+    );
+
+  return {
+    name: select.selectedOptions[0]?.text || "",
+    url: select.value,
+    captureM3u8: btn?.captureM3u8 || false
+  };
+
+})
+.filter(c => c.url);
 
   if(!champ || !home || !away || !time) return;
 
@@ -1412,10 +1589,22 @@ window.editGame = async function(id){
   $('#game-away-team').val(g.away || "").trigger('change.select2');
 
   const ch = g.channels || [];
-  $('#game-channel1').val(ch[0]?.url || null).trigger('change.select2');
-$('#game-channel2').val(ch[1]?.url || null).trigger('change.select2');
-$('#game-channel3').val(ch[2]?.url || null).trigger('change.select2');
-$('#game-channel4').val(ch[3]?.url || null).trigger('change.select2');
+
+function findButtonValue(channel) {
+
+  if (!channel) return null;
+
+  const btn = buttonsMemory.find(
+    b => b.name === channel.name
+  );
+
+  return btn ? btn.link : channel.url;
+}
+
+$('#game-channel1').val(findButtonValue(ch[0])).trigger('change.select2');
+$('#game-channel2').val(findButtonValue(ch[1])).trigger('change.select2');
+$('#game-channel3').val(findButtonValue(ch[2])).trigger('change.select2');
+$('#game-channel4').val(findButtonValue(ch[3])).trigger('change.select2');
 
   document.getElementById("game-time").value = g.time || "";
   document.getElementById("game-date").value = g.date || "";
@@ -1439,6 +1628,37 @@ window.clearSelect = function(id) {
   $('#' + id).val(null).trigger('change');
 };
 
+
+window.editSelectedButton = function(channelNumber){
+
+  const select =
+    document.getElementById(
+      `game-channel${channelNumber}`
+    );
+
+  const selectedLink = select.value;
+
+  if(!selectedLink){
+    alert("Selecione um botão");
+    return;
+  }
+
+  const button = buttonsMemory.find(
+    b => b.link === selectedLink
+  );
+
+  if(!button){
+    alert("Botão não encontrado");
+    return;
+  }
+
+  editButton(
+    button.id,
+    button.name,
+    button.link,
+    button.captureM3u8 || false
+  );
+};
 
 // Ativa busca nos selects
 $(document).ready(function () {
