@@ -2388,8 +2388,7 @@ async function sendNotification() {
 
     const text = await response.text();
 
-    out.innerHTML =
-      '<span class="text-green-600">✅ Notificação enviada com sucesso</span>';
+out.innerHTML = text;
 
   } catch (e) {
 
