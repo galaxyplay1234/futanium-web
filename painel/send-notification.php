@@ -2,8 +2,11 @@
 // ===============================================
 // 🔔 Envio de Notificação Firebase - Versão Responsiva + Sucesso
 // ===============================================
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-$jsonFile = __DIR__ . '/chave-firebase.json';
+
+$jsonFile = 'https://controledeestoque.rf.gd/futaniumbox/futaniumbox/chave-firebase.json';
 $projectId = 'futanium-box-3-1'; // 🔹 ajuste conforme o seu projeto
 
 $statusMsg = '';
