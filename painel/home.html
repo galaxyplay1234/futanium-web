@@ -76,6 +76,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 </button>
     <button onclick="showTab('buttons')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
+    <button onclick="showTab('notification')"
+  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Notificação
+</button>  
+            
     <button onclick="showTab('import')"
         class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
   Importar
@@ -524,6 +529,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   ✕
 </button>
 
+
+
 </div>
         </form>
 </div>
@@ -541,6 +548,98 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
       </div>
     </div>
   </div>
+
+
+<div id="tab-notification" class="tab-content hidden">
+
+<h2 class="text-lg sm:text-xl font-semibold mb-4">
+  Enviar Notificação FCM
+</h2>
+
+<div class="bg-white rounded shadow p-4">
+
+<label class="block font-semibold mb-1">
+Server key (FCM legacy)
+</label>
+
+<input id="serverKey"
+  type="password"
+  placeholder="AAAA..."
+  class="w-full p-2 border rounded mb-3">
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+
+<div>
+<label class="block font-semibold mb-1">
+Tipo de envio
+</label>
+
+<select id="mode"
+  class="w-full p-2 border rounded">
+
+<option value="topic" selected>
+Tópico
+</option>
+
+<option value="token">
+Token
+</option>
+
+</select>
+</div>
+
+<div>
+<label id="lblTarget"
+  class="block font-semibold mb-1">
+Tópico (ex.: global)
+</label>
+
+<input id="target"
+  value="global"
+  class="w-full p-2 border rounded">
+</div>
+
+</div>
+
+<label class="block font-semibold mt-3 mb-1">
+Título
+</label>
+
+<input id="title"
+  class="w-full p-2 border rounded">
+
+<label class="block font-semibold mt-3 mb-1">
+Mensagem
+</label>
+
+<textarea id="bodyTxt"
+  rows="4"
+  class="w-full p-2 border rounded"></textarea>
+
+<label class="block font-semibold mt-3 mb-1">
+Dados extras (JSON)
+</label>
+
+<textarea id="dataJson"
+  rows="3"
+  placeholder='{"screen":"home"}'
+  class="w-full p-2 border rounded"></textarea>
+
+<button id="sendBtn"
+  class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">
+
+Enviar
+
+</button>
+
+<p id="out"
+  class="text-sm text-gray-500 mt-3">
+</p>
+
+</div>
+
+</div>
+
 
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -2252,6 +2351,166 @@ function setTodayDate() {
     timeZone: "America/Sao_Paulo"
   });
   document.getElementById("game-date").value = today;
+}
+
+
+const endpoint =
+"https://fcm.googleapis.com/fcm/send";
+
+const modeSel =
+document.getElementById("mode");
+
+const target =
+document.getElementById("target");
+
+const lbl =
+document.getElementById("lblTarget");
+
+modeSel?.addEventListener("change", ()=>{
+
+  if(modeSel.value==="token"){
+
+    lbl.textContent =
+    "Token do aparelho";
+
+    target.placeholder =
+    "Cole o token FCM";
+
+  }else{
+
+    lbl.textContent =
+    "Tópico (ex.: global)";
+
+    target.placeholder =
+    "global";
+
+  }
+});
+
+document.getElementById("sendBtn")
+?.addEventListener("click", async ()=>{
+
+  const key =
+  document.getElementById("serverKey")
+  .value.trim();
+
+  const mode =
+  modeSel.value;
+
+  const tg =
+  target.value.trim();
+
+  const title =
+  document.getElementById("title")
+  .value.trim();
+
+  const body =
+  document.getElementById("bodyTxt")
+  .value.trim();
+
+  const data =
+  document.getElementById("dataJson")
+  .value.trim();
+
+  if(!key || !title || !body){
+
+    return showFCM(
+      "Preencha Server key, título e mensagem.",
+      true
+    );
+  }
+
+  const payload = {
+
+    notification:{
+      title,
+      body
+    },
+
+    priority:"high"
+  };
+
+  if(data){
+
+    try{
+
+      payload.data =
+      JSON.parse(data);
+
+    }catch(e){
+
+      return showFCM(
+        "JSON inválido.",
+        true
+      );
+    }
+  }
+
+  if(mode==="token"){
+
+    payload.to = tg;
+
+  }else{
+
+    payload.to =
+    "/topics/" + (tg || "global");
+  }
+
+  try{
+
+    const res = await fetch(
+      endpoint,
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":
+          "application/json",
+
+          "Authorization":
+          "key=" + key
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const txt =
+    await res.text();
+
+    if(res.ok){
+
+      showFCM(
+        "Enviado com sucesso!"
+      );
+
+    }else{
+
+      showFCM(
+        "Erro: " + txt,
+        true
+      );
+    }
+
+  }catch(err){
+
+    showFCM(
+      "Erro: " + err,
+      true
+    );
+  }
+
+});
+
+function showFCM(msg, err=false){
+
+  const out =
+  document.getElementById("out");
+
+  out.textContent = msg;
+
+  out.className =
+  err
+  ? "text-red-600 mt-3"
+  : "text-green-600 mt-3";
 }
 
 
