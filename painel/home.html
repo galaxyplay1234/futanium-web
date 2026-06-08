@@ -551,6 +551,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
 
 <div id="tab-notification" class="tab-content hidden">
+  <iframe
+    src="https://controledeestoque.rf.gd/futaniumbox/futaniumbox/notificacao.php"
+    style="width:100%;height:85vh;border:none;border-radius:10px;">
+  </iframe>
+</div>
 
 <h2 class="text-lg sm:text-xl font-semibold mb-4">
   Enviar Notificação FCM
@@ -2346,61 +2351,6 @@ function setTodayDate() {
 }
 
 
-async function sendNotification() {
-
-  const titulo =
-    document.getElementById("title").value.trim();
-
-  const mensagem =
-    document.getElementById("bodyTxt").value.trim();
-
-  const topico =
-    document.getElementById("target").value.trim() || "global";
-
-  const out =
-    document.getElementById("out");
-
-  if (!titulo || !mensagem) {
-
-    out.innerHTML =
-      '<span class="text-red-600">Preencha título e mensagem</span>';
-
-    return;
-  }
-
-  const formData = new FormData();
-
-  formData.append("titulo", titulo);
-  formData.append("mensagem", mensagem);
-  formData.append("topico", topico);
-
-  out.innerHTML = "Enviando...";
-
-  try {
-
-    const response = await fetch(
-      "send_notification.php",
-      {
-        method: "POST",
-        body: formData
-      }
-    );
-
-    const text = await response.text();
-
-out.innerHTML = text;
-
-  } catch (e) {
-
-    out.innerHTML =
-      '<span class="text-red-600">❌ Erro ao enviar</span>';
-
-  }
-}
-
-document
-.getElementById("sendBtn")
-.addEventListener("click", sendNotification);
 
 
 
