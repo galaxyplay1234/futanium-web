@@ -558,14 +558,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
 <div class="bg-white rounded shadow p-4">
 
-<label class="block font-semibold mb-1">
-Server key (FCM legacy)
-</label>
-
-<input id="serverKey"
-  type="password"
-  placeholder="AAAA..."
-  class="w-full p-2 border rounded mb-3">
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
 
@@ -2354,164 +2346,62 @@ function setTodayDate() {
 }
 
 
-const endpoint =
-"https://fcm.googleapis.com/fcm/send";
+async function sendNotification() {
 
-const modeSel =
-document.getElementById("mode");
+  const titulo =
+    document.getElementById("title").value.trim();
 
-const target =
-document.getElementById("target");
+  const mensagem =
+    document.getElementById("bodyTxt").value.trim();
 
-const lbl =
-document.getElementById("lblTarget");
+  const topico =
+    document.getElementById("target").value.trim() || "global";
 
-modeSel?.addEventListener("change", ()=>{
+  const out =
+    document.getElementById("out");
 
-  if(modeSel.value==="token"){
+  if (!titulo || !mensagem) {
 
-    lbl.textContent =
-    "Token do aparelho";
+    out.innerHTML =
+      '<span class="text-red-600">Preencha título e mensagem</span>';
 
-    target.placeholder =
-    "Cole o token FCM";
-
-  }else{
-
-    lbl.textContent =
-    "Tópico (ex.: global)";
-
-    target.placeholder =
-    "global";
-
-  }
-});
-
-document.getElementById("sendBtn")
-?.addEventListener("click", async ()=>{
-
-  const key =
-  document.getElementById("serverKey")
-  .value.trim();
-
-  const mode =
-  modeSel.value;
-
-  const tg =
-  target.value.trim();
-
-  const title =
-  document.getElementById("title")
-  .value.trim();
-
-  const body =
-  document.getElementById("bodyTxt")
-  .value.trim();
-
-  const data =
-  document.getElementById("dataJson")
-  .value.trim();
-
-  if(!key || !title || !body){
-
-    return showFCM(
-      "Preencha Server key, título e mensagem.",
-      true
-    );
+    return;
   }
 
-  const payload = {
+  const formData = new FormData();
 
-    notification:{
-      title,
-      body
-    },
+  formData.append("titulo", titulo);
+  formData.append("mensagem", mensagem);
+  formData.append("topico", topico);
 
-    priority:"high"
-  };
+  out.innerHTML = "Enviando...";
 
-  if(data){
+  try {
 
-    try{
-
-      payload.data =
-      JSON.parse(data);
-
-    }catch(e){
-
-      return showFCM(
-        "JSON inválido.",
-        true
-      );
-    }
-  }
-
-  if(mode==="token"){
-
-    payload.to = tg;
-
-  }else{
-
-    payload.to =
-    "/topics/" + (tg || "global");
-  }
-
-  try{
-
-    const res = await fetch(
-      endpoint,
+    const response = await fetch(
+      "send_notification.php",
       {
-        method:"POST",
-        headers:{
-          "Content-Type":
-          "application/json",
-
-          "Authorization":
-          "key=" + key
-        },
-        body: JSON.stringify(payload)
+        method: "POST",
+        body: formData
       }
     );
 
-    const txt =
-    await res.text();
+    const text = await response.text();
 
-    if(res.ok){
+    out.innerHTML =
+      '<span class="text-green-600">✅ Notificação enviada com sucesso</span>';
 
-      showFCM(
-        "Enviado com sucesso!"
-      );
+  } catch (e) {
 
-    }else{
+    out.innerHTML =
+      '<span class="text-red-600">❌ Erro ao enviar</span>';
 
-      showFCM(
-        "Erro: " + txt,
-        true
-      );
-    }
-
-  }catch(err){
-
-    showFCM(
-      "Erro: " + err,
-      true
-    );
   }
-
-});
-
-function showFCM(msg, err=false){
-
-  const out =
-  document.getElementById("out");
-
-  out.textContent = msg;
-
-  out.className =
-  err
-  ? "text-red-600 mt-3"
-  : "text-green-600 mt-3";
 }
+
+document
+.getElementById("sendBtn")
+.addEventListener("click", sendNotification);
 
 
 
