@@ -1727,12 +1727,12 @@ window.editSelectedButton = function(channelNumber){
     "inline-button-link"
   ).value = button.link;
   
+  const linkEl = document.getElementById("inline-button-link");
+
+linkEl.style.height = "auto";
+linkEl.style.height = linkEl.scrollHeight + "px";
   
-  autoResizeTextarea(
-  document.getElementById(
-    "inline-button-link"
-  )
-);
+  
 
   document.getElementById(
     "inline-button-capture"
