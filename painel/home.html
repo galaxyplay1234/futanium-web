@@ -274,11 +274,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     Editar Botão
   </h3>
 
-  <input
+  <textarea
     id="inline-button-name"
-    type="text"
+    rows="1"
     placeholder="Nome do canal"
-    class="w-full p-2 border rounded mb-2">
+    class="w-full p-2 border rounded resize-none overflow-hidden mb-2"></textarea>
 
   <textarea
   id="inline-button-link"
@@ -1719,13 +1719,15 @@ window.editSelectedButton = function(channelNumber){
 
   currentInlineButtonId = button.id;
 
-  document.getElementById(
-    "inline-button-name"
-  ).value = button.name;
+  const nameEl = document.getElementById("inline-button-name");
+const linkEl = document.getElementById("inline-button-link");
 
-  document.getElementById(
-    "inline-button-link"
-  ).value = button.link;
+nameEl.value = button.name;
+linkEl.value = button.link;
+
+// força redimensionar igual aba Botões
+autoResizeTextarea(nameEl);
+autoResizeTextarea(linkEl);
   
   autoResizeTextarea(
   document.getElementById("inline-button-link")
@@ -1738,9 +1740,10 @@ window.editSelectedButton = function(channelNumber){
   ).value =
     button.captureM3u8 ? "true" : "false";
 
-  document
-    .getElementById("inline-button-editor")
-    .classList.remove("hidden");
+  setTimeout(() => {
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(linkEl);
+}, 50);
 
   document
     .getElementById("inline-button-editor")
