@@ -1746,11 +1746,15 @@ autoResizeTextarea(linkEl);
 }, 50);
 
   document
-    .getElementById("inline-button-editor")
-    .scrollIntoView({
-      behavior: "smooth",
-      block: "center"
-    });
+  .getElementById("inline-button-editor")
+  .classList.remove("hidden");
+
+document
+  .getElementById("inline-button-editor")
+  .scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 };
 
 
