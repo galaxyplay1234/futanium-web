@@ -767,7 +767,8 @@ function populateChannelSelects(buttons) {
 
   selects.forEach(sel => {
 
-    const currentValue = sel.value;
+    const currentText =
+  sel.selectedOptions[0]?.text || "";
 
     sel.innerHTML =
       `<option value="">Selecione um botão</option>`;
@@ -783,7 +784,13 @@ function populateChannelSelects(buttons) {
       sel.appendChild(opt);
     });
 
-    sel.value = currentValue;
+    const found = buttons.find(
+  b => b.name === currentText
+);
+
+if(found){
+  sel.value = found.link;
+}
 
     $(sel).trigger('change.select2');
   });
