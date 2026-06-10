@@ -111,7 +111,7 @@ Versões
 </div>
 
 <div id="versionStats"
-     class="bg-white rounded shadow p-3 mb-4 text-center text-sm font-semibold">
+class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   Carregando versões...
 </div>
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
@@ -2059,10 +2059,19 @@ let html = "";
 
 Object.entries(versions)
   .sort((a,b)=>compareVersions(a[0], b[0]))
+  .slice(0, 3) // apenas as 3 últimas versões
   .forEach(([version,total]) => {
 
     html += `
-      <span style="margin-right:20px">
+      <span
+        style="
+          display:inline-block;
+          margin:4px;
+          padding:6px 10px;
+          background:#f3f4f6;
+          border-radius:8px;
+          font-weight:600;
+        ">
         ${total} 🔄 ${version}
       </span>
     `;
