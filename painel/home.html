@@ -2000,39 +2000,39 @@ function renderVersions(versions){
       "bg-white rounded shadow p-4";
 
     div.innerHTML = `
-      <div class="flex justify-between items-center">
+  <div class="flex justify-between items-center">
 
-        <div>
+    <div>
 
-          <div class="text-xl font-bold">
-            ${version}
-          </div>
-
-          <div class="text-sm text-gray-500">
-            ${total} instalações
-          </div>
-
-        </div>
-
-        ${
-          latest
-          ? `
-            <span class="
-              bg-green-100
-              text-green-700
-              px-3
-              py-1
-              rounded-full
-              text-xs
-              font-bold">
-              ÚLTIMA
-            </span>
-          `
-          : ""
-        }
-
+      <div class="text-2xl font-bold text-gray-900">
+        ${total}
       </div>
-    `;
+
+      <div class="text-sm text-gray-500">
+        Versão ${version}
+      </div>
+
+    </div>
+
+    ${
+      latest
+      ? `
+        <span class="
+          bg-green-100
+          text-green-700
+          px-3
+          py-1
+          rounded-full
+          text-xs
+          font-bold">
+          ÚLTIMA
+        </span>
+      `
+      : ""
+    }
+
+  </div>
+`;
 
     container.appendChild(div);
   });
