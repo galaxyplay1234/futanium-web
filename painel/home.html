@@ -70,6 +70,12 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     
     <button onclick="showTab('addgame', false, true)"
         class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+        
+   <button onclick="showTab('versions')"
+class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+Versões
+</button>     
+        
     <button onclick="showTab('analytics')"
   class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
   Analytics
@@ -330,6 +336,21 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Salvar Jogo</button>
       </form>
     </div>
+
+
+<!-- Versões -->
+<div id="tab-versions" class="tab-content hidden">
+
+  <h2 class="text-lg sm:text-xl font-semibold mb-4">
+    Versões
+  </h2>
+
+  <div id="versions-list" class="space-y-3">
+
+  </div>
+
+</div>
+
 
 
 <!-- Analytics -->
@@ -1933,6 +1954,92 @@ function listenRealtimeCounters() {
     });
   });
 
+function compareVersions(a, b){
+
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+
+  const max = Math.max(pa.length, pb.length);
+
+  for(let i=0;i<max;i++){
+
+    const va = pa[i] || 0;
+    const vb = pb[i] || 0;
+
+    if(va !== vb){
+      return vb - va;
+    }
+  }
+
+  return 0;
+}
+
+function renderVersions(versions){
+
+  const container =
+    document.getElementById("versions-list");
+
+  if(!container) return;
+
+  container.innerHTML = "";
+
+  const ordered =
+    Object.entries(versions)
+      .sort((a,b)=>
+        compareVersions(a[0], b[0])
+      );
+
+  ordered.forEach(([version,total],index)=>{
+
+    const latest = index === 0;
+
+    const div =
+      document.createElement("div");
+
+    div.className =
+      "bg-white rounded shadow p-4";
+
+    div.innerHTML = `
+      <div class="flex justify-between items-center">
+
+        <div>
+
+          <div class="text-xl font-bold">
+            ${version}
+          </div>
+
+          <div class="text-sm text-gray-500">
+            ${total} instalações
+          </div>
+
+        </div>
+
+        ${
+          latest
+          ? `
+            <span class="
+              bg-green-100
+              text-green-700
+              px-3
+              py-1
+              rounded-full
+              text-xs
+              font-bold">
+              ÚLTIMA
+            </span>
+          `
+          : ""
+        }
+
+      </div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+
+
   // 🔥 Contagem por versão
   const installsRef = ref(rtdb, "instalados");
 
@@ -1946,16 +2053,23 @@ function listenRealtimeCounters() {
       versions[version] = (versions[version] || 0) + 1;
     });
 
-    let html = "";
+    renderVersions(versions);
 
-    Object.entries(versions)
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .forEach(([version, total]) => {
-        html += `<span style="margin-right:20px">${total} 🔄 ${version}</span>`;
-      });
+let html = "";
 
-    document.getElementById("versionStats").innerHTML =
-      html || "Nenhuma instalação";
+Object.entries(versions)
+  .sort((a,b)=>compareVersions(a[0], b[0]))
+  .forEach(([version,total]) => {
+
+    html += `
+      <span style="margin-right:20px">
+        ${total} 🔄 ${version}
+      </span>
+    `;
+  });
+
+document.getElementById("versionStats").innerHTML =
+  html || "Nenhuma instalação";
   });
 }
 
