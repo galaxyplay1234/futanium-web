@@ -35,6 +35,47 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   min-height: 42px;
 }
   
+  
+
+
+.version-count{
+  display:inline-block;
+  min-width:30px;
+  font-weight:bold;
+  transition:transform .3s ease;
+}
+
+.version-count.up{
+  animation:countUp .4s ease;
+}
+
+.version-count.down{
+  animation:countDown .4s ease;
+}
+
+@keyframes countUp{
+  0%{
+    transform:translateY(12px);
+    opacity:0;
+  }
+  100%{
+    transform:translateY(0);
+    opacity:1;
+  }
+}
+
+@keyframes countDown{
+  0%{
+    transform:translateY(-12px);
+    opacity:0;
+  }
+  100%{
+    transform:translateY(0);
+    opacity:1;
+  }
+}
+  
+  
 </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -1930,6 +1971,78 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12
 
 const rtdb = getDatabase(app);
 
+
+
+const versionCounts = {};
+
+function updateVersionCard(version,total){
+
+  let el =
+    document.getElementById(
+      "version-" +
+      version.replaceAll(".","-")
+    );
+
+  if(!el){
+
+    el = document.createElement("span");
+
+    el.id =
+      "version-" +
+      version.replaceAll(".","-");
+
+    el.style.cssText = `
+      display:inline-block;
+      margin:4px;
+      padding:6px 10px;
+      background:#f3f4f6;
+      border-radius:8px;
+      font-weight:600;
+    `;
+
+    el.innerHTML = `
+      <span class="version-count">
+        ${total}
+      </span>
+      🔄
+      <strong>${version}</strong>
+    `;
+
+    document
+      .getElementById("versionStats")
+      .appendChild(el);
+
+    versionCounts[version] = total;
+
+    return;
+  }
+
+  const old =
+    versionCounts[version] || 0;
+
+  if(old === total) return;
+
+  const count =
+    el.querySelector(".version-count");
+
+  count.textContent = total;
+
+  count.classList.remove(
+    "up",
+    "down"
+  );
+
+  void count.offsetWidth;
+
+  count.classList.add(
+    total > old ? "up" : "down"
+  );
+
+  versionCounts[version] = total;
+}
+
+
+
 function listenRealtimeCounters() {
   const nodes = ["online", "webview", "m3u8", "instalados"];
   const elements = {
@@ -2055,30 +2168,27 @@ function renderVersions(versions){
 
     renderVersions(versions);
 
-let html = "";
+const container =
+  document.getElementById("versionStats");
+
+if(
+  container.innerHTML === "" ||
+  container.innerHTML === "Carregando versões..."
+){
+  container.innerHTML = "";
+}
 
 Object.entries(versions)
   .sort((a,b)=>compareVersions(a[0], b[0]))
-  .slice(0, 3) // apenas as 3 últimas versões
+  .slice(0, 3)
   .forEach(([version,total]) => {
 
-    html += `
-      <span
-        style="
-          display:inline-block;
-          margin:4px;
-          padding:6px 10px;
-          background:#f3f4f6;
-          border-radius:8px;
-          font-weight:600;
-        ">
-        ${total} 🔄 ${version}
-      </span>
-    `;
-  });
+    updateVersionCard(
+      version,
+      total
+    );
 
-document.getElementById("versionStats").innerHTML =
-  html || "Nenhuma instalação";
+
   });
 }
 
@@ -2608,6 +2718,10 @@ function setTodayDate() {
   });
   document.getElementById("game-date").value = today;
 }
+
+
+
+
 
 
 
