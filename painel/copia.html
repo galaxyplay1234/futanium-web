@@ -267,6 +267,55 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 </div>
 
 
+<div id="inline-button-editor"
+     class="hidden bg-white border rounded-lg p-4 mt-4 shadow">
+
+  <h3 class="font-semibold text-lg mb-3">
+    Editar Botão
+  </h3>
+
+  <textarea
+    id="inline-button-name"
+    rows="1"
+    placeholder="Nome do canal"
+    class="w-full p-2 border rounded resize-none overflow-hidden mb-2"></textarea>
+
+  <textarea
+  id="inline-button-link"
+  rows="1"
+  placeholder="Link"
+  class="w-full p-2 border rounded resize-none overflow-hidden mb-2"></textarea>
+
+  <select
+    id="inline-button-capture"
+    class="w-full p-2 border rounded mb-3">
+
+    <option value="false">Não</option>
+    <option value="true">Sim</option>
+
+  </select>
+
+  <div class="flex gap-2">
+
+    <button
+      type="button"
+      onclick="saveInlineButtonEdit()"
+      class="bg-green-600 text-white px-4 py-2 rounded w-full">
+      Atualizar
+    </button>
+
+    <button
+      type="button"
+      onclick="cancelInlineButtonEdit()"
+      class="bg-gray-500 text-white px-4 py-2 rounded w-full">
+      Cancelar
+    </button>
+
+  </div>
+
+</div>
+
+
 <hr class="my-4">
 
 <label class="block text-sm font-semibold mb-2">
@@ -573,6 +622,7 @@ let currentEditId = null;
 let currentButtonEditId = null;
 let currentChampEditId = null;
 let currentTeamEditId = null;
+let currentInlineButtonId = null;
 let teamsMemory = [];
 let champsMemory = [];
 let buttonsMemory = [];
@@ -707,6 +757,7 @@ function resetSelect(el, placeholder){
 }
 
 function populateChannelSelects(buttons) {
+
   const selects = [
     document.getElementById('game-channel1'),
     document.getElementById('game-channel2'),
@@ -715,12 +766,33 @@ function populateChannelSelects(buttons) {
   ];
 
   selects.forEach(sel => {
-    sel.innerHTML = `<option value="">Selecione um botão</option>`;
+
+    const currentText =
+  sel.selectedOptions[0]?.text || "";
+
+    sel.innerHTML =
+      `<option value="">Selecione um botão</option>`;
+
     buttons.forEach(btn => {
-      // Aqui o text = nome real do botão (Ex: ESPN 1)
-      const opt = new Option(btn.name, btn.link);
+
+      const opt =
+        new Option(
+          btn.name,
+          btn.link
+        );
+
       sel.appendChild(opt);
     });
+
+    const found = buttons.find(
+  b => b.name === currentText
+);
+
+if(found){
+  sel.value = found.link;
+}
+
+    $(sel).trigger('change.select2');
   });
 }
 
@@ -1652,13 +1724,171 @@ window.editSelectedButton = function(channelNumber){
     return;
   }
 
-  editButton(
-    button.id,
-    button.name,
-    button.link,
-    button.captureM3u8 || false
-  );
+  currentInlineButtonId = button.id;
+
+  const nameEl = document.getElementById("inline-button-name");
+const linkEl = document.getElementById("inline-button-link");
+
+nameEl.value = button.name;
+linkEl.value = button.link;
+
+// força redimensionar igual aba Botões
+autoResizeTextarea(nameEl);
+autoResizeTextarea(linkEl);
+  
+  autoResizeTextarea(
+  document.getElementById("inline-button-link")
+);
+  
+  
+
+  document.getElementById(
+    "inline-button-capture"
+  ).value =
+    button.captureM3u8 ? "true" : "false";
+
+  setTimeout(() => {
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(linkEl);
+}, 50);
+
+  document
+  .getElementById("inline-button-editor")
+  .classList.remove("hidden");
+
+document
+  .getElementById("inline-button-editor")
+  .scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 };
+
+
+window.saveInlineButtonEdit = async function(){
+
+  if(!currentInlineButtonId) return;
+
+  const name =
+    document.getElementById(
+      "inline-button-name"
+    ).value.trim();
+
+  const link =
+    document.getElementById(
+      "inline-button-link"
+    ).value.trim();
+
+  const captureM3u8 =
+    document.getElementById(
+      "inline-button-capture"
+    ).value === "true";
+
+  if(!name || !link) return;
+
+  const oldButton =
+    buttonsMemory.find(
+      b => b.id === currentInlineButtonId
+    );
+
+  const oldName =
+    oldButton?.name || name;
+
+  await updateDoc(
+    doc(
+      db,
+      "buttons",
+      currentInlineButtonId
+    ),
+    {
+      name,
+      link,
+      captureM3u8
+    }
+  );
+
+  const index =
+    buttonsMemory.findIndex(
+      b => b.id === currentInlineButtonId
+    );
+
+  if(index !== -1){
+
+    buttonsMemory[index].name = name;
+    buttonsMemory[index].link = link;
+    buttonsMemory[index].captureM3u8 =
+      captureM3u8;
+  }
+
+  for(const game of gamesMemory){
+
+    let changed = false;
+
+    const channels =
+      (game.channels || []).map(ch => {
+
+        if(ch.name === oldName){
+
+          changed = true;
+
+          return {
+            ...ch,
+            name,
+            url: link,
+            captureM3u8
+          };
+        }
+
+        return ch;
+      });
+
+    if(changed){
+
+      await updateDoc(
+        doc(db,"games",game.id),
+        { channels }
+      );
+    }
+  }
+
+  await loadButtons();
+
+  cancelInlineButtonEdit();
+};
+
+
+window.cancelInlineButtonEdit = function(){
+
+  currentInlineButtonId = null;
+
+  document
+    .getElementById(
+      "inline-button-editor"
+    )
+    .classList.add("hidden");
+
+  document
+    .getElementById(
+      "inline-button-name"
+    ).value = "";
+
+  document
+    .getElementById(
+      "inline-button-link"
+    ).value = "";
+    
+  autoResizeTextarea(
+  document.getElementById(
+    "inline-button-link"
+  )
+);
+
+  document
+    .getElementById(
+      "inline-button-capture"
+    ).value = "false";
+};
+
 
 // Ativa busca nos selects
 $(document).ready(function () {
@@ -2063,6 +2293,8 @@ setupAutoResize("button-name");
 setupAutoResize("button-link");
 setupAutoResize("team-name");
 setupAutoResize("team-logo");
+setupAutoResize("inline-button-name");
+setupAutoResize("inline-button-link");
 
 
 
