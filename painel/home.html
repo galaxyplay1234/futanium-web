@@ -2000,12 +2000,12 @@ function updateVersionCard(version,total){
     `;
 
     el.innerHTML = `
-      <span class="version-count">
-        ${total}
-      </span>
-      🔄
-      <strong>${version}</strong>
-    `;
+  <span class="version-count">
+    ${total}
+  </span>
+  🔄
+  ${version}
+`;
 
     document
       .getElementById("versionStats")
