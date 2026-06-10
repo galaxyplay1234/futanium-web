@@ -153,7 +153,6 @@ Versões
 
 <div id="versionStats"
 class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
-  Carregando versões...
 </div>
       <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
       <ul id="games-list" class="space-y-2"></ul>
@@ -2171,12 +2170,7 @@ function renderVersions(versions){
 const container =
   document.getElementById("versionStats");
 
-if(
-  container.innerHTML === "" ||
-  container.innerHTML === "Carregando versões..."
-){
-  container.innerHTML = "";
-}
+
 
 Object.entries(versions)
   .sort((a,b)=>compareVersions(a[0], b[0]))
