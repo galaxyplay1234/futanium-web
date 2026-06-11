@@ -1,14 +1,3 @@
 {
-  "success": true,
-  "total": 1,
-  "games": [
-    {
-      "home_team": "Sport Recife",
-      "away_team": "Athletic Club",
-      "home_score": "10",
-      "away_score": "1",
-      "minute": "80",
-      "url": "https://www.futebolnatv.com.br/aovivo/sport-recife-x-athletic-club-434afcbd53.html"
-    }
-  ]
+  
 }
