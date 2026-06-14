@@ -176,6 +176,10 @@ export default async function handler(req, res) {
 
   }));
 
+      const hideChannels =
+  f.hideChannels?.booleanValue || false;
+
+
       return {
         championship: f.champ?.stringValue || "",
         championship_image_url: f.champ_logo?.stringValue || null,
@@ -189,9 +193,13 @@ export default async function handler(req, res) {
         start_minutes: matchMinutes,
         game_date: gameDate,
         buttons:
-          (canShowButtons || isLive || isFinished)
-            ? allButtons
-            : []
+  hideChannels
+    ? []
+    : (
+        (canShowButtons || isLive || isFinished)
+          ? allButtons
+          : []
+      )
       };
     });
 
