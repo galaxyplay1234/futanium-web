@@ -1712,21 +1712,37 @@ ${hideChannelsLabel}
     } else {
 
       li.innerHTML = `
-        <div class="flex justify-between items-start">
-          <div class="flex items-center gap-2">
-            <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
-            <span class="text-[12px] text-gray-500">${g.champ}</span>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
-            <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
-          </div>
-        </div>
+  <div class="flex justify-between items-start">
 
-        <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
-        ${canaisLabel}
-${hideChannelsLabel}
-      `;
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
+        <span class="text-[12px] text-gray-500">${g.champ}</span>
+      </div>
+
+      <div class="text-base font-semibold leading-tight mt-2">
+        ${g.home} x ${g.away}
+      </div>
+
+      ${canaisLabel}
+    </div>
+
+    <div class="flex flex-col items-end gap-2">
+      <div class="flex gap-2">
+        <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
+          Editar
+        </button>
+
+        <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
+          Excluir
+        </button>
+      </div>
+
+      ${hideChannelsLabel}
+    </div>
+
+  </div>
+`;
     }
 
     ul.appendChild(li);
