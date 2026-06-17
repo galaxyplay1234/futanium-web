@@ -75,6 +75,40 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   }
 }
   
+  #versionStats{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:6px;
+  justify-content:center;
+  align-items:center;
+}
+
+.version-badge{
+  flex:1;
+  min-width:0;
+  text-align:center;
+  padding:6px 4px;
+  background:#f3f4f6;
+  border-radius:8px;
+  font-weight:600;
+  font-size:14px;
+}
+
+
+@media (max-width: 400px){
+
+  .version-badge{
+    font-size:12px;
+    padding:5px 2px;
+  }
+
+  .version-count{
+    min-width:auto;
+  }
+
+}
+  
+  
   
 </style>
 </head>
@@ -2044,14 +2078,7 @@ function updateVersionCard(version,total){
       "version-" +
       version.replaceAll(".","-");
 
-    el.style.cssText = `
-      display:inline-block;
-      margin:4px;
-      padding:6px 10px;
-      background:#f3f4f6;
-      border-radius:8px;
-      font-weight:600;
-    `;
+    el.className = "version-badge";
 
     el.innerHTML = `
   <span class="version-count">
