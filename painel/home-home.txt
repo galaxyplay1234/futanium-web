@@ -28,7 +28,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   padding-bottom: 40px; /* 👈 novo espaço no final */
 }
 
-
   
   textarea {
   line-height: 1.4;
@@ -36,7 +35,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 }
   
   
-
 
 .version-count{
   display:inline-block;
@@ -93,7 +91,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   font-weight:600;
   font-size:14px;
 }
-
 
 @media (max-width: 400px){
 
@@ -173,8 +170,6 @@ Versões
 <div class="pt-3">
     <!-- 56px (h-14 da topbar) + 48px (tabs) = 104px -->
 
-
-
     <!-- Home -->
     <div id="tab-home" class="tab-content">
       <!-- 📊 Contadores em tempo real -->
@@ -216,7 +211,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   type="date"
   class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
 
-
   <div class="bg-white border rounded p-2 mb-3">
   <label class="flex items-center gap-2 cursor-pointer">
     <input
@@ -229,7 +223,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
     </span>
   </label>
 </div>
-
 
   <div class="bg-white border rounded p-2 mb-3">
   <label class="flex items-center gap-2 cursor-pointer">
@@ -276,7 +269,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </button>
 </div>
 
-
 <label class="block text-sm font-semibold mt-2">Canal 2</label>
 <div class="flex items-center gap-2">
   <select id="game-channel2" class="p-2 border rounded w-[75%]">
@@ -307,7 +299,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   ✕
 </button>
 </div>
-
 
 <label class="block text-sm font-semibold mt-2">Canal 3</label>
 <div class="flex items-center gap-2">
@@ -340,7 +331,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </button>
 </div>
 
-
 <label class="block text-sm font-semibold mt-2">Canal 4</label>
 <div class="flex items-center gap-2">
   <select id="game-channel4" class="p-2 border rounded w-[75%]">
@@ -371,7 +361,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   ✕
 </button>
 </div>
-
 
 <div id="inline-button-editor"
      class="hidden bg-white border rounded-lg p-4 mt-4 shadow">
@@ -421,7 +410,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 
 </div>
 
-
 <hr class="my-4">
 
 <label class="block text-sm font-semibold mb-2">
@@ -437,7 +425,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
       </form>
     </div>
 
-
 <!-- Versões -->
 <div id="tab-versions" class="tab-content hidden">
 
@@ -450,8 +437,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   </div>
 
 </div>
-
-
 
 <!-- Analytics -->
 <div id="tab-analytics" class="tab-content hidden">
@@ -471,9 +456,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
     <div id="analytics-hours" class="flex flex-col gap-2 text-sm"></div>
   </div>
 </div>
-
-
-
 
 <!-- Importar (imagem -> jogos) -->
 <div id="tab-import" class="tab-content hidden">
@@ -508,7 +490,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
     </div>
   </div>
 </div>
-
 
     <!-- Times -->
     <div id="tab-times" class="tab-content hidden">
@@ -712,7 +693,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
     </div>
   </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <!-- Firebase + Script -->
 <script type="module">
@@ -779,8 +759,6 @@ function startGamesListener() {
     }
   );
 }
-
-
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -860,7 +838,6 @@ if (tab === "buttons") {
 
     setTodayDate();
 
-
     // Reseta selects manualmente
     $('#game-champ').val(null).trigger('change');
     $('#game-home-team').val(null).trigger('change');
@@ -917,9 +894,6 @@ if(found){
   });
 }
 
-
-
-
 // ===== Times =====
 document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -964,8 +938,6 @@ document.getElementById("team-form").addEventListener("submit", async e => {
   // 🔥 Apenas renderiza usando cache, sem nova leitura
   await loadTeams();
 });
-
-
 
 async function loadTeams(filter = "", force = false){
 
@@ -1035,7 +1007,6 @@ teamsMemory
   });
 }
 
-
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
 
@@ -1046,7 +1017,6 @@ window.deleteTeam = async function(id){
 };
   
   
-
 
 window.cancelButtonEdit = function(){
   currentButtonEditId = null;
@@ -1109,7 +1079,6 @@ window.cancelTeamEdit = function(){
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-
 const teamSearchInput = document.getElementById("team-search");
 const clearTeamBtn = document.getElementById("clear-team-search");
 
@@ -1130,9 +1099,6 @@ clearTeamBtn.addEventListener("click", function() {
   clearTeamBtn.classList.add("hidden");
   loadTeams();
 });
-
-
-
 
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
@@ -1228,7 +1194,6 @@ async function loadChamps(force = false){
   });
 }
 
-
 window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
 
@@ -1268,7 +1233,6 @@ window.editChamp = function(id, name, logo){
   }, 150);
 };
 
-
 window.cancelChampEdit = function(){
   currentChampEditId = null;
 
@@ -1286,8 +1250,6 @@ autoResizeTextarea(logoEl);
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
-
-
 
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
@@ -1396,7 +1358,6 @@ const captureM3u8 =
   await loadButtons();
 });
 
-
 async function loadButtons(filter = "", force = false){
 
   if(!buttonsMemory.length || force){
@@ -1477,8 +1438,6 @@ ${b.captureM3u8 ? "true" : "false"}
 
 populateChannelSelects(orderedButtons);
 }
-
-
 
 window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
@@ -1667,7 +1626,6 @@ for (const gameId of checkedIds) {
     channels: selected
   });
 }
-
 
   document.getElementById("game-form").reset();
   
@@ -1887,7 +1845,6 @@ window.clearSelect = function(id) {
   $('#' + id).val(null).trigger('change');
 };
 
-
 window.editSelectedButton = function(channelNumber){
 
   const select =
@@ -1950,7 +1907,6 @@ document
     block: "center"
   });
 };
-
 
 window.saveInlineButtonEdit = async function(){
 
@@ -2043,7 +1999,6 @@ window.saveInlineButtonEdit = async function(){
   cancelInlineButtonEdit();
 };
 
-
 window.cancelInlineButtonEdit = function(){
 
   currentInlineButtonId = null;
@@ -2076,7 +2031,6 @@ window.cancelInlineButtonEdit = function(){
     ).value = "false";
 };
 
-
 // Ativa busca nos selects
 $(document).ready(function () {
   $('#game-champ').select2({ placeholder: "Selecione o Campeonato", allowClear: true, width: '100%' });
@@ -2095,8 +2049,6 @@ $(document).ready(function () {
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
 const rtdb = getDatabase(app);
-
-
 
 const versionCounts = {};
 
@@ -2160,8 +2112,6 @@ function updateVersionCard(version,total){
 
   versionCounts[version] = total;
 }
-
-
 
 function listenRealtimeCounters() {
   const nodes = ["online", "webview", "m3u8", "instalados"];
@@ -2271,8 +2221,6 @@ function renderVersions(versions){
   });
 }
 
-
-
   // 🔥 Contagem por versão
   const installsRef = ref(rtdb, "instalados");
 
@@ -2290,8 +2238,6 @@ function renderVersions(versions){
 
 const container =
   document.getElementById("versionStats");
-
-
 
 Object.entries(versions)
   .sort((a,b)=>compareVersions(a[0], b[0]))
@@ -2311,14 +2257,6 @@ Object.entries(versions)
 
 // ⏱️ Inicia a escuta assim que o painel carregar
 listenRealtimeCounters();
-
-
-
-
-
-
-
-
 
 // refs da UI
 const fileInput = document.getElementById('img-file');
@@ -2432,7 +2370,7 @@ async function preprocessImage(file){
     i.onload = ()=>res(i);
     i.src = URL.createObjectURL(file);
   });
-  const scale = 2;
+  const scale = 4;
   const canvas = document.createElement('canvas');
   canvas.width  = img.width * scale;
   canvas.height = img.height * scale;
@@ -2442,8 +2380,15 @@ async function preprocessImage(file){
   const d = imgData.data;
   for (let p=0; p<d.length; p+=4){
     const g = (d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114);
-    const v = g > 180 ? 255 : 0;
-    d[p]=d[p+1]=d[p+2]=v;
+    const contrast = 1.6;
+
+let value = ((g - 128) * contrast) + 128;
+
+value = value > 160 ? 255 : 0;
+
+d[p]   = value;
+d[p+1] = value;
+d[p+2] = value;
   }
   ctx.putImageData(imgData,0,0);
   return new Promise(res=>canvas.toBlob(res, 'image/png'));
@@ -2454,7 +2399,11 @@ function parseTextToRows(text){
   text = text
     .replace(/[\u200B-\u200D\uFEFF]/g,'')
     .replace(/[|]/g,'l')
-    .replace(/O(?=\d)/g,'0');
+    .replace(/O(?=\d)/g,'0')
+    .replace(/I(?=\d)/g,'1')
+    .replace(/l(?=\d)/g,'1')
+    .replace(/S(?=\d)/g,'5')
+    .replace(/B(?=\d)/g,'8');
 
   const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
 
@@ -2508,8 +2457,8 @@ function parseTextToRows(text){
   return rows.map(r => {
     const homeClean = cleanTeamRaw(r.home);
     const awayClean = cleanTeamRaw(r.away);
-    const homeMatch = fuzzyFindName(homeClean, window.teamsCache);
-    const awayMatch = fuzzyFindName(awayClean, window.teamsCache);
+    const homeMatch = fuzzyFindName(homeClean, window.teamsCache, 0.85);
+const awayMatch = fuzzyFindName(awayClean, window.teamsCache, 0.85);
     return {
       time: r.time,
       champ: resolveChamp365(r.champ), // <- campeonato já no formato final
@@ -2529,18 +2478,34 @@ btnOCR.addEventListener('click', async () => {
   if (!fileInput.files?.length) return;
   btnOCR.disabled = true;
   ocrStatus.textContent = 'Lendo imagem (OCR)…';
-
+  
   try {
+
     const pre = await preprocessImage(fileInput.files[0]);
-    const { data: { text} } = await Tesseract.recognize(pre, 'por+eng', {
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐',
-      psm: 6,
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
-        }
+
+  const { data: { text } } = await Tesseract.recognize(
+  pre,
+  'por+eng',
+  {
+    tessedit_pageseg_mode: 6,
+
+    tessedit_ocr_engine_mode: 1,
+
+    preserve_interword_spaces: 1,
+
+    tessedit_char_whitelist:
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ0123456789:-.h*•⭐ ',
+
+    logger: m => {
+      if (m.status === 'recognizing text') {
+        ocrStatus.textContent =
+          `OCR ${Math.round(m.progress * 100)}%`;
       }
-    });
+    }
+  }
+);
+
+console.log(text);
 
     importedRows = parseTextToRows(text);
 
@@ -2617,8 +2582,6 @@ btnSaveAll.addEventListener('click', async () => {
   }
 });
 
-
-
 // ===== Auto resize textarea (versão estável iPhone) =====
 function autoResizeTextarea(el){
   if(!el) return;
@@ -2646,8 +2609,6 @@ setupAutoResize("team-logo");
 setupAutoResize("inline-button-name");
 setupAutoResize("inline-button-link");
 
-
-
 window.moveChannel = function(position, direction){
 
   const current = document.getElementById(`game-channel${position}`);
@@ -2670,10 +2631,6 @@ window.moveChannel = function(position, direction){
   $(`#game-channel${position}`).trigger('change.select2');
   $(`#game-channel${targetPosition}`).trigger('change.select2');
 };
-
-
-
-
 
 let analyticsUnsubscribe = null;
 let currentListeningDay = null;
@@ -2761,7 +2718,6 @@ function listenAnalytics() {
   setInterval(startListening, 30000);
 }
 
-
 function renderMoreGamesList() {
 
   const container = document.getElementById("more-games-list");
@@ -2827,16 +2783,12 @@ function renderMoreGamesList() {
   });
 }
 
-
-
 function setTodayDate() {
   const today = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/Sao_Paulo"
   });
   document.getElementById("game-date").value = today;
 }
-
-
 
 document.addEventListener("change", async (e) => {
 
@@ -2855,7 +2807,6 @@ document.addEventListener("change", async (e) => {
 
 });
 
-
 document.addEventListener("change", async (e) => {
 
   if (!e.target.classList.contains("home-hide-game"))
@@ -2872,7 +2823,6 @@ document.addEventListener("change", async (e) => {
   );
 
 });
-
 
 </script>
 </body>
