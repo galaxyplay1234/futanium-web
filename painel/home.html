@@ -2451,7 +2451,6 @@ value = value > 160 ? 255 : 0;
 d[p]   = value;
 d[p+1] = value;
 d[p+2] = value;
-    d[p]=d[p+1]=d[p+2]=v;
   }
   ctx.putImageData(imgData,0,0);
   return new Promise(res=>canvas.toBlob(res, 'image/png'));
@@ -2541,6 +2540,10 @@ btnOCR.addEventListener('click', async () => {
   if (!fileInput.files?.length) return;
   btnOCR.disabled = true;
   ocrStatus.textContent = 'Lendo imagem (OCR)…';
+  
+  try {
+
+    const pre = await preprocessImage(fileInput.files[0]);
 
   const { data: { text } } = await Tesseract.recognize(
   pre,
