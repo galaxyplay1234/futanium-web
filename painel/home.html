@@ -221,6 +221,20 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   <label class="flex items-center gap-2 cursor-pointer">
     <input
       type="checkbox"
+      id="game-hide-game"
+      class="w-4 h-4">
+
+    <span class="text-sm font-semibold">
+      Ocultar jogo
+    </span>
+  </label>
+</div>
+
+
+  <div class="bg-white border rounded p-2 mb-3">
+  <label class="flex items-center gap-2 cursor-pointer">
+    <input
+      type="checkbox"
       id="game-hide-channels"
       class="w-4 h-4">
 
@@ -1569,6 +1583,12 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
   const time  = document.getElementById("game-time").value;
   const date  = document.getElementById("game-date").value;
   
+  
+  const hideGame =
+  document.getElementById(
+    "game-hide-game"
+  ).checked;
+  
   const hideChannels =
   document.getElementById(
     "game-hide-channels"
@@ -1622,6 +1642,7 @@ teamsMemory.forEach(t => {
   away_logo: awayLogo,
   time,
   date,
+  hideGame,
   hideChannels,
   channels: selected
 };
@@ -1707,7 +1728,16 @@ const hideChannelsLabel = `
 </label>
 `;
 
-      
+    const hideGameLabel = `
+<label class="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
+  <input
+    type="checkbox"
+    class="home-hide-game w-3 h-3"
+    data-id="${g.id}"
+    ${g.hideGame ? "checked" : ""}>
+  <span>Ocultar jogo</span>
+</label>
+`;
 
     const li = document.createElement("li");
     li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
@@ -1732,6 +1762,7 @@ const hideChannelsLabel = `
 
           <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
           ${canaisLabel}
+${hideGameLabel}
 ${hideChannelsLabel}
         </div>
       `;
@@ -1772,7 +1803,8 @@ ${hideChannelsLabel}
         </button>
       </div>
 
-      ${hideChannelsLabel}
+      ${hideGameLabel}
+${hideChannelsLabel}
     </div>
 
   </div>
@@ -1824,6 +1856,12 @@ $('#game-channel4').val(findButtonValue(ch[3])).trigger('change.select2');
 
   document.getElementById("game-time").value = g.time || "";
   document.getElementById("game-date").value = g.date || "";
+  
+  document.getElementById(
+  "game-hide-game"
+).checked =
+  g.hideGame || false;
+  
   
   document.getElementById(
   "game-hide-channels"
@@ -2817,6 +2855,23 @@ document.addEventListener("change", async (e) => {
 
 });
 
+
+document.addEventListener("change", async (e) => {
+
+  if (!e.target.classList.contains("home-hide-game"))
+    return;
+
+  const gameId = e.target.dataset.id;
+  const checked = e.target.checked;
+
+  await updateDoc(
+    doc(db, "games", gameId),
+    {
+      hideGame: checked
+    }
+  );
+
+});
 
 
 </script>
