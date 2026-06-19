@@ -2432,7 +2432,7 @@ async function preprocessImage(file){
     i.onload = ()=>res(i);
     i.src = URL.createObjectURL(file);
   });
-  const scale = 2;
+  const scale = 4;
   const canvas = document.createElement('canvas');
   canvas.width  = img.width * scale;
   canvas.height = img.height * scale;
@@ -2442,7 +2442,15 @@ async function preprocessImage(file){
   const d = imgData.data;
   for (let p=0; p<d.length; p+=4){
     const g = (d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114);
-    const v = g > 180 ? 255 : 0;
+    const contrast = 1.6;
+
+let value = ((g - 128) * contrast) + 128;
+
+value = value > 160 ? 255 : 0;
+
+d[p]   = value;
+d[p+1] = value;
+d[p+2] = value;
     d[p]=d[p+1]=d[p+2]=v;
   }
   ctx.putImageData(imgData,0,0);
@@ -2454,7 +2462,11 @@ function parseTextToRows(text){
   text = text
     .replace(/[\u200B-\u200D\uFEFF]/g,'')
     .replace(/[|]/g,'l')
-    .replace(/O(?=\d)/g,'0');
+    .replace(/O(?=\d)/g,'0')
+    .replace(/I(?=\d)/g,'1')
+    .replace(/l(?=\d)/g,'1')
+    .replace(/S(?=\d)/g,'5')
+    .replace(/B(?=\d)/g,'8');
 
   const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
 
@@ -2530,17 +2542,27 @@ btnOCR.addEventListener('click', async () => {
   btnOCR.disabled = true;
   ocrStatus.textContent = 'Lendo imagem (OCR)…';
 
-  try {
-    const pre = await preprocessImage(fileInput.files[0]);
-    const { data: { text} } = await Tesseract.recognize(pre, 'por+eng', {
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐',
-      psm: 6,
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
-        }
+  const { data: { text } } = await Tesseract.recognize(
+  pre,
+  'por+eng',
+  {
+    tessedit_pageseg_mode: 6,
+
+    tessedit_ocr_engine_mode: 1,
+
+    preserve_interword_spaces: 1,
+
+    tessedit_char_whitelist:
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ0123456789:-.h*•⭐ ',
+
+    logger: m => {
+      if (m.status === 'recognizing text') {
+        ocrStatus.textContent =
+          `OCR ${Math.round(m.progress * 100)}%`;
       }
-    });
+    }
+  }
+);
 
     importedRows = parseTextToRows(text);
 
