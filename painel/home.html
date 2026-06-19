@@ -2551,21 +2551,24 @@ btnSaveAll.addEventListener('click', async () => {
 
   for (const r of importedRows) {
 
-    const payload = {
-      champ: r.champ,
-      champ_logo: window.champsCache[r.champ] || '',
-      home: r.home,
-      home_logo: window.teamsCache[r.home] || '',
-      away: r.away,
-      away_logo: window.teamsCache[r.away] || '',
-      time: r.time,
-      date: today, // 🔥 AGORA SALVA A DATA
-      channels: []
-    };
+  const payload = {
+    champ: r.champ,
+    champ_logo: window.champsCache[r.champ] || '',
+    home: r.home,
+    home_logo: window.teamsCache[r.home] || '',
+    away: r.away,
+    away_logo: window.teamsCache[r.away] || '',
+    time: r.time,
+    date: today,
 
-    await addDoc(collection(db,'games'), payload);
-  }
-    
+    hideGame: true,
+    hideChannels: true,
+
+    channels: []
+  };
+
+  await addDoc(collection(db,'games'), payload);
+}
 
     importedRows = [];
     preview.classList.add('hidden');
