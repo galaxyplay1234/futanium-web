@@ -2519,8 +2519,8 @@ function parseTextToRows(text){
   return rows.map(r => {
     const homeClean = cleanTeamRaw(r.home);
     const awayClean = cleanTeamRaw(r.away);
-    const homeMatch = fuzzyFindName(homeClean, window.teamsCache);
-    const awayMatch = fuzzyFindName(awayClean, window.teamsCache);
+    const homeMatch = fuzzyFindName(homeClean, window.teamsCache, 0.85);
+const awayMatch = fuzzyFindName(awayClean, window.teamsCache, 0.85);
     return {
       time: r.time,
       champ: resolveChamp365(r.champ), // <- campeonato já no formato final
@@ -2566,6 +2566,9 @@ btnOCR.addEventListener('click', async () => {
     }
   }
 );
+
+
+console.log(text);
 
     importedRows = parseTextToRows(text);
 
