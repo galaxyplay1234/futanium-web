@@ -2410,9 +2410,17 @@ function cutAfterDash(s){
   return (parts[0] || s).trim();
 }
 function resolveChamp365(raw){
-  const cut = cutAfterDash(norm((raw||'').replace(/^[=\-\*\.\s]+/,'')));
-  const match = fuzzyFindName(cut, window.champsCache, 0.62);
-  return match || cut; // se não casar, fica o nome lido do 365
+  const cut = cutAfterDash(
+    norm((raw || '').replace(/^[=\-\*\.\s]+/, ''))
+  );
+
+  const match = fuzzyFindName(
+    cut,
+    window.champsCache,
+    0.85
+  );
+
+  return match || cut;
 }
 
 /* ===== regex e filtros ===== */
@@ -2568,7 +2576,13 @@ btnOCR.addEventListener('click', async () => {
 );
 
 
+console.log("OCR BRUTO:");
 console.log(text);
+
+importedRows = parseTextToRows(text);
+
+console.log("JOGOS PARSEADOS:");
+console.log(importedRows);
 
     importedRows = parseTextToRows(text);
 
