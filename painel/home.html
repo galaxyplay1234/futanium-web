@@ -183,9 +183,24 @@ Versões
 <div id="versionStats"
 class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </div>
-      <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
-      <ul id="games-list" class="space-y-2"></ul>
-    </div>
+      <div class="flex items-center justify-between mb-4">
+
+  <h2 class="text-lg sm:text-xl font-semibold">
+    Jogos Adicionados
+  </h2>
+
+  <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+
+    <input
+      type="checkbox"
+      id="toggle-all-hidden"
+      class="w-4 h-4">
+
+    <span>Selecionar todos</span>
+
+  </label>
+
+</div>
 
     <!-- Adicionar Jogo -->
     <div id="tab-addgame" class="tab-content hidden">
@@ -2826,6 +2841,33 @@ document.addEventListener("change", async (e) => {
   );
 
 });
+
+document.addEventListener("change", async (e) => {
+
+  if (e.target.id !== "toggle-all-hidden")
+    return;
+
+  const checked = e.target.checked;
+
+  const updates = gamesMemory
+    .filter(game => !(
+      game.home?.toLowerCase() === "aviso" &&
+      game.away?.toLowerCase() === "aviso"
+    ))
+    .map(game =>
+      updateDoc(
+        doc(db, "games", game.id),
+        {
+          hideGame: checked
+        }
+      )
+    );
+
+  await Promise.all(updates);
+
+});
+
+
 
 </script>
 </body>
