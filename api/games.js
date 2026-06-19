@@ -83,12 +83,20 @@ export default async function handler(req, res) {
     let games = data.documents.map(doc => {
 
       const f = doc.fields;
-      const gameDate = f.date?.stringValue || "";
+const gameDate = f.date?.stringValue || "";
 
-      // 🔥 FILTRO: NÃO mostrar jogos do futuro
-      if (gameDate > todaySP) {
-        return null;
-      }
+const hideGame =
+  f.hideGame?.booleanValue || false;
+
+// 🔥 JOGO OCULTO
+if (hideGame) {
+  return null;
+}
+
+// 🔥 FILTRO: NÃO mostrar jogos do futuro
+if (gameDate > todaySP) {
+  return null;
+}
 
       const home = f.home?.stringValue || "";
       const away = f.away?.stringValue || "";
