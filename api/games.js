@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   try {
 
     const MASTER_IPS = [
-      "177.54.84.132",
+      "177.54.94.183",
       "200.189.28.99",
       "177.54.93.93",
       "177.75.110.183",
