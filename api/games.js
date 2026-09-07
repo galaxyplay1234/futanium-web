@@ -3,9 +3,10 @@ import fetch from "node-fetch";
 // =====================================================
 // 🔥 CACHE DOS JOGOS DO FIRESTORE
 // =====================================================
-// O cache dura 30 minutos.
+// O cache dura 1 minuto.
+//
 // IMPORTANTE:
-// - Cacheia somente os dados vindos do Firestore.
+// - Cacheia os dados vindos do Firestore por 1 minuto.
 // - is_live é recalculado a cada requisição.
 // - is_finished é recalculado a cada requisição.
 // - minutesToStart é recalculado a cada requisição.
@@ -19,7 +20,7 @@ import fetch from "node-fetch";
 let gamesCache = null;
 let gamesCacheTime = 0;
 
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutos
+const CACHE_DURATION = 60 * 1000; // 1 minuto
 
 
 export default async function handler(req, res) {
@@ -632,7 +633,7 @@ export default async function handler(req, res) {
     // ===============================
 
     // O navegador sempre chama a API.
-    // O cache de 30 minutos fica somente
+    // O cache de 1 minuto fica somente
     // na consulta aos dados do Firestore.
 
     res.setHeader(
