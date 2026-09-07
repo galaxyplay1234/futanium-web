@@ -746,35 +746,28 @@ let champsMemory = [];
 let buttonsMemory = [];
 let gamesMemory = [];
 
-import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+// ===== Jogos em cache =====
+// Carrega os jogos UMA vez quando o painel é aberto.
+// Depois disso, alterações são feitas diretamente em gamesMemory.
 
-let gamesUnsubscribe = null;
+async function loadGames() {
 
-import { query, orderBy } from 
-"https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+  const q = await getDocs(collection(db, "games"));
 
-function startGamesListener() {
+  gamesMemory = [];
 
-  if (gamesUnsubscribe) return;
+  q.forEach(docSnap => {
+    gamesMemory.push({
+      id: docSnap.id,
+      ...docSnap.data()
+    });
+  });
 
-  gamesUnsubscribe = onSnapshot(
-    collection(db, "games"),
-    snapshot => {
+  renderGames();
 
-      gamesMemory = [];
-
-      snapshot.forEach(docSnap => {
-        gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
-      });
-
-      renderGames();
-
-      // 🔥 Se estiver na aba adicionar jogo, atualiza lista copiar canais
-      if (!document.getElementById("tab-addgame").classList.contains("hidden")) {
-        renderMoreGamesList();
-      }
-    }
-  );
+  if (!document.getElementById("tab-addgame").classList.contains("hidden")) {
+    renderMoreGamesList();
+  }
 }
 
 // ===== Auth & Tabs =====
@@ -1630,11 +1623,48 @@ const checkedIds = Array.from(
 
 // 🔥 SALVA O JOGO ATUAL
 if(currentEditId){
-  await updateDoc(doc(db,"games",currentEditId), payload);
+
+  await updateDoc(
+    doc(db, "games", currentEditId),
+    payload
+  );
+
+  // Atualiza somente o jogo alterado na memória
+  const index = gamesMemory.findIndex(
+    game => game.id === currentEditId
+  );
+
+  if (index !== -1) {
+    gamesMemory[index] = {
+      id: currentEditId,
+      ...payload
+    };
+  }
+
   currentEditId = null;
-  document.getElementById("form-title").innerText = "Adicionar Jogo";
+
+  document.getElementById("form-title").innerText =
+    "Adicionar Jogo";
+
 } else {
-  await addDoc(collection(db,"games"), payload);
+
+  const docRef = await addDoc(
+    collection(db, "games"),
+    payload
+  );
+
+  // Adiciona o novo jogo somente na memória
+  gamesMemory.push({
+    id: docRef.id,
+    ...payload
+  });
+}
+
+// Atualiza a tela sem nova leitura
+renderGames();
+
+if (!document.getElementById("tab-addgame").classList.contains("hidden")) {
+  renderMoreGamesList();
 }
 
 // 🔥 AGORA COPIA PARA OS OUTROS
@@ -1793,13 +1823,33 @@ ${hideChannelsLabel}
   
 
 window.deleteGame = async function(id){
-  await deleteDoc(doc(db,"games",id));
+
+  await deleteDoc(
+    doc(db, "games", id)
+  );
+
+  // Remove somente da memória
+  gamesMemory = gamesMemory.filter(
+    game => game.id !== id
+  );
+
+  // Atualiza a tela sem consultar o Firestore novamente
+  renderGames();
+
+  if (!document.getElementById("tab-addgame").classList.contains("hidden")) {
+    renderMoreGamesList();
+  }
 };
 
 window.editGame = async function(id){
-  const snap = await getDoc(doc(db,"games",id));
-  if(!snap.exists()) return;
-  const g = snap.data();
+
+  const game = gamesMemory.find(
+    g => g.id === id
+  );
+
+  if (!game) return;
+
+  const g = game;
 
   // garante que selects estejam populados
   await loadChamps();
@@ -1853,7 +1903,7 @@ async function loadData(){
   await loadTeams();
   await loadChamps();
   await loadButtons();
-  startGamesListener(); // 👈 aqui
+  await loadGames();
   listenAnalytics();
 }
 
