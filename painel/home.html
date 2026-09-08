@@ -2901,21 +2901,46 @@ document.addEventListener("change", async (e) => {
 
   const checked = e.target.checked;
 
-  const updates = gamesMemory
-    .filter(game => !(
+  // Pega somente jogos normais
+  const gamesToUpdate = gamesMemory.filter(game =>
+    !(
       game.home?.toLowerCase() === "aviso" &&
       game.away?.toLowerCase() === "aviso"
-    ))
-    .map(game =>
+    )
+  );
+
+  // Atualiza o Firestore
+  await Promise.all(
+    gamesToUpdate.map(game =>
       updateDoc(
         doc(db, "games", game.id),
         {
           hideGame: checked
         }
       )
-    );
+    )
+  );
 
-  await Promise.all(updates);
+  // 🔥 ATUALIZA A MEMÓRIA DO PAINEL
+  gamesMemory = gamesMemory.map(game => {
+
+    const isAviso =
+      game.home?.toLowerCase() === "aviso" &&
+      game.away?.toLowerCase() === "aviso";
+
+    if (isAviso) {
+      return game;
+    }
+
+    return {
+      ...game,
+      hideGame: checked
+    };
+
+  });
+
+  // 🔥 ATUALIZA A TELA SEM FAZER NOVA LEITURA
+  renderGames();
 
 });
 
