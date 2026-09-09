@@ -746,6 +746,47 @@ let champsMemory = [];
 let buttonsMemory = [];
 let gamesMemory = [];
 
+// ===== CACHE LOCAL DOS BOTÕES =====
+const BUTTONS_CACHE_KEY = "futanium_buttons_cache_v1";
+
+function saveButtonsLocalCache() {
+  try {
+    localStorage.setItem(
+      BUTTONS_CACHE_KEY,
+      JSON.stringify(buttonsMemory)
+    );
+  } catch (e) {
+    console.log("Erro ao salvar cache dos botões:", e);
+  }
+}
+
+function loadButtonsLocalCache() {
+  try {
+    const saved = localStorage.getItem(BUTTONS_CACHE_KEY);
+
+    if (!saved) return false;
+
+    const parsed = JSON.parse(saved);
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      return false;
+    }
+
+    buttonsMemory = parsed;
+
+    console.log(
+      "🟢 Botões carregados do cache:",
+      buttonsMemory.length
+    );
+
+    return true;
+
+  } catch (e) {
+    console.log("Erro ao carregar cache dos botões:", e);
+    return false;
+  }
+}
+
 // ===== Jogos em cache =====
 // Carrega os jogos UMA vez quando o painel é aberto.
 // Depois disso, alterações são feitas diretamente em gamesMemory.
@@ -1301,6 +1342,8 @@ const captureM3u8 =
     buttonsMemory[index].link = link;
     buttonsMemory[index].captureM3u8 = captureM3u8;
   }
+  
+  saveButtonsLocalCache();
 
   // 🔥 atualiza todos os jogos automaticamente
   for (const game of gamesMemory) {
@@ -1356,7 +1399,8 @@ const captureM3u8 =
   link,
   captureM3u8
 });
-  }
+
+saveButtonsLocalCache();
 
   // limpa campos
   nameEl.value = "";
@@ -1365,16 +1409,46 @@ const captureM3u8 =
   autoResizeTextarea(linkEl);
 
   // 🔥 Apenas renderiza usando cache
+
   await loadButtons();
-});
+
+  }  // fecha o else
+
+}); // fecha o addEventListener
 
 async function loadButtons(filter = "", force = false){
 
-  if(!buttonsMemory.length || force){
-    const q = await getDocs(collection(db,"buttons"));
+  // Primeiro tenta usar o cache salvo no iPhone
+  if (!buttonsMemory.length && !force) {
+    loadButtonsLocalCache();
+  }
+
+  // Só consulta o Firestore se não houver cache
+  // ou se force = true
+  if (!buttonsMemory.length || force) {
+
+    console.log("🔥 Buscando botões no Firestore...");
+
+    const q = await getDocs(
+      collection(db, "buttons")
+    );
+
     buttonsMemory = [];
-    q.forEach(docSnap => 
-      buttonsMemory.push({ id: docSnap.id, ...docSnap.data() })
+
+    q.forEach(docSnap =>
+      buttonsMemory.push({
+        id: docSnap.id,
+        ...docSnap.data()
+      })
+    );
+
+    // Salva os botões no iPhone
+    saveButtonsLocalCache();
+
+    console.log(
+      "💾 Cache salvo:",
+      buttonsMemory.length,
+      "botões"
     );
   }
 
@@ -1453,9 +1527,13 @@ window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
 
   // 🔥 Remove só da memória
-  buttonsMemory = buttonsMemory.filter(b => b.id !== id);
+  buttonsMemory = buttonsMemory.filter(
+  b => b.id !== id
+);
 
-  await loadButtons();
+saveButtonsLocalCache();
+
+await loadButtons();
 };
 
 window.editButton = function(
@@ -2060,6 +2138,7 @@ window.saveInlineButtonEdit = async function(){
     buttonsMemory[index].captureM3u8 =
       captureM3u8;
   }
+  saveButtonsLocalCache();
 
   for(const game of gamesMemory){
 
