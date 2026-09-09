@@ -905,7 +905,7 @@ function resetSelect(el, placeholder){
   el.innerHTML = `<option value="">${placeholder}</option>`;
 }
 
-function populateChannelSelects(buttons) {
+function populateChannelSelects(buttons, savedChannels = []) {
 
   const selects = [
     document.getElementById('game-channel1'),
@@ -914,37 +914,71 @@ function populateChannelSelects(buttons) {
     document.getElementById('game-channel4'),
   ];
 
-  selects.forEach(sel => {
+  // 🔥 Cria uma lista temporária com os botões do cache
+  // + os canais que já estão salvos neste jogo.
+  const allButtons = [...buttons];
 
-    const currentText =
-  sel.selectedOptions[0]?.text || "";
+  savedChannels.forEach(channel => {
+
+    if (!channel) return;
+
+    const exists = allButtons.some(
+      b =>
+        b.name === channel.name ||
+        b.link === channel.url
+    );
+
+    if (!exists) {
+
+      allButtons.push({
+        id: "saved-" + Math.random(),
+        name: channel.name || "Canal",
+        link: channel.url || "",
+        captureM3u8: channel.captureM3u8 || false
+      });
+
+    }
+
+  });
+
+  selects.forEach((sel, index) => {
 
     sel.innerHTML =
       `<option value="">Selecione um botão</option>`;
 
-    buttons.forEach(btn => {
+    allButtons.forEach(btn => {
 
-      const opt =
-        new Option(
-          btn.name,
-          btn.link
-        );
+      const opt = new Option(
+        btn.name,
+        btn.link
+      );
 
       sel.appendChild(opt);
+
     });
 
-    const found = buttons.find(
-  b => b.name === currentText
-);
+    // 🔥 Seleciona o canal que já estava salvo no jogo
+    const savedChannel = savedChannels[index];
 
-if(found){
-  sel.value = found.link;
-}
+    if (savedChannel) {
+
+      const found = allButtons.find(
+        b =>
+          b.link === savedChannel.url ||
+          b.name === savedChannel.name
+      );
+
+      if (found) {
+        sel.value = found.link;
+      }
+
+    }
 
     $(sel).trigger('change.select2');
-  });
-}
 
+  });
+
+}
 // ===== Times =====
 document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
