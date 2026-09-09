@@ -1,20 +1,21 @@
 import fetch from "node-fetch";
 
 // =====================================================
-// 🔥 CACHE DOS JOGOS DO FIRESTORE
+// 🔥 CACHE COMPLETO DOS JOGOS
 // =====================================================
-// O cache dura 1 minuto.
+// O resultado completo da API fica em cache por 1 minuto.
 //
-// IMPORTANTE:
-// - Cacheia os dados vindos do Firestore por 1 minuto.
-// - is_live é recalculado a cada requisição.
-// - is_finished é recalculado a cada requisição.
-// - minutesToStart é recalculado a cada requisição.
-// - canShowButtons é recalculado a cada requisição.
-// - ordenação é recalculada a cada requisição.
+// Durante 1 minuto:
+// - Não consulta o Firestore
+// - Não recalcula is_live
+// - Não recalcula is_finished
+// - Não recalcula buttons
+// - Não recalcula minutesToStart
+// - Não refaz a ordenação
 //
-// Em ambientes serverless, cada instância pode ter seu
-// próprio cache. Isso é normal.
+// Todos os usuários recebem o mesmo resultado em cache.
+//
+// O ANALYTICS continua sendo processado normalmente.
 // =====================================================
 
 let gamesCache = null;
@@ -24,7 +25,12 @@ const CACHE_DURATION = 60 * 1000; // 1 minuto
 
 
 export default async function handler(req, res) {
+
   try {
+
+    // =====================================================
+    // 🔐 IPs MASTER
+    // =====================================================
 
     const MASTER_IPS = [
       "177.54.84.42",
@@ -34,49 +40,82 @@ export default async function handler(req, res) {
       "177.23.116.38"
     ];
 
-    const forwarded = req.headers["x-forwarded-for"];
 
-    const userIP = forwarded
-      ? forwarded.split(",")[0].trim()
-      : req.socket.remoteAddress;
-
-    const isMaster = MASTER_IPS.includes(userIP);
+    const forwarded =
+      req.headers["x-forwarded-for"];
 
 
-    // ===============================
+    const userIP =
+      forwarded
+        ? forwarded.split(",")[0].trim()
+        : req.socket.remoteAddress;
+
+
+    const isMaster =
+      MASTER_IPS.includes(userIP);
+
+
+    // =====================================================
     // 🔥 ANALYTICS
-    // ===============================
+    // =====================================================
+    // Continua sendo executado em TODA requisição.
+    // Não entra no cache dos jogos.
+    // =====================================================
 
     try {
 
-      const nowSP = new Date(
-        new Date().toLocaleString("en-US", {
-          timeZone: "America/Sao_Paulo"
-        })
-      );
+      const nowSP =
+        new Date(
+          new Date().toLocaleString(
+            "en-US",
+            {
+              timeZone: "America/Sao_Paulo"
+            }
+          )
+        );
 
-      const today = nowSP.toISOString().split("T")[0];
+
+      const today =
+        nowSP.toISOString().split("T")[0];
+
 
       const hour =
-        nowSP.getHours().toString().padStart(2, "0") + ":00";
+        nowSP
+          .getHours()
+          .toString()
+          .padStart(2, "0") + ":00";
 
-      const ipKey = userIP.replace(/\./g, "_");
+
+      const ipKey =
+        userIP.replace(/\./g, "_");
+
 
       const baseURL =
         "https://futanium-web-default-rtdb.firebaseio.com";
 
+
       const analyticsURL =
         `${baseURL}/analytics/${today}.json`;
 
-      const snapshot = await fetch(analyticsURL);
+
+      const snapshot =
+        await fetch(analyticsURL);
+
 
       const analyticsData =
         await snapshot.json() || {};
 
-      const ips = analyticsData.ips || {};
-      const hours = analyticsData.hours || {};
+
+      const ips =
+        analyticsData.ips || {};
+
+
+      const hours =
+        analyticsData.hours || {};
+
 
       ips[ipKey] = true;
+
 
       const updatedData = {
 
@@ -89,25 +128,32 @@ export default async function handler(req, res) {
           Object.keys(ips).length,
 
         hours: {
+
           ...hours,
+
           [hour]:
             (hours[hour] || 0) + 1
+
         }
 
       };
 
-      await fetch(analyticsURL, {
 
-        method: "PATCH",
+      await fetch(
+        analyticsURL,
+        {
+          method: "PATCH",
 
-        headers: {
-          "Content-Type": "application/json"
-        },
+          headers: {
+            "Content-Type":
+              "application/json"
+          },
 
-        body:
-          JSON.stringify(updatedData)
+          body:
+            JSON.stringify(updatedData)
+        }
+      );
 
-      });
 
     } catch (err) {
 
@@ -119,62 +165,95 @@ export default async function handler(req, res) {
     }
 
 
-    // ===============================
-    // 🔥 BUSCA FIRESTORE COM CACHE
-    // ===============================
+    // =====================================================
+    // 🔥 VERIFICA CACHE
+    // =====================================================
 
-    const now = Date.now();
+    const now =
+      Date.now();
+
 
     const cacheValid =
       gamesCache !== null &&
       (now - gamesCacheTime) < CACHE_DURATION;
 
 
-    let data;
-
+    // =====================================================
+    // 🟢 CACHE VÁLIDO
+    // =====================================================
 
     if (cacheValid) {
 
-      // =========================================
-      // 🟢 CACHE VÁLIDO
-      // Não consulta o Firestore novamente.
-      // =========================================
-
-      data = gamesCache;
-
-    } else {
-
-      // =========================================
-      // 🔥 CACHE EXPIRADO
-      // Consulta o Firestore novamente.
-      // =========================================
-
-      const url =
-        "https://firestore.googleapis.com/v1/projects/futanium-web/databases/(default)/documents/games";
-
-      const response =
-        await fetch(url);
-
-      data =
-        await response.json();
+      res.setHeader(
+        "Cache-Control",
+        "no-store"
+      );
 
 
-      // =========================================
-      // 💾 SALVA NO CACHE
-      // =========================================
+      res.setHeader(
+        "X-Games-Cache",
+        "HIT"
+      );
 
-      gamesCache = data;
 
-      gamesCacheTime = now;
+      return res
+        .status(200)
+        .json(gamesCache);
 
     }
 
 
-    // ===============================
-    // 🔥 SEM JOGOS
-    // ===============================
+    // =====================================================
+    // 🔥 CACHE EXPIRADO
+    // =====================================================
+    // Aqui é feita UMA nova leitura do Firestore.
+    // Depois o resultado completo será salvo.
+    // =====================================================
+
+
+    const url =
+      "https://firestore.googleapis.com/v1/projects/futanium-web/databases/(default)/documents/games";
+
+
+    const response =
+      await fetch(url);
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        `Firestore respondeu ${response.status}`
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    // =====================================================
+    // 🔥 SEM DOCUMENTOS
+    // =====================================================
 
     if (!data.documents) {
+
+      gamesCache = [];
+
+      gamesCacheTime = now;
+
+
+      res.setHeader(
+        "Cache-Control",
+        "no-store"
+      );
+
+
+      res.setHeader(
+        "X-Games-Cache",
+        "MISS"
+      );
+
 
       return res
         .status(200)
@@ -183,458 +262,538 @@ export default async function handler(req, res) {
     }
 
 
-    // ===============================
+    // =====================================================
     // 🔥 HORA ATUAL
-    // ===============================
+    // =====================================================
 
-    // Isso NÃO fica em cache.
-    // É calculado novamente em toda requisição.
-
-    const nowSP = new Date(
-      new Date().toLocaleString(
-        "en-US",
-        {
-          timeZone: "America/Sao_Paulo"
-        }
-      )
-    );
+    const nowSP =
+      new Date(
+        new Date().toLocaleString(
+          "en-US",
+          {
+            timeZone:
+              "America/Sao_Paulo"
+          }
+        )
+      );
 
 
     const todaySP =
-      nowSP.toISOString().split("T")[0];
+      nowSP
+        .toISOString()
+        .split("T")[0];
 
 
-    // ===============================
-    // 🔥 PROCESSA OS JOGOS
-    // ===============================
+    // =====================================================
+    // 🔥 PROCESSA JOGOS
+    // =====================================================
 
-    // A partir daqui tudo é recalculado
-    // em TODA requisição da API.
+    let games =
+      data.documents.map(doc => {
 
-    let games = data.documents.map(doc => {
-
-      const f = doc.fields;
-
-
-      // ===============================
-      // DATA DO JOGO
-      // ===============================
-
-      const gameDate =
-        f.date?.stringValue || "";
+        const f =
+          doc.fields;
 
 
-      // ===============================
-      // JOGO OCULTO
-      // ===============================
+        // =================================================
+        // DATA
+        // =================================================
 
-      const hideGame =
-        f.hideGame?.booleanValue || false;
-
-
-      if (hideGame) {
-        return null;
-      }
+        const gameDate =
+          f.date?.stringValue || "";
 
 
-      // ===============================
-      // NÃO MOSTRAR JOGOS FUTUROS
-      // ===============================
+        // =================================================
+        // JOGO OCULTO
+        // =================================================
 
-      if (gameDate > todaySP) {
-        return null;
-      }
-
-
-      // ===============================
-      // TIMES
-      // ===============================
-
-      const home =
-        f.home?.stringValue || "";
-
-      const away =
-        f.away?.stringValue || "";
+        const hideGame =
+          f.hideGame?.booleanValue || false;
 
 
-      // ===============================
-      // AVISO
-      // ===============================
+        if (hideGame) {
 
-      const isAviso =
-        home.toLowerCase() === "aviso" &&
-        away.toLowerCase() === "aviso";
+          return null;
+
+        }
 
 
-      // ===============================
-      // HORÁRIO
-      // ===============================
+        // =================================================
+        // NÃO MOSTRAR JOGOS FUTUROS
+        // =================================================
 
-      const matchTimeStr =
-        f.time?.stringValue || "";
+        if (gameDate > todaySP) {
 
+          return null;
 
-      const cleanTime =
-        matchTimeStr.replace("h", ":");
-
-
-      const [h, m] =
-        cleanTime
-          .split(":")
-          .map(v => parseInt(v) || 0);
+        }
 
 
-      const matchMinutes =
-        h * 60 + m;
+        // =================================================
+        // TIMES
+        // =================================================
+
+        const home =
+          f.home?.stringValue || "";
 
 
-      // ===============================
-      // 🔴 LIVE
-      // RECALCULADO SEMPRE
-      // ===============================
-
-      let isLive = false;
-
-      let isFinished = false;
+        const away =
+          f.away?.stringValue || "";
 
 
-      if (gameDate) {
+        // =================================================
+        // AVISO
+        // =================================================
 
-        const [
-          year,
-          month,
-          day
-        ] =
-          gameDate
-            .split("-")
-            .map(Number);
+        const isAviso =
+          home.toLowerCase() === "aviso" &&
+          away.toLowerCase() === "aviso";
 
 
-        const matchDateTime =
-          new Date(
-            year,
-            month - 1,
-            day,
-            h,
-            m,
-            0
-          );
+        // =================================================
+        // HORÁRIO
+        // =================================================
+
+        const matchTimeStr =
+          f.time?.stringValue || "";
 
 
-        const nowDateTime =
-          new Date(
-            nowSP.getFullYear(),
-            nowSP.getMonth(),
-            nowSP.getDate(),
-            nowSP.getHours(),
-            nowSP.getMinutes(),
-            0
-          );
+        const cleanTime =
+          matchTimeStr.replace("h", ":");
 
 
-        const diffMinutes =
-          (nowDateTime -
-            matchDateTime) / 60000;
+        const [h, m] =
+          cleanTime
+            .split(":")
+            .map(
+              v => parseInt(v) || 0
+            );
 
 
+        const matchMinutes =
+          h * 60 + m;
+
+
+        // =================================================
         // 🔴 LIVE
-        if (
-          diffMinutes >= 0 &&
-          diffMinutes < 130
-        ) {
+        // =================================================
 
-          isLive = true;
+        let isLive = false;
+
+        let isFinished = false;
+
+
+        if (gameDate) {
+
+          const [
+            year,
+            month,
+            day
+          ] =
+            gameDate
+              .split("-")
+              .map(Number);
+
+
+          const matchDateTime =
+            new Date(
+              year,
+              month - 1,
+              day,
+              h,
+              m,
+              0
+            );
+
+
+          const nowDateTime =
+            new Date(
+              nowSP.getFullYear(),
+              nowSP.getMonth(),
+              nowSP.getDate(),
+              nowSP.getHours(),
+              nowSP.getMinutes(),
+              0
+            );
+
+
+          const diffMinutes =
+            (
+              nowDateTime -
+              matchDateTime
+            ) / 60000;
+
+
+          // 🔴 LIVE
+          if (
+            diffMinutes >= 0 &&
+            diffMinutes < 130
+          ) {
+
+            isLive = true;
+
+          }
+
+
+          // ⏹️ ENCERRADO
+          if (
+            diffMinutes >= 130
+          ) {
+
+            isFinished = true;
+
+          }
 
         }
 
 
-        // ⏹️ ENCERRADO
-        if (diffMinutes >= 130) {
+        // =================================================
+        // 🔥 TEMPO ATÉ O JOGO
+        // =================================================
 
-          isFinished = true;
+        const minutesToStart =
+          gameDate
 
-        }
+            ? (
 
-      }
-
-
-      // ===============================
-      // 🔥 TEMPO ATÉ O JOGO
-      // RECALCULADO SEMPRE
-      // ===============================
-
-      const minutesToStart =
-        gameDate
-
-          ? (
-              (
-                new Date(
-                  nowSP.getFullYear(),
-                  nowSP.getMonth(),
-                  nowSP.getDate(),
-                  nowSP.getHours(),
-                  nowSP.getMinutes(),
-                  0
-                )
-
-                -
-
-                new Date(
-                  ...gameDate
-                    .split("-")
-                    .map(Number)
-                    .map(
-                      (v, i) =>
-                        i === 1
-                          ? v - 1
-                          : v
-                    ),
-                  h,
-                  m,
-                  0
-                )
-
-              ) / -60000
-            )
-
-          : 0;
-
-
-      // ===============================
-      // 🔘 BOTÕES
-      // RECALCULADO SEMPRE
-      // ===============================
-
-      const canShowButtons =
-        isMaster
-          ? true
-          : (minutesToStart <= 15);
-
-
-      // ===============================
-      // 🔘 CANAIS / BOTÕES
-      // ===============================
-
-      const allButtons =
-        (
-          f.channels?.arrayValue?.values || []
-        ).map((c, i) => ({
-
-          url:
-            c.mapValue.fields.url?.stringValue || "",
-
-          name:
-            isAviso
-
-              ? (
-                  c.mapValue.fields.name
-                    ?.stringValue ||
-                  `Canal ${i + 1}`
-                )
-
-              : `Canal ${i + 1}`,
-
-          captureM3u8:
-            c.mapValue.fields
-              .captureM3u8
-              ?.booleanValue || false
-
-        }));
-
-
-      // ===============================
-      // 🙈 OCULTAR CANAIS
-      // ===============================
-
-      const hideChannels =
-        f.hideChannels?.booleanValue || false;
-
-
-      // ===============================
-      // 🔥 RETORNO
-      // ===============================
-
-      return {
-
-        championship:
-          f.champ?.stringValue || "",
-
-        championship_image_url:
-          f.champ_logo?.stringValue || null,
-
-        home_team:
-          home,
-
-        visiting_team:
-          away,
-
-        home_team_image_url:
-          f.home_logo?.stringValue || null,
-
-        visiting_team_image_url:
-          f.away_logo?.stringValue || null,
-
-        start_time:
-          f.time?.stringValue || "",
-
-        // 🔴 RECALCULADO
-        is_live:
-          isLive,
-
-        // ⏹️ RECALCULADO
-        is_finished:
-          isFinished,
-
-        start_minutes:
-          matchMinutes,
-
-        game_date:
-          gameDate,
-
-        // 🔘 RECALCULADO
-        buttons:
-
-          hideChannels
-
-            ? []
-
-            : (
                 (
-                  canShowButtons ||
-                  isLive ||
-                  isFinished
-                )
 
-                  ? allButtons
+                  new Date(
+                    nowSP.getFullYear(),
+                    nowSP.getMonth(),
+                    nowSP.getDate(),
+                    nowSP.getHours(),
+                    nowSP.getMinutes(),
+                    0
+                  )
 
-                  : []
+                  -
+
+                  new Date(
+                    ...gameDate
+                      .split("-")
+                      .map(Number)
+                      .map(
+                        (v, i) =>
+                          i === 1
+                            ? v - 1
+                            : v
+                      ),
+                    h,
+                    m,
+                    0
+                  )
+
+                ) / -60000
+
               )
 
-      };
-
-    });
+            : 0;
 
 
-    // ===============================
-    // 🔥 REMOVE JOGOS NULL
-    // ===============================
+        // =================================================
+        // 🔘 PODE MOSTRAR BOTÕES?
+        // =================================================
+
+        const canShowButtons =
+          isMaster
+            ? true
+            : (
+                minutesToStart <= 15
+              );
+
+
+        // =================================================
+        // 🔘 TODOS OS CANAIS
+        // =================================================
+
+        const allButtons =
+          (
+            f.channels
+              ?.arrayValue
+              ?.values || []
+          ).map(
+            (c, i) => ({
+
+              url:
+                c.mapValue
+                  .fields
+                  .url
+                  ?.stringValue || "",
+
+
+              name:
+
+                isAviso
+
+                  ? (
+                      c.mapValue
+                        .fields
+                        .name
+                        ?.stringValue ||
+                      `Canal ${i + 1}`
+                    )
+
+                  : `Canal ${i + 1}`,
+
+
+              captureM3u8:
+                c.mapValue
+                  .fields
+                  .captureM3u8
+                  ?.booleanValue || false
+
+            })
+          );
+
+
+        // =================================================
+        // 🙈 OCULTAR CANAIS
+        // =================================================
+
+        const hideChannels =
+          f.hideChannels
+            ?.booleanValue || false;
+
+
+        // =================================================
+        // 🔥 RESULTADO DO JOGO
+        // =================================================
+
+        return {
+
+          championship:
+            f.champ?.stringValue || "",
+
+
+          championship_image_url:
+            f.champ_logo
+              ?.stringValue || null,
+
+
+          home_team:
+            home,
+
+
+          visiting_team:
+            away,
+
+
+          home_team_image_url:
+            f.home_logo
+              ?.stringValue || null,
+
+
+          visiting_team_image_url:
+            f.away_logo
+              ?.stringValue || null,
+
+
+          start_time:
+            f.time?.stringValue || "",
+
+
+          // 🔴 FICA NO CACHE POR 1 MINUTO
+          is_live:
+            isLive,
+
+
+          // ⏹️ FICA NO CACHE POR 1 MINUTO
+          is_finished:
+            isFinished,
+
+
+          start_minutes:
+            matchMinutes,
+
+
+          game_date:
+            gameDate,
+
+
+          // 🔘 FICA NO CACHE POR 1 MINUTO
+          buttons:
+
+            hideChannels
+
+              ? []
+
+              : (
+
+                  (
+                    canShowButtons ||
+                    isLive ||
+                    isFinished
+                  )
+
+                    ? allButtons
+
+                    : []
+
+                )
+
+        };
+
+      });
+
+
+    // =====================================================
+    // 🔥 REMOVE NULL
+    // =====================================================
 
     games =
       games.filter(Boolean);
 
 
-    // ===============================
+    // =====================================================
     // 🔥 ORDENAÇÃO
-    // ===============================
+    // =====================================================
 
-    games.sort((a, b) => {
+    games.sort(
+      (a, b) => {
 
-      if (
-        a.game_date !==
-        b.game_date
-      ) {
+        // Data
+        if (
+          a.game_date !==
+          b.game_date
+        ) {
 
-        return b.game_date
-          .localeCompare(
-            a.game_date
+          return b.game_date
+            .localeCompare(
+              a.game_date
+            );
+
+        }
+
+
+        // 🔴 LIVE PRIMEIRO
+
+        if (
+          a.is_live &&
+          !b.is_live
+        ) {
+
+          return -1;
+
+        }
+
+
+        if (
+          !a.is_live &&
+          b.is_live
+        ) {
+
+          return 1;
+
+        }
+
+
+        // 🔴 DOIS LIVE
+
+        if (
+          a.is_live &&
+          b.is_live
+        ) {
+
+          return (
+            b.start_minutes -
+            a.start_minutes
           );
 
-      }
+        }
 
 
-      // 🔴 LIVE PRIMEIRO
+        // 🕐 PRÓXIMOS
 
-      if (
-        a.is_live &&
-        !b.is_live
-      ) {
-        return -1;
-      }
+        if (
+          !a.is_finished &&
+          !b.is_finished
+        ) {
 
+          return (
+            a.start_minutes -
+            b.start_minutes
+          );
 
-      if (
-        !a.is_live &&
-        b.is_live
-      ) {
-        return 1;
-      }
+        }
 
 
-      if (
-        a.is_live &&
-        b.is_live
-      ) {
+        // ⏹️ ENCERRADOS
 
-        return (
-          b.start_minutes -
-          a.start_minutes
-        );
+        if (
+          a.is_finished &&
+          !b.is_finished
+        ) {
 
-      }
+          return 1;
 
-
-      // 🕐 PRÓXIMOS JOGOS
-
-      if (
-        !a.is_finished &&
-        !b.is_finished
-      ) {
-
-        return (
-          a.start_minutes -
-          b.start_minutes
-        );
-
-      }
+        }
 
 
-      // ⏹️ ENCERRADO
+        if (
+          !a.is_finished &&
+          b.is_finished
+        ) {
 
-      if (
-        a.is_finished &&
-        !b.is_finished
-      ) {
+          return -1;
 
-        return 1;
-
-      }
+        }
 
 
-      if (
-        !a.is_finished &&
-        b.is_finished
-      ) {
+        // ⏹️ DOIS ENCERRADOS
 
-        return -1;
+        if (
+          a.is_finished &&
+          b.is_finished
+        ) {
+
+          return (
+            a.start_minutes -
+            b.start_minutes
+          );
+
+        }
+
+
+        return 0;
 
       }
+    );
 
 
-      if (
-        a.is_finished &&
-        b.is_finished
-      ) {
+    // =====================================================
+    // 💾 SALVA O RESULTADO COMPLETO NO CACHE
+    // =====================================================
+    //
+    // IMPORTANTE:
+    // Agora não salvamos somente o Firestore.
+    //
+    // Salvamos o JSON FINAL.
+    //
+    // Portanto:
+    //
+    // is_live
+    // is_finished
+    // buttons
+    // times
+    // campeonato
+    // logos
+    // ordenação
+    //
+    // tudo fica congelado por 1 minuto.
+    // =====================================================
 
-        return (
-          a.start_minutes -
-          b.start_minutes
-        );
-
-      }
+    gamesCache =
+      games;
 
 
-      return 0;
+    gamesCacheTime =
+      now;
 
-    });
 
-
-    // ===============================
-    // 🔥 NÃO CACHEAR NO NAVEGADOR
-    // ===============================
-
-    // O navegador sempre chama a API.
-    // O cache de 1 minuto fica somente
-    // na consulta aos dados do Firestore.
+    // =====================================================
+    // 🔥 RESPOSTA
+    // =====================================================
 
     res.setHeader(
       "Cache-Control",
@@ -642,9 +801,11 @@ export default async function handler(req, res) {
     );
 
 
-    // ===============================
-    // 🔥 RESPOSTA
-    // ===============================
+    res.setHeader(
+      "X-Games-Cache",
+      "MISS"
+    );
+
 
     res
       .status(200)
@@ -658,12 +819,16 @@ export default async function handler(req, res) {
       err
     );
 
+
     res
       .status(500)
       .json({
+
         error:
           "Erro ao buscar jogos"
+
       });
 
   }
+
 }
