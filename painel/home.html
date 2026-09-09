@@ -1409,8 +1409,12 @@ saveButtonsLocalCache();
   autoResizeTextarea(linkEl);
 
   // 🔥 Apenas renderiza usando cache
+
   await loadButtons();
-});
+
+  }  // fecha o else
+
+}); // fecha o addEventListener
 
 async function loadButtons(filter = "", force = false){
 
