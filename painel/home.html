@@ -905,7 +905,7 @@ function resetSelect(el, placeholder){
   el.innerHTML = `<option value="">${placeholder}</option>`;
 }
 
-function populateChannelSelects(buttons, savedChannels = []) {
+function populateChannelSelects(buttons) {
 
   const selects = [
     document.getElementById('game-channel1'),
@@ -914,71 +914,37 @@ function populateChannelSelects(buttons, savedChannels = []) {
     document.getElementById('game-channel4'),
   ];
 
-  // 🔥 Cria uma lista temporária com os botões do cache
-  // + os canais que já estão salvos neste jogo.
-  const allButtons = [...buttons];
+  selects.forEach(sel => {
 
-  savedChannels.forEach(channel => {
-
-    if (!channel) return;
-
-    const exists = allButtons.some(
-      b =>
-        b.name === channel.name ||
-        b.link === channel.url
-    );
-
-    if (!exists) {
-
-      allButtons.push({
-        id: "saved-" + Math.random(),
-        name: channel.name || "Canal",
-        link: channel.url || "",
-        captureM3u8: channel.captureM3u8 || false
-      });
-
-    }
-
-  });
-
-  selects.forEach((sel, index) => {
+    const currentText =
+  sel.selectedOptions[0]?.text || "";
 
     sel.innerHTML =
       `<option value="">Selecione um botão</option>`;
 
-    allButtons.forEach(btn => {
+    buttons.forEach(btn => {
 
-      const opt = new Option(
-        btn.name,
-        btn.link
-      );
+      const opt =
+        new Option(
+          btn.name,
+          btn.link
+        );
 
       sel.appendChild(opt);
-
     });
 
-    // 🔥 Seleciona o canal que já estava salvo no jogo
-    const savedChannel = savedChannels[index];
+    const found = buttons.find(
+  b => b.name === currentText
+);
 
-    if (savedChannel) {
-
-      const found = allButtons.find(
-        b =>
-          b.link === savedChannel.url ||
-          b.name === savedChannel.name
-      );
-
-      if (found) {
-        sel.value = found.link;
-      }
-
-    }
+if(found){
+  sel.value = found.link;
+}
 
     $(sel).trigger('change.select2');
-
   });
-
 }
+
 // ===== Times =====
 document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -2006,21 +1972,42 @@ window.editGame = async function(id){
 
   const ch = g.channels || [];
 
-function findButtonValue(channel) {
+function findButtonValue(channel, selectId) {
 
   if (!channel) return null;
 
-  const btn = buttonsMemory.find(
-    b => b.name === channel.name
+  const select = document.getElementById(selectId);
+
+  // Procura primeiro pelo botão no cache
+  let btn = buttonsMemory.find(
+    b =>
+      b.name === channel.name ||
+      b.link === channel.url
   );
+
+  // Se o botão não estiver no cache,
+  // adiciona temporariamente a opção salva no jogo
+  if (!btn && channel.url) {
+
+    const option = new Option(
+      channel.name || "Canal",
+      channel.url,
+      true,
+      true
+    );
+
+    select.appendChild(option);
+
+    return channel.url;
+  }
 
   return btn ? btn.link : channel.url;
 }
 
-$('#game-channel1').val(findButtonValue(ch[0])).trigger('change.select2');
-$('#game-channel2').val(findButtonValue(ch[1])).trigger('change.select2');
-$('#game-channel3').val(findButtonValue(ch[2])).trigger('change.select2');
-$('#game-channel4').val(findButtonValue(ch[3])).trigger('change.select2');
+$('#game-channel1').val(findButtonValue(ch[0], 'game-channel1')).trigger('change.select2');
+$('#game-channel2').val(findButtonValue(ch[1], 'game-channel2')).trigger('change.select2');
+$('#game-channel3').val(findButtonValue(ch[2], 'game-channel3')).trigger('change.select2');
+$('#game-channel4').val(findButtonValue(ch[3], 'game-channel4')).trigger('change.select2');
 
   document.getElementById("game-time").value = g.time || "";
   document.getElementById("game-date").value = g.date || "";
