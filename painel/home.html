@@ -1342,6 +1342,8 @@ const captureM3u8 =
     buttonsMemory[index].link = link;
     buttonsMemory[index].captureM3u8 = captureM3u8;
   }
+  
+  saveButtonsLocalCache();
 
   // 🔥 atualiza todos os jogos automaticamente
   for (const game of gamesMemory) {
