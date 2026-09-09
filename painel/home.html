@@ -1667,11 +1667,42 @@ if (!document.getElementById("tab-addgame").classList.contains("hidden")) {
   renderMoreGamesList();
 }
 
-// 🔥 AGORA COPIA PARA OS OUTROS
+// 🔥 COPIA OS CANAIS PARA OS JOGOS SELECIONADOS
 for (const gameId of checkedIds) {
-  await updateDoc(doc(db, "games", gameId), {
-    channels: selected
-  });
+
+  // Salva no Firestore
+  await updateDoc(
+    doc(db, "games", gameId),
+    {
+      channels: selected
+    }
+  );
+
+  // 🔥 Atualiza também a memória do painel
+  const targetIndex = gamesMemory.findIndex(
+    game => game.id === gameId
+  );
+
+  if (targetIndex !== -1) {
+
+    gamesMemory[targetIndex] = {
+      ...gamesMemory[targetIndex],
+      channels: [...selected]
+    };
+
+  }
+}
+
+// 🔥 Atualiza a tela sem fazer nova leitura
+renderGames();
+
+if (
+  !document
+    .getElementById("tab-addgame")
+    .classList
+    .contains("hidden")
+) {
+  renderMoreGamesList();
 }
 
   document.getElementById("game-form").reset();
