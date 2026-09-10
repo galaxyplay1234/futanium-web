@@ -911,125 +911,39 @@ function populateChannelSelects(buttons) {
     document.getElementById('game-channel1'),
     document.getElementById('game-channel2'),
     document.getElementById('game-channel3'),
-    document.getElementById('game-channel4')
+    document.getElementById('game-channel4'),
   ];
 
   selects.forEach(sel => {
 
-    // Guarda o valor atual antes de reconstruir
-    const oldValue = sel.value;
+    const currentText =
+  sel.selectedOptions[0]?.text || "";
 
-    sel.innerHTML = "";
+    sel.innerHTML =
+      `<option value="">Selecione um botão</option>`;
 
     buttons.forEach(btn => {
 
-      const opt = new Option(
-        btn.name,
-        btn.link
-      );
+      const opt =
+        new Option(
+          btn.name,
+          btn.link
+        );
 
       sel.appendChild(opt);
-
     });
 
-    if (oldValue) {
-      sel.value = oldValue;
-    }
+    const found = buttons.find(
+  b => b.name === currentText
+);
 
-  });
-
-  // 🔥 Recria o Select2 do Canal 1
-  const channel1 = $('#game-channel1');
-
-  if (channel1.hasClass("select2-hidden-accessible")) {
-    channel1.select2("destroy");
-  }
-
-  channel1.attr("multiple", "multiple");
-
-  channel1.select2({
-    placeholder: "Selecione até 4 botões",
-    closeOnSelect: false,
-    width: "100%",
-
-    templateResult: function(data) {
-
-      if (!data.id) {
-        return data.text;
-      }
-
-      const selected =
-        channel1.val() || [];
-
-      const checked =
-        selected.includes(data.id);
-
-      const container =
-        $('<span></span>');
-
-      const checkbox =
-        $('<input type="checkbox">');
-
-      checkbox
-        .prop("checked", checked)
-        .css({
-          marginRight: "8px",
-          pointerEvents: "none"
-        });
-
-      container.append(checkbox);
-      container.append(
-        document.createTextNode(data.text)
-      );
-
-      return container;
-    }
-  });
-
+if(found){
+  sel.value = found.link;
 }
 
-
-// ===== Distribui os canais selecionados =====
-
-$('#game-channel1').on('change', function () {
-
-  let selected = $(this).val() || [];
-
-  // Máximo de 4
-  if (selected.length > 4) {
-
-    selected = selected.slice(0, 4);
-
-    $(this)
-      .val(selected)
-      .trigger('change');
-
-    alert("Você pode selecionar no máximo 4 botões.");
-
-    return;
-  }
-
-  // Distribui os selecionados nos 4 canais
-  for (let i = 0; i < 4; i++) {
-
-    const value = selected[i] || "";
-
-    const select =
-      document.getElementById(
-        `game-channel${i + 1}`
-      );
-
-    if (i === 0) {
-      continue;
-    }
-
-    select.value = value;
-
-    $(select).trigger('change.select2');
-  }
-
-});
-
+    $(sel).trigger('change.select2');
+  });
+}
 
 // ===== Times =====
 document.getElementById("team-form").addEventListener("submit", async e => {
@@ -1729,26 +1643,25 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
 
   // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
   // coleta canais selecionados (valor = link, nome = texto real do botão)
-// ===== Canais selecionados =====
+const selected = [1, 2, 3, 4]
+.map(n => {
 
-const selectedLinks =
-  $('#game-channel1').val() || [];
+  const select =
+    document.getElementById(`game-channel${n}`);
 
-const selected = selectedLinks
-  .slice(0, 4)
-  .map(link => {
-
-    const btn = buttonsMemory.find(
-      b => b.link === link
+  const btn =
+    buttonsMemory.find(
+      b => b.link === select.value
     );
 
-    return {
-      name: btn?.name || "",
-      url: link,
-      captureM3u8: btn?.captureM3u8 || false
-    };
+  return {
+    name: select.selectedOptions[0]?.text || "",
+    url: select.value,
+    captureM3u8: btn?.captureM3u8 || false
+  };
 
-  });
+})
+.filter(c => c.url);
 
   if(!champ || !home || !away || !time) return;
 
@@ -2322,75 +2235,12 @@ $(document).ready(function () {
   $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa", allowClear: true, width: '100%' });
   $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante", allowClear: true, width: '100%' });
 
-  // ===== SELEÇÃO MÚLTIPLA DOS CANAIS =====
-
-const channelSelects = [
-  $('#game-channel1'),
-  $('#game-channel2'),
-  $('#game-channel3'),
-  $('#game-channel4')
-];
-
-// Transforma o Canal 1 no seletor múltiplo
-$('#game-channel1').attr('multiple', 'multiple');
-
-$('#game-channel1').select2({
-  placeholder: "Selecione até 4 botões",
-  closeOnSelect: false,
-  width: '100%',
-  templateResult: function(data) {
-
-    if (!data.id) return data.text;
-
-    const selected =
-      $('#game-channel1').val() || [];
-
-    const checked =
-      selected.includes(data.id);
-
-    const $result = $('<span></span>');
-
-    const $checkbox =
-      $('<input type="checkbox" style="margin-right:8px;">');
-
-    $checkbox.prop('checked', checked);
-
-    $result.append($checkbox);
-    $result.append(document.createTextNode(data.text));
-
-    return $result;
-  }
-});
-
-// Quando selecionar/desmarcar
-$('#game-channel1').on('change', function() {
-
-  let selected =
-    $(this).val() || [];
-
-  // máximo de 4
-  if (selected.length > 4) {
-
-    selected = selected.slice(0, 4);
-
-    $(this)
-      .val(selected)
-      .trigger('change.select2');
-
-    alert("Você pode selecionar no máximo 4 botões.");
-  }
-
-  // Preenche os 4 canais na ordem
-  for (let i = 0; i < 4; i++) {
-
-    const value = selected[i] || "";
-
-    $(`#game-channel${i + 1}`)
-      .val(value)
-      .trigger('change.select2');
-  }
-
-});
+  // ✅ habilita limpar nos canais
+  $('#game-channel1, #game-channel2, #game-channel3, #game-channel4').select2({
+    placeholder: "Selecione um botão",
+    allowClear: true,     // <- mostra o “x” para limpar
+    width: '100%'
+  });
 });
 
 // ===== Contadores em tempo real (Realtime Database) =====
