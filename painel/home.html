@@ -995,21 +995,21 @@ $('#game-channel1').on('change', function () {
 
   let selected = $(this).val() || [];
 
-  // Limite máximo de 4
+  // Máximo de 4
   if (selected.length > 4) {
 
     selected = selected.slice(0, 4);
 
     $(this)
       .val(selected)
-      .trigger('change.select2');
+      .trigger('change');
 
     alert("Você pode selecionar no máximo 4 botões.");
 
     return;
   }
 
-  // Distribui na ordem selecionada
+  // Distribui os selecionados nos 4 canais
   for (let i = 0; i < 4; i++) {
 
     const value = selected[i] || "";
@@ -1729,25 +1729,26 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
 
   // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
   // coleta canais selecionados (valor = link, nome = texto real do botão)
-const selected = [1, 2, 3, 4]
-.map(n => {
+// ===== Canais selecionados =====
 
-  const select =
-    document.getElementById(`game-channel${n}`);
+const selectedLinks =
+  $('#game-channel1').val() || [];
 
-  const btn =
-    buttonsMemory.find(
-      b => b.link === select.value
+const selected = selectedLinks
+  .slice(0, 4)
+  .map(link => {
+
+    const btn = buttonsMemory.find(
+      b => b.link === link
     );
 
-  return {
-    name: select.selectedOptions[0]?.text || "",
-    url: select.value,
-    captureM3u8: btn?.captureM3u8 || false
-  };
+    return {
+      name: btn?.name || "",
+      url: link,
+      captureM3u8: btn?.captureM3u8 || false
+    };
 
-})
-.filter(c => c.url);
+  });
 
   if(!champ || !home || !away || !time) return;
 
