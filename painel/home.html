@@ -3006,6 +3006,15 @@ document.addEventListener("change", async (e) => {
     }
   );
 
+  // 🔥 Atualiza também a memória
+  const game = gamesMemory.find(
+    g => g.id === gameId
+  );
+
+  if (game) {
+    game.hideChannels = checked;
+  }
+
 });
 
 document.addEventListener("change", async (e) => {
