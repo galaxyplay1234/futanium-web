@@ -813,46 +813,8 @@ window.openChannelPicker = function() {
   const modal = document.getElementById("channel-picker");
 
   container.innerHTML = "";
-  
-  const searchInput = document.getElementById("channel-picker-search");
-const clearSearch = document.getElementById("clear-channel-picker-search");
 
-searchInput.value = "";
-clearSearch.classList.add("hidden");
-
-searchInput.oninput = function() {
-
-  const term = this.value.toLowerCase().trim();
-
-  clearSearch.classList.toggle("hidden", !this.value);
-
-  container.querySelectorAll("label").forEach(row => {
-
-    const name = row.querySelector("span")?.textContent.toLowerCase() || "";
-
-    row.style.display = name.includes(term) ? "flex" : "none";
-
-  });
-
-
-
-clearSearch.onclick = function() {
-
-  searchInput.value = "";
-  searchInput.dispatchEvent(new Event("input"));
-
-  searchInput.focus();
-
-};
-
-};
-
-  // Canais em ordem alfabética
-  const ordered = [...buttonsMemory].sort((a, b) =>
-    a.name.localeCompare(b.name, "pt", { sensitivity: "base" })
-  );
-
-  // Canais que já estão nos quatro campos
+  // Canais já selecionados nos quatro campos
   const currentValues = [
     document.getElementById("game-channel1").value,
     document.getElementById("game-channel2").value,
@@ -860,15 +822,29 @@ clearSearch.onclick = function() {
     document.getElementById("game-channel4").value
   ].filter(Boolean);
 
-  if (!ordered.length) {
-    container.innerHTML = `
-      <p class="text-center text-gray-500 py-6">
-        Nenhum canal cadastrado.
-      </p>
-    `;
-  }
+  // Ordena os canais alfabeticamente
+  const ordered = [...buttonsMemory].sort((a, b) =>
+    a.name.localeCompare(b.name, "pt", { sensitivity: "base" })
+  );
 
-  ordered.forEach(button => {
+  // Separa selecionados dos não selecionados
+  const selectedButtons = ordered.filter(b =>
+    currentValues.includes(b.link)
+  );
+
+  const otherButtons = ordered.filter(b =>
+    !currentValues.includes(b.link)
+  );
+
+  // Pesquisa
+  const searchInput = document.getElementById("channel-picker-search");
+  const clearSearch = document.getElementById("clear-channel-picker-search");
+
+  searchInput.value = "";
+  clearSearch.classList.add("hidden");
+
+  // Cria cada canal
+  function createChannelRow(button) {
 
     const row = document.createElement("label");
 
@@ -889,15 +865,12 @@ clearSearch.onclick = function() {
     row.appendChild(checkbox);
     row.appendChild(name);
 
-    container.appendChild(row);
-
     checkbox.addEventListener("change", () => {
 
       const checked = container.querySelectorAll(
         ".channel-picker-checkbox:checked"
       );
 
-      // Não permite selecionar mais de quatro
       if (checked.length > 4) {
         checkbox.checked = false;
         alert("Você pode selecionar no máximo 4 canais.");
@@ -905,7 +878,79 @@ clearSearch.onclick = function() {
 
       updateChannelPickerCount();
     });
+
+    return row;
+  }
+
+  // Área dos já selecionados
+  const selectedArea = document.createElement("div");
+  selectedArea.id = "selected-channels-area";
+
+  selectedButtons.forEach(button => {
+    selectedArea.appendChild(createChannelRow(button));
   });
+
+  container.appendChild(selectedArea);
+
+  // Separador fino
+  if (selectedButtons.length > 0 && otherButtons.length > 0) {
+
+    const separator = document.createElement("div");
+
+    separator.className = "border-t border-gray-200 my-2";
+
+    container.appendChild(separator);
+  }
+
+  // Área dos demais canais
+  const otherArea = document.createElement("div");
+  otherArea.id = "other-channels-area";
+
+  otherButtons.forEach(button => {
+    otherArea.appendChild(createChannelRow(button));
+  });
+
+  container.appendChild(otherArea);
+
+  // Atualiza pesquisa
+  searchInput.oninput = function() {
+
+    const term = this.value.toLowerCase().trim();
+
+    clearSearch.classList.toggle("hidden", !this.value);
+
+    container.querySelectorAll("label").forEach(row => {
+
+      const name = row.querySelector("span")?.textContent.toLowerCase() || "";
+
+      row.style.display = name.includes(term) ? "flex" : "none";
+
+    });
+
+    // Esconde o separador se uma das áreas não tiver resultados
+    const selectedVisible = Array.from(
+      selectedArea.querySelectorAll("label")
+    ).some(row => row.style.display !== "none");
+
+    const otherVisible = Array.from(
+      otherArea.querySelectorAll("label")
+    ).some(row => row.style.display !== "none");
+
+    const separator = container.querySelector(".border-t");
+
+    if (separator) {
+      separator.style.display =
+        selectedVisible && otherVisible ? "block" : "none";
+    }
+  };
+
+  clearSearch.onclick = function() {
+
+    searchInput.value = "";
+    searchInput.dispatchEvent(new Event("input"));
+    searchInput.focus();
+
+  };
 
   updateChannelPickerCount();
 
