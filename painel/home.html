@@ -399,9 +399,17 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
       </button>
     </div>
 
-    <div id="channel-picker-list"
-         class="p-3 overflow-y-auto flex-1 space-y-1">
-    </div>
+    <div class="px-3 pt-3">
+  <input
+    id="channel-picker-search"
+    type="text"
+    placeholder="🔍 Pesquisar canal..."
+    class="w-full p-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+</div>
+
+<div id="channel-picker-list"
+     class="p-3 overflow-y-auto flex-1 space-y-1">
+</div>
 
     <div class="p-3 border-t flex items-center justify-between gap-3">
       <span id="channel-picker-count" class="text-sm text-gray-500">
@@ -794,6 +802,24 @@ window.openChannelPicker = function() {
   const modal = document.getElementById("channel-picker");
 
   container.innerHTML = "";
+  
+  const searchInput = document.getElementById("channel-picker-search");
+
+searchInput.value = "";
+
+searchInput.oninput = function() {
+
+  const term = this.value.toLowerCase().trim();
+
+  container.querySelectorAll("label").forEach(row => {
+
+    const name = row.querySelector("span")?.textContent.toLowerCase() || "";
+
+    row.style.display = name.includes(term) ? "flex" : "none";
+
+  });
+
+};
 
   // Canais em ordem alfabética
   const ordered = [...buttonsMemory].sort((a, b) =>
