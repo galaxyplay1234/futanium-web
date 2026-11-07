@@ -892,15 +892,7 @@ window.openChannelPicker = function() {
 
   container.appendChild(selectedArea);
 
-  // Separador fino
-  if (selectedButtons.length > 0 && otherButtons.length > 0) {
-
-    const separator = document.createElement("div");
-
-    separator.className = "border-t border-gray-200 my-2";
-
-    container.appendChild(separator);
-  }
+  
 
   // Área dos demais canais
   const otherArea = document.createElement("div");
