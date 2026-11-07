@@ -400,11 +400,22 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
     </div>
 
     <div class="px-3 pt-3">
-  <input
-    id="channel-picker-search"
-    type="text"
-    placeholder="🔍 Pesquisar canal..."
-    class="w-full p-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+  <div class="relative">
+
+    <input
+      id="channel-picker-search"
+      type="text"
+      placeholder="🔍 Pesquisar canal..."
+      class="w-full p-3 pr-11 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+    <button
+      type="button"
+      id="clear-channel-picker-search"
+      class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-lg font-bold text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100">
+      ✕
+    </button>
+
+  </div>
 </div>
 
 <div id="channel-picker-list"
@@ -804,12 +815,16 @@ window.openChannelPicker = function() {
   container.innerHTML = "";
   
   const searchInput = document.getElementById("channel-picker-search");
+const clearSearch = document.getElementById("clear-channel-picker-search");
 
 searchInput.value = "";
+clearSearch.classList.add("hidden");
 
 searchInput.oninput = function() {
 
   const term = this.value.toLowerCase().trim();
+
+  clearSearch.classList.toggle("hidden", !this.value);
 
   container.querySelectorAll("label").forEach(row => {
 
@@ -818,6 +833,17 @@ searchInput.oninput = function() {
     row.style.display = name.includes(term) ? "flex" : "none";
 
   });
+
+};
+
+clearSearch.onclick = function() {
+
+  searchInput.value = "";
+  searchInput.dispatchEvent(new Event("input"));
+
+  searchInput.focus();
+
+};
 
 };
 
