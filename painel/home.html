@@ -921,17 +921,25 @@ channelSelectionOrder = [...currentValues];
   // Atualiza pesquisa
   searchInput.oninput = function() {
 
-    const term = this.value.toLowerCase().trim();
+  const term = this.value.toLowerCase().trim();
 
-    clearSearch.classList.toggle("hidden", !this.value);
+  clearSearch.classList.toggle("hidden", !this.value);
 
-    container.querySelectorAll("label").forEach(row => {
+  // Os já selecionados permanecem sempre visíveis
+  selectedArea.querySelectorAll("label").forEach(row => {
+    row.style.display = "flex";
+  });
 
-      const name = row.querySelector("span")?.textContent.toLowerCase() || "";
+  // A pesquisa filtra somente os demais canais
+  otherArea.querySelectorAll("label").forEach(row => {
 
-      row.style.display = name.includes(term) ? "flex" : "none";
+    const name = row.querySelector("span")?.textContent.toLowerCase() || "";
 
-    });
+    row.style.display = name.includes(term) ? "flex" : "none";
+
+  });
+
+};
 
     // Esconde o separador se uma das áreas não tiver resultados
     const selectedVisible = Array.from(
