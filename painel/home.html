@@ -2290,11 +2290,15 @@ $(document).ready(function () {
     width: '100%'
   });
 
-  // Ao tocar no Canal 1, abre a lista com caixas de seleção
-  $('#game-channel1').on('select2:opening', function(e) {
-    e.preventDefault();
-    window.openChannelPicker();
-  });
+  // Ao tocar em qualquer canal, abre a nova lista
+$('#game-channel1, #game-channel2, #game-channel3, #game-channel4')
+.on('select2:opening', function(e) {
+
+  e.preventDefault();
+
+  window.openChannelPicker();
+
+});
 
 });
 
