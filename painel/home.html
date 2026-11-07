@@ -803,6 +803,7 @@ let teamsMemory = [];
 let champsMemory = [];
 let buttonsMemory = [];
 let gamesMemory = [];
+let channelSelectionOrder = [];
 
 
 // ===== Seletor de múltiplos canais =====
@@ -821,6 +822,9 @@ window.openChannelPicker = function() {
     document.getElementById("game-channel3").value,
     document.getElementById("game-channel4").value
   ].filter(Boolean);
+  
+  // Mantém a ordem dos canais que já estavam selecionados
+channelSelectionOrder = [...currentValues];
 
   // Ordena os canais alfabeticamente
   const ordered = [...buttonsMemory].sort((a, b) =>
@@ -867,17 +871,27 @@ window.openChannelPicker = function() {
 
     checkbox.addEventListener("change", () => {
 
-      const checked = container.querySelectorAll(
-        ".channel-picker-checkbox:checked"
-      );
+  if (checkbox.checked) {
 
-      if (checked.length > 4) {
-        checkbox.checked = false;
-        alert("Você pode selecionar no máximo 4 canais.");
-      }
+    if (channelSelectionOrder.length >= 4) {
+      checkbox.checked = false;
+      alert("Você pode selecionar no máximo 4 canais.");
+      return;
+    }
 
-      updateChannelPickerCount();
-    });
+    // Adiciona no final, respeitando a ordem do clique
+    channelSelectionOrder.push(checkbox.value);
+
+  } else {
+
+    // Remove da ordem quando desmarcar
+    channelSelectionOrder =
+      channelSelectionOrder.filter(link => link !== checkbox.value);
+
+  }
+
+  updateChannelPickerCount();
+});
 
     return row;
   }
@@ -968,23 +982,20 @@ window.closeChannelPicker = function() {
 
 window.addSelectedChannels = function() {
 
-  const selected = Array.from(
-    document.querySelectorAll(
-      "#channel-picker-list .channel-picker-checkbox:checked"
-    )
-  ).map(checkbox => checkbox.value);
+  const selected = [...channelSelectionOrder];
 
+  // Limita a quatro canais
   if (selected.length > 4) {
     alert("Selecione no máximo 4 canais.");
     return;
   }
 
-  // Limpa os quatro campos antes de distribuir a nova seleção
+  // Limpa os quatro campos
   for (let i = 1; i <= 4; i++) {
     $(`#game-channel${i}`).val(null).trigger("change");
   }
 
-  // Distribui na ordem escolhida
+  // Preenche conforme a ordem em que foram selecionados
   selected.forEach((link, index) => {
 
     const channelNumber = index + 1;
@@ -992,6 +1003,7 @@ window.addSelectedChannels = function() {
     $(`#game-channel${channelNumber}`)
       .val(link)
       .trigger("change");
+
   });
 
   closeChannelPicker();
