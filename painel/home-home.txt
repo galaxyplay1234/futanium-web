@@ -152,6 +152,12 @@ Versões
   class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
   Analytics
 </button>
+
+<button onclick="showTab('console')"
+  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Console
+</button>
+
     <button onclick="showTab('buttons')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
     <button onclick="showTab('import')"
@@ -202,6 +208,10 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
     <span>Selecionar todos</span>
   </label>
 
+</div>
+
+<div id="games-date-tabs"
+     class="flex gap-2 overflow-x-auto whitespace-nowrap mb-3 pb-1">
 </div>
 
 <div id="games-list" class="space-y-2"></div>
@@ -560,6 +570,71 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   </div>
 </div>
 
+
+<!-- Console Firestore -->
+<div id="tab-console" class="tab-content hidden">
+
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg sm:text-xl font-semibold">
+      Monitor Firestore
+    </h2>
+
+    <button onclick="clearFirestoreConsole()"
+      class="bg-red-500 text-white px-3 py-1 rounded text-sm">
+      Limpar
+    </button>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 mb-4">
+
+    <div class="bg-white rounded shadow p-3">
+      <div class="text-sm text-gray-500">Leituras</div>
+      <div id="console-reads"
+        class="text-2xl font-bold text-blue-600">0</div>
+    </div>
+
+    <div class="bg-white rounded shadow p-3">
+      <div class="text-sm text-gray-500">Gravações</div>
+      <div id="console-writes"
+        class="text-2xl font-bold text-green-600">0</div>
+    </div>
+
+    <div class="bg-white rounded shadow p-3">
+      <div class="text-sm text-gray-500">Atualizações</div>
+      <div id="console-updates"
+        class="text-2xl font-bold text-yellow-600">0</div>
+    </div>
+
+    <div class="bg-white rounded shadow p-3">
+      <div class="text-sm text-gray-500">Exclusões</div>
+      <div id="console-deletes"
+        class="text-2xl font-bold text-red-600">0</div>
+    </div>
+
+  </div>
+
+  <div class="bg-white rounded shadow overflow-hidden">
+
+    <div class="p-3 border-b flex justify-between items-center">
+      <span class="font-semibold">Atividades recentes</span>
+      <span id="console-total"
+        class="text-xs text-gray-500">0 operações</span>
+    </div>
+
+    <div id="console-log"
+      class="p-3 space-y-2 max-h-[550px] overflow-y-auto text-xs font-mono">
+
+      <div class="text-gray-400">
+        Aguardando operações do Firestore...
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <!-- Importar (imagem -> jogos) -->
 <div id="tab-import" class="tab-content hidden">
   <h2 class="text-lg sm:text-xl font-semibold mb-4">Importar jogos por imagem</h2>
@@ -809,7 +884,16 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 <!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc as fbAddDoc,
+  getDocs as fbGetDocs,
+  deleteDoc as fbDeleteDoc,
+  updateDoc as fbUpdateDoc,
+  getDoc as fbGetDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
@@ -823,6 +907,218 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// ===== MONITOR FIRESTORE =====
+
+const firestoreStats = {
+  reads: 0,
+  writes: 0,
+  updates: 0,
+  deletes: 0
+};
+
+let firestoreLogs = [];
+
+function logFirestore(type, collectionName, amount = 1) {
+
+  const now = new Date().toLocaleTimeString("pt-BR", {
+    timeZone: "America/Sao_Paulo"
+  });
+
+  const colors = {
+    READ: "text-blue-600",
+    WRITE: "text-green-600",
+    UPDATE: "text-yellow-600",
+    DELETE: "text-red-600"
+  };
+
+  if (type === "READ") firestoreStats.reads += amount;
+  if (type === "WRITE") firestoreStats.writes += amount;
+  if (type === "UPDATE") firestoreStats.updates += amount;
+  if (type === "DELETE") firestoreStats.deletes += amount;
+
+  firestoreLogs.unshift({
+    time: now,
+    type,
+    collection: collectionName,
+    amount
+  });
+
+  firestoreLogs = firestoreLogs.slice(0, 100);
+
+  renderFirestoreConsole();
+}
+
+function renderFirestoreConsole() {
+
+  const reads = document.getElementById("console-reads");
+  if (!reads) return;
+
+  document.getElementById("console-reads").textContent =
+    firestoreStats.reads;
+
+  document.getElementById("console-writes").textContent =
+    firestoreStats.writes;
+
+  document.getElementById("console-updates").textContent =
+    firestoreStats.updates;
+
+  document.getElementById("console-deletes").textContent =
+    firestoreStats.deletes;
+
+  document.getElementById("console-total").textContent =
+    `${firestoreLogs.length} operações registradas`;
+
+  const container = document.getElementById("console-log");
+
+  if (!firestoreLogs.length) {
+    container.innerHTML =
+      '<div class="text-gray-400">Aguardando operações...</div>';
+    return;
+  }
+
+  container.innerHTML = firestoreLogs.map(log => {
+
+    const colors = {
+      READ: "text-blue-600",
+      WRITE: "text-green-600",
+      UPDATE: "text-yellow-600",
+      DELETE: "text-red-600"
+    };
+
+    return `
+      <div class="border-b pb-2">
+        <div class="flex justify-between gap-2">
+          <span class="${colors[log.type]} font-bold">
+            ${log.type}
+          </span>
+
+          <span class="text-gray-400">
+            ${log.time}
+          </span>
+        </div>
+
+        <div class="text-gray-700 mt-1">
+          ${log.collection}
+          <span class="text-gray-400">
+            · ${log.amount} documento(s)
+          </span>
+        </div>
+      </div>
+    `;
+
+  }).join("");
+}
+
+window.clearFirestoreConsole = function() {
+
+  firestoreStats.reads = 0;
+  firestoreStats.writes = 0;
+  firestoreStats.updates = 0;
+  firestoreStats.deletes = 0;
+
+  firestoreLogs = [];
+
+  renderFirestoreConsole();
+};
+
+
+// ===== INTERCEPTADORES FIRESTORE =====
+
+async function getDocs(...args) {
+
+  const result = await fbGetDocs(...args);
+
+  const collectionName =
+    args[0]._query?.path?.segments?.[0] ||
+    "consulta";
+
+  logFirestore("READ", collectionName, result.size);
+
+  return result;
+}
+
+async function getDoc(...args) {
+
+  const result = await fbGetDoc(...args);
+
+  const collectionName =
+    args[0].parent?.id || "documento";
+
+  logFirestore("READ", collectionName, 1);
+
+  return result;
+}
+
+async function addDoc(...args) {
+
+  const result = await fbAddDoc(...args);
+
+  const collectionName = args[0].id;
+
+  logFirestore("WRITE", collectionName, 1);
+
+  return result;
+}
+
+async function updateDoc(...args) {
+
+  const result = await fbUpdateDoc(...args);
+
+  const collectionName =
+    args[0].parent?.id || "documento";
+
+  logFirestore("UPDATE", collectionName, 1);
+
+  return result;
+}
+
+async function deleteDoc(...args) {
+
+  const result = await fbDeleteDoc(...args);
+
+  const collectionName =
+    args[0].parent?.id || "documento";
+
+  logFirestore("DELETE", collectionName, 1);
+
+  return result;
+}
+
+function onSnapshot(reference, callback, errorCallback) {
+
+  return fbOnSnapshot(
+    reference,
+
+    snapshot => {
+
+      let changes = 0;
+
+      if (typeof snapshot.docChanges === "function") {
+        changes = snapshot.docChanges().filter(change =>
+          change.type === "added" ||
+          change.type === "modified"
+        ).length;
+      } else {
+        changes = 1;
+      }
+
+      if (changes > 0) {
+
+        const collectionName =
+          reference._query?.path?.segments?.[0] ||
+          "listener";
+
+        logFirestore("READ", collectionName, changes);
+      }
+
+      callback(snapshot);
+    },
+
+    errorCallback
+  );
+}
+
 import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 enableIndexedDbPersistence(db).catch((err) => {
@@ -842,6 +1138,20 @@ let champsMemory = [];
 let buttonsMemory = [];
 let gamesMemory = [];
 let channelSelectionOrder = [];
+
+// ===== Abas de datas da Home =====
+let selectedGamesDate = "today";
+
+function getTodaySP() {
+  return new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo"
+  });
+}
+
+function formatGamesDate(date) {
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}`;
+}
 
 
 // ===== Seletor de múltiplos canais =====
@@ -1099,7 +1409,9 @@ window.addSelectedChannels = function() {
   closeChannelPicker();
 };
 
-import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import {
+  onSnapshot as fbOnSnapshot
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 let gamesUnsubscribe = null;
 
@@ -2017,40 +2329,123 @@ for (const gameId of checkedIds) {
 
 function renderGames() {
 
-  const gamesArr = [...gamesMemory];
+  const today = getTodaySP();
+
+  // Todas as datas que possuem jogos cadastrados
+  const dates = [...new Set(
+  gamesMemory
+    .filter(g => !(
+      g.home?.toLowerCase() === "aviso" &&
+      g.away?.toLowerCase() === "aviso"
+    ))
+    .map(g => g.date)
+    .filter(date => date)
+)].sort((a, b) => a.localeCompare(b));
+
+  // Hoje sempre aparece.
+  // Outras datas aparecem somente se tiverem jogos.
+  const availableDates = [
+    today,
+    ...dates.filter(date => date !== today)
+  ].sort((a, b) => {
+    if (a === today) return -1;
+    if (b === today) return 1;
+    return a.localeCompare(b);
+  });
+
+  // Se a data selecionada não tiver mais jogos, volta para Hoje.
+  if (
+    selectedGamesDate !== "today" &&
+    !dates.includes(selectedGamesDate)
+  ) {
+    selectedGamesDate = "today";
+  }
+
+  const activeDate =
+    selectedGamesDate === "today"
+      ? today
+      : selectedGamesDate;
+
+  // Cria as abas
+  const tabsContainer =
+    document.getElementById("games-date-tabs");
+
+  tabsContainer.innerHTML = "";
+
+  availableDates.forEach(date => {
+
+    const isToday = date === today;
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+
+    button.textContent = isToday
+      ? "Hoje"
+      : formatGamesDate(date);
+
+    const active = activeDate === date;
+
+    button.className = active
+      ? "bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0"
+      : "bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0";
+
+    button.addEventListener("click", () => {
+      selectedGamesDate = isToday ? "today" : date;
+      renderGames();
+    });
+
+    tabsContainer.appendChild(button);
+  });
+
+  // Filtra somente os jogos da data selecionada
+  const gamesArr = gamesMemory.filter(g => {
+
+  const isAviso =
+    g.home?.toLowerCase() === "aviso" &&
+    g.away?.toLowerCase() === "aviso";
+
+  // Avisos aparecem em todas as datas
+  if (isAviso) return true;
+
+  return g.date === activeDate;
+});
 
   gamesArr.sort((a, b) => {
 
-  // 🔔 Aviso sempre no topo
-  const aIsAviso = a.home?.toLowerCase() === "aviso" && a.away?.toLowerCase() === "aviso";
-  const bIsAviso = b.home?.toLowerCase() === "aviso" && b.away?.toLowerCase() === "aviso";
+    // Aviso sempre no topo
+    const aIsAviso =
+      a.home?.toLowerCase() === "aviso" &&
+      a.away?.toLowerCase() === "aviso";
 
-  if (aIsAviso && !bIsAviso) return -1;
-  if (!aIsAviso && bIsAviso) return 1;
+    const bIsAviso =
+      b.home?.toLowerCase() === "aviso" &&
+      b.away?.toLowerCase() === "aviso";
 
-  // 🔥 Ordenar por DATA (mais futura primeiro)
-  const dateA = a.date || "";
-  const dateB = b.date || "";
+    if (aIsAviso && !bIsAviso) return -1;
+    if (!aIsAviso && bIsAviso) return 1;
 
-  if (dateA !== dateB) {
-    return dateB.localeCompare(dateA); // DESC
-  }
+    // Horário decrescente
+    const timeA = parseInt(
+      (a.time || "").replace("h", "").replace(":", "")
+    ) || 0;
 
-  // 🔥 Dentro da mesma data → ordenar por HORÁRIO DESC
-  const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
-  const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
+    const timeB = parseInt(
+      (b.time || "").replace("h", "").replace(":", "")
+    ) || 0;
 
-  return timeB - timeA;
-});
+    return timeB - timeA;
+  });
 
   const ul = document.getElementById("games-list");
+
   ul.innerHTML = "";
-  
+
   document.getElementById("games-total").textContent =
-  gamesArr.filter(g =>
-    !(g.home?.toLowerCase() === "aviso" &&
-      g.away?.toLowerCase() === "aviso")
-  ).length;
+    gamesArr.filter(g =>
+      !(g.home?.toLowerCase() === "aviso" &&
+        g.away?.toLowerCase() === "aviso")
+    ).length;
 
   gamesArr.forEach(g => {
 
@@ -2059,35 +2454,37 @@ function renderGames() {
       g.away?.toLowerCase() === "aviso";
 
     const canaisLabel = (g.channels && g.channels.length)
-  ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
-       ${g.channels.map(c => `${c.name}`).join("<br>")}
-     </div>`
-  : "";
+      ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
+           ${g.channels.map(c => `${c.name}`).join("<br>")}
+         </div>`
+      : "";
 
-const hideChannelsLabel = `
-<label class="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
-  <input
-    type="checkbox"
-    class="home-hide-channels w-3 h-3"
-    data-id="${g.id}"
-    ${g.hideChannels ? "checked" : ""}>
-  <span>Ocultar canais</span>
-</label>
-`;
+    const hideChannelsLabel = `
+      <label class="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
+        <input
+          type="checkbox"
+          class="home-hide-channels w-3 h-3"
+          data-id="${g.id}"
+          ${g.hideChannels ? "checked" : ""}>
+        <span>Ocultar canais</span>
+      </label>
+    `;
 
     const hideGameLabel = `
-<label class="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
-  <input
-    type="checkbox"
-    class="home-hide-game w-3 h-3"
-    data-id="${g.id}"
-    ${g.hideGame ? "checked" : ""}>
-  <span>Ocultar jogo</span>
-</label>
-`;
+      <label class="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
+        <input
+          type="checkbox"
+          class="home-hide-game w-3 h-3"
+          data-id="${g.id}"
+          ${g.hideGame ? "checked" : ""}>
+        <span>Ocultar jogo</span>
+      </label>
+    `;
 
     const li = document.createElement("li");
-    li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
+
+    li.className =
+      "bg-white p-4 rounded shadow flex flex-col gap-1.5";
 
     if (isAviso) {
 
@@ -2101,16 +2498,27 @@ const hideChannelsLabel = `
             <div class="flex items-center gap-2">
               <span class="text-[12px] text-gray-500">${g.champ}</span>
             </div>
+
             <div class="flex gap-2">
-              <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
-              <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
+              <button onclick="editGame('${g.id}')"
+                class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
+                Editar
+              </button>
+
+              <button onclick="deleteGame('${g.id}')"
+                class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
+                Excluir
+              </button>
             </div>
           </div>
 
-          <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
+          <div class="text-base font-semibold leading-tight mt-0">
+            ${g.home} x ${g.away}
+          </div>
+
           ${canaisLabel}
-${hideGameLabel}
-${hideChannelsLabel}
+          ${hideGameLabel}
+          ${hideChannelsLabel}
         </div>
       `;
 
@@ -2124,38 +2532,45 @@ ${hideChannelsLabel}
     } else {
 
       li.innerHTML = `
-  <div class="flex justify-between items-start">
+        <div class="flex justify-between items-start">
 
-    <div>
-      <div class="flex items-center gap-2">
-        <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
-        <span class="text-[12px] text-gray-500">${g.champ}</span>
-      </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">
+                ${g.time}
+              </span>
 
-      <div class="text-base font-semibold leading-tight mt-2">
-        ${g.home} x ${g.away}
-      </div>
+              <span class="text-[12px] text-gray-500">
+                ${g.champ}
+              </span>
+            </div>
 
-      ${canaisLabel}
-    </div>
+            <div class="text-base font-semibold leading-tight mt-2">
+              ${g.home} x ${g.away}
+            </div>
 
-    <div class="flex flex-col items-start gap-2">
-      <div class="flex gap-2">
-        <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
-          Editar
-        </button>
+            ${canaisLabel}
+          </div>
 
-        <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
-          Excluir
-        </button>
-      </div>
+          <div class="flex flex-col items-start gap-2">
+            <div class="flex gap-2">
+              <button onclick="editGame('${g.id}')"
+                class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
+                Editar
+              </button>
 
-      ${hideGameLabel}
-${hideChannelsLabel}
-    </div>
+              <button onclick="deleteGame('${g.id}')"
+                class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
+                Excluir
+              </button>
+            </div>
 
-  </div>
-`;
+            ${hideGameLabel}
+            ${hideChannelsLabel}
+          </div>
+
+        </div>
+      `;
     }
 
     ul.appendChild(li);
