@@ -185,9 +185,13 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </div>
       <div class="flex items-center justify-between mb-4">
 
-  <h2 class="text-lg sm:text-xl font-semibold">
-    Jogos Adicionados
-  </h2>
+  <h2 class="text-lg sm:text-xl font-semibold flex items-center gap-2">
+  Jogos Adicionados
+  <span id="games-total"
+        class="text-sm font-medium text-gray-400">
+    0
+  </span>
+</h2>
 
   <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
     <input
@@ -1975,6 +1979,12 @@ function renderGames() {
 
   const ul = document.getElementById("games-list");
   ul.innerHTML = "";
+  
+  document.getElementById("games-total").textContent =
+  gamesArr.filter(g =>
+    !(g.home?.toLowerCase() === "aviso" &&
+      g.away?.toLowerCase() === "aviso")
+  ).length;
 
   gamesArr.forEach(g => {
 
