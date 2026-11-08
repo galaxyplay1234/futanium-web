@@ -379,6 +379,64 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </button>
 </div>
 
+<!-- Seletor múltiplo de canais -->
+<div id="channel-picker"
+     onclick="if(event.target === this) closeChannelPicker()"
+     class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+    
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md h-[620px] max-h-[75vh] flex flex-col">
+
+    <div class="p-4 border-b flex justify-between items-center">
+      <div>
+        <h3 class="font-bold text-lg">Selecionar canais</h3>
+        <p class="text-xs text-gray-500">Escolha até 4 canais</p>
+      </div>
+
+      <button type="button"
+        onclick="closeChannelPicker()"
+        class="text-gray-500 text-2xl px-2">
+        ✕
+      </button>
+    </div>
+
+    <div class="px-3 pt-3">
+  <div class="relative">
+
+    <input
+      id="channel-picker-search"
+      type="text"
+      placeholder="🔍 Pesquisar canal..."
+      class="w-full p-3 pr-11 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+    <button
+      type="button"
+      id="clear-channel-picker-search"
+      class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-lg font-bold text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100">
+      ✕
+    </button>
+
+  </div>
+</div>
+
+<div id="channel-picker-list"
+     class="px-3 py-2 overflow-y-auto flex-1 min-h-0 space-y-1">
+</div>
+
+    <div class="p-3 border-t flex items-center justify-between gap-3">
+      <span id="channel-picker-count" class="text-sm text-gray-500">
+        0 de 4 selecionados
+      </span>
+
+      <button type="button"
+        onclick="addSelectedChannels()"
+        class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2 rounded">
+        Adicionar
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <div id="inline-button-editor"
      class="hidden bg-white border rounded-lg p-4 mt-4 shadow">
 
@@ -745,6 +803,219 @@ let teamsMemory = [];
 let champsMemory = [];
 let buttonsMemory = [];
 let gamesMemory = [];
+let channelSelectionOrder = [];
+
+
+// ===== Seletor de múltiplos canais =====
+
+window.openChannelPicker = function() {
+
+  const container = document.getElementById("channel-picker-list");
+  const modal = document.getElementById("channel-picker");
+
+  container.innerHTML = "";
+
+  // Canais já selecionados nos quatro campos
+  const currentValues = [
+    document.getElementById("game-channel1").value,
+    document.getElementById("game-channel2").value,
+    document.getElementById("game-channel3").value,
+    document.getElementById("game-channel4").value
+  ].filter(Boolean);
+  
+  // Mantém a ordem dos canais que já estavam selecionados
+channelSelectionOrder = [...currentValues];
+
+  // Ordena os canais alfabeticamente
+  const ordered = [...buttonsMemory].sort((a, b) =>
+    a.name.localeCompare(b.name, "pt", { sensitivity: "base" })
+  );
+
+  // Separa selecionados dos não selecionados
+  const selectedButtons = ordered.filter(b =>
+    currentValues.includes(b.link)
+  );
+
+  const otherButtons = ordered.filter(b =>
+    !currentValues.includes(b.link)
+  );
+
+  // Pesquisa
+  const searchInput = document.getElementById("channel-picker-search");
+  const clearSearch = document.getElementById("clear-channel-picker-search");
+
+  searchInput.value = "";
+  clearSearch.classList.add("hidden");
+
+  // Cria cada canal
+  function createChannelRow(button) {
+
+    const row = document.createElement("label");
+
+    row.className =
+      "flex items-center gap-3 p-3 border-b cursor-pointer hover:bg-gray-50";
+
+    const checkbox = document.createElement("input");
+
+    checkbox.type = "checkbox";
+    checkbox.className = "channel-picker-checkbox w-5 h-5";
+    checkbox.value = button.link;
+    checkbox.checked = currentValues.includes(button.link);
+
+    const name = document.createElement("span");
+    name.className = "text-sm font-medium flex-1";
+    name.textContent = button.name;
+
+    row.appendChild(checkbox);
+    row.appendChild(name);
+
+    checkbox.addEventListener("change", () => {
+
+  if (checkbox.checked) {
+
+    if (channelSelectionOrder.length >= 4) {
+      checkbox.checked = false;
+      alert("Você pode selecionar no máximo 4 canais.");
+      return;
+    }
+
+    // Adiciona no final, respeitando a ordem do clique
+    channelSelectionOrder.push(checkbox.value);
+
+  } else {
+
+    // Remove da ordem quando desmarcar
+    channelSelectionOrder =
+      channelSelectionOrder.filter(link => link !== checkbox.value);
+
+  }
+
+  updateChannelPickerCount();
+});
+
+    return row;
+  }
+
+  // Área dos já selecionados
+  const selectedArea = document.createElement("div");
+  selectedArea.id = "selected-channels-area";
+
+  selectedButtons.forEach(button => {
+    selectedArea.appendChild(createChannelRow(button));
+  });
+
+  container.appendChild(selectedArea);
+
+  
+
+  // Área dos demais canais
+  const otherArea = document.createElement("div");
+  otherArea.id = "other-channels-area";
+
+  otherButtons.forEach(button => {
+    otherArea.appendChild(createChannelRow(button));
+  });
+
+  container.appendChild(otherArea);
+
+  // Atualiza pesquisa
+  searchInput.oninput = function() {
+
+  const term = this.value.toLowerCase().trim();
+
+  clearSearch.classList.toggle("hidden", !this.value);
+
+  // Os já selecionados permanecem sempre visíveis
+  selectedArea.querySelectorAll("label").forEach(row => {
+    row.style.display = "flex";
+  });
+
+  // A pesquisa filtra somente os demais canais
+  otherArea.querySelectorAll("label").forEach(row => {
+
+    const name = row.querySelector("span")?.textContent.toLowerCase() || "";
+
+    row.style.display = name.includes(term) ? "flex" : "none";
+
+  });
+
+
+
+    // Esconde o separador se uma das áreas não tiver resultados
+    const selectedVisible = Array.from(
+      selectedArea.querySelectorAll("label")
+    ).some(row => row.style.display !== "none");
+
+    const otherVisible = Array.from(
+      otherArea.querySelectorAll("label")
+    ).some(row => row.style.display !== "none");
+
+    const separator = container.querySelector(".border-t");
+
+    if (separator) {
+      separator.style.display =
+        selectedVisible && otherVisible ? "block" : "none";
+    }
+  };
+
+  clearSearch.onclick = function() {
+
+    searchInput.value = "";
+    searchInput.dispatchEvent(new Event("input"));
+    searchInput.focus();
+
+  };
+
+  updateChannelPickerCount();
+
+  modal.classList.remove("hidden");
+};
+
+
+function updateChannelPickerCount() {
+
+  const total = document.querySelectorAll(
+    "#channel-picker-list .channel-picker-checkbox:checked"
+  ).length;
+
+  document.getElementById("channel-picker-count").textContent =
+    `${total} de 4 selecionados`;
+}
+
+
+window.closeChannelPicker = function() {
+  document.getElementById("channel-picker").classList.add("hidden");
+};
+
+
+window.addSelectedChannels = function() {
+
+  const selected = [...channelSelectionOrder];
+
+  // Limita a quatro canais
+  if (selected.length > 4) {
+    alert("Selecione no máximo 4 canais.");
+    return;
+  }
+
+  // Limpa os quatro campos
+  for (let i = 1; i <= 4; i++) {
+    $(`#game-channel${i}`).val(null).trigger("change");
+  }
+
+  // Preenche conforme a ordem em que foram selecionados
+  selected.forEach((link, index) => {
+
+    const channelNumber = index + 1;
+
+    $(`#game-channel${channelNumber}`)
+      .val(link)
+      .trigger("change");
+
+  });
+
+  closeChannelPicker();
+};
 
 import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
@@ -2050,16 +2321,42 @@ window.cancelInlineButtonEdit = function(){
 
 // Ativa busca nos selects
 $(document).ready(function () {
-  $('#game-champ').select2({ placeholder: "Selecione o Campeonato", allowClear: true, width: '100%' });
-  $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa", allowClear: true, width: '100%' });
-  $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante", allowClear: true, width: '100%' });
 
-  // ✅ habilita limpar nos canais
-  $('#game-channel1, #game-channel2, #game-channel3, #game-channel4').select2({
-    placeholder: "Selecione um botão",
-    allowClear: true,     // <- mostra o “x” para limpar
+  $('#game-champ').select2({
+    placeholder: "Selecione o Campeonato",
+    allowClear: true,
     width: '100%'
   });
+
+  $('#game-home-team').select2({
+    placeholder: "Selecione o Time da Casa",
+    allowClear: true,
+    width: '100%'
+  });
+
+  $('#game-away-team').select2({
+    placeholder: "Selecione o Time Visitante",
+    allowClear: true,
+    width: '100%'
+  });
+
+  // Mantém os quatro campos individuais
+  $('#game-channel1, #game-channel2, #game-channel3, #game-channel4').select2({
+    placeholder: "Selecione um botão",
+    allowClear: true,
+    width: '100%'
+  });
+
+  // Ao tocar em qualquer canal, abre a nova lista
+$('#game-channel1, #game-channel2, #game-channel3, #game-channel4')
+.on('select2:opening', function(e) {
+
+  e.preventDefault();
+
+  window.openChannelPicker();
+
+});
+
 });
 
 // ===== Contadores em tempo real (Realtime Database) =====
