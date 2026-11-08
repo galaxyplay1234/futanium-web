@@ -2795,56 +2795,52 @@ function looksLikeTeam(s){
   return t.length >= 2;
 }
 
-/* ===== pré-processamento da imagem ===== */
+/* ===== PRÉ-PROCESSAMENTO OCR ===== */
 async function preprocessImage(file) {
 
   const img = await new Promise((resolve, reject) => {
-
     const image = new Image();
-    const url = URL.createObjectURL(file);
 
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Não foi possível carregar a imagem"));
 
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Não foi possível carregar a imagem."));
-    };
-
-    image.src = url;
+    image.src = URL.createObjectURL(file);
   });
 
-  const scale = 2;
+  // Limita o tamanho para evitar excesso de memória
+  const maxWidth = 2200;
+  const maxHeight = 5000;
+
+  const scale = Math.min(
+    2.5,
+    maxWidth / img.width,
+    maxHeight / img.height
+  );
 
   const canvas = document.createElement("canvas");
 
-  canvas.width = img.width * scale;
-  canvas.height = img.height * scale;
+  canvas.width = Math.max(1, Math.round(img.width * scale));
+  canvas.height = Math.max(1, Math.round(img.height * scale));
 
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", {
+    willReadFrequently: true
+  });
 
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
+  if (!ctx) {
+    throw new Error("Não foi possível processar a imagem");
+  }
 
-  ctx.drawImage(
-    img,
-    0,
-    0,
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  const imageData = ctx.getImageData(
+    0, 0,
     canvas.width,
     canvas.height
   );
 
-  const imgData = ctx.getImageData(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  const d = imageData.data;
 
-  const d = imgData.data;
-
+  // Escala de cinza e contraste moderado
   for (let p = 0; p < d.length; p += 4) {
 
     const gray =
@@ -2852,163 +2848,33 @@ async function preprocessImage(file) {
       d[p + 1] * 0.587 +
       d[p + 2] * 0.114;
 
-    const contrast = 1.25;
+    const contrast = 1.35;
 
-    let value = ((gray - 128) * contrast) + 128;
-
-    value = Math.max(0, Math.min(255, value));
+    const value = Math.max(
+      0,
+      Math.min(255, (gray - 128) * contrast + 128)
+    );
 
     d[p] = value;
     d[p + 1] = value;
     d[p + 2] = value;
   }
 
-  ctx.putImageData(imgData, 0, 0);
+  ctx.putImageData(imageData, 0, 0);
 
-  // Retorna uma imagem Data URL em vez de Blob
-  return canvas.toDataURL("image/png");
-}
+  return new Promise((resolve, reject) => {
 
-/* ===== parser OCR → linhas ===== */
-/* ===== parser OCR → linhas ===== */
-function parseTextToRows(text) {
+    canvas.toBlob(blob => {
 
-  const normalizeText = str =>
-    (str || "")
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9 ]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+      if (!blob) {
+        reject(new Error("Falha ao preparar a imagem"));
+        return;
+      }
 
-  const lines = text
-    .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .split("\n")
-    .map(line => line.replace(/\s+/g, " ").trim())
-    .filter(Boolean);
+      resolve(blob);
 
-  let currentChamp = "";
-  const rows = [];
-
-  // Identifica os campeonatos, mesmo com pequenos erros do OCR
-  function detectChamp(line) {
-
-    const s = normalizeText(line);
-
-    if (s.includes("taliano") || s.includes("italiano"))
-      return "Campeonato Italiano";
-
-    if (s.includes("espanhol"))
-      return "Campeonato Espanhol";
-
-    if (s.includes("ingles"))
-      return "Campeonato Inglês";
-
-    if (s.includes("frances"))
-      return "Campeonato Francês";
-
-    if (s.includes("alemao"))
-      return "Campeonato Alemão";
-
-    if (s.includes("portugues"))
-      return "Campeonato Português";
-
-    if (s.includes("brasileirao") || s.includes("serie b"))
-      return "Brasileirão - Série B";
-
-    if (s.includes("copa do brasil"))
-      return "Copa do Brasil - Semifinal";
-
-    if (s.includes("argentino"))
-      return "Campeonato Argentino - Clausura - Grupo A";
-
-    return null;
-  }
-
-  // Tenta corrigir o nome usando os times cadastrados
-  function resolveTeam(raw) {
-
-    let name = cleanTeamRaw(raw);
-
-    const normalized = normalizeText(name);
-
-    // Correções de erros frequentes do OCR
-    if (normalized.includes("marseile") ||
-        normalized.includes("marseille"))
-      return "Olympique de Marseille";
-
-    if (normalized.includes("koln"))
-      return "1. FC Köln";
-
-    if (normalized.includes("lanus"))
-      return "Lanús";
-
-    if (normalized.includes("vitoria guimaraes"))
-      return "Vitória Guimarães";
-
-    if (normalized.includes("schalke"))
-      return "Schalke 04";
-
-    // Procura correspondência nos times cadastrados
-    const match = fuzzyFindName(
-      name,
-      window.teamsCache || {},
-      0.62
-    );
-
-    return match || name;
-  }
-
-  for (const line of lines) {
-
-    // Primeiro verifica se é um cabeçalho de campeonato
-    const detectedChamp = detectChamp(line);
-
-    if (detectedChamp) {
-      currentChamp = detectedChamp;
-      continue;
-    }
-
-    // Localiza horários com ou sem dois-pontos
-    const timeMatch = line.match(
-      /\b(\d{1,2}\s*:\s*\d{2}|\d{1,2}\s*h\s*\d{2}|\d{3,4})\b/i
-    );
-
-    if (!timeMatch) continue;
-
-    const timeRaw = timeMatch[1];
-
-    const time = normalizeTime(timeRaw);
-
-    if (!time) continue;
-
-    // Separa o texto antes e depois do horário
-    const timeIndex = timeMatch.index;
-
-    const homeRaw = line.slice(0, timeIndex);
-    const awayRaw = line.slice(timeIndex + timeRaw.length);
-
-    const home = resolveTeam(homeRaw);
-    const away = resolveTeam(awayRaw);
-
-    // Ignora linhas que não parecem jogos
-    if (!home || !away) continue;
-
-    if (home.length < 2 || away.length < 2) continue;
-
-    rows.push({
-      time,
-      champ: currentChamp || "Amistoso",
-      home,
-      away
-    });
-  }
-
-  console.log("JOGOS IDENTIFICADOS:", rows.length);
-  console.table(rows);
-
-  return rows;
+    }, "image/png");
+  });
 }
 
 /* ===== UI ===== */
