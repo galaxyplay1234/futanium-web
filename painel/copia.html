@@ -28,12 +28,84 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   padding-bottom: 40px; /* 👈 novo espaço no final */
 }
 
-
   
   textarea {
   line-height: 1.4;
   min-height: 42px;
 }
+  
+  
+
+.version-count{
+  display:inline-block;
+  min-width:30px;
+  font-weight:bold;
+  transition:transform .3s ease;
+}
+
+.version-count.up{
+  animation:countUp .4s ease;
+}
+
+.version-count.down{
+  animation:countDown .4s ease;
+}
+
+@keyframes countUp{
+  0%{
+    transform:translateY(12px);
+    opacity:0;
+  }
+  100%{
+    transform:translateY(0);
+    opacity:1;
+  }
+}
+
+@keyframes countDown{
+  0%{
+    transform:translateY(-12px);
+    opacity:0;
+  }
+  100%{
+    transform:translateY(0);
+    opacity:1;
+  }
+}
+  
+  #versionStats{
+  display:flex;
+  flex-wrap:nowrap;
+  gap:6px;
+  justify-content:center;
+  align-items:center;
+}
+
+.version-badge{
+  flex:1;
+  min-width:0;
+  text-align:center;
+  padding:6px 4px;
+  background:#f3f4f6;
+  border-radius:8px;
+  font-weight:600;
+  font-size:14px;
+}
+
+@media (max-width: 400px){
+
+  .version-badge{
+    font-size:13px;
+    padding:5px 2px;
+  }
+
+  .version-count{
+    min-width:auto;
+  }
+
+}
+  
+  
   
 </style>
 </head>
@@ -70,6 +142,12 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     
     <button onclick="showTab('addgame', false, true)"
         class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Adicionar Jogo</button>
+        
+   <button onclick="showTab('versions')"
+class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+Versões
+</button>     
+        
     <button onclick="showTab('analytics')"
   class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
   Analytics
@@ -92,8 +170,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 <div class="pt-3">
     <!-- 56px (h-14 da topbar) + 48px (tabs) = 104px -->
 
-
-
     <!-- Home -->
     <div id="tab-home" class="tab-content">
       <!-- 📊 Contadores em tempo real -->
@@ -105,12 +181,36 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 </div>
 
 <div id="versionStats"
-     class="bg-white rounded shadow p-3 mb-4 text-center text-sm font-semibold">
-  Carregando versões...
+class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </div>
-      <h2 class="text-lg sm:text-xl font-semibold mb-4">Jogos Adicionados</h2>
-      <ul id="games-list" class="space-y-2"></ul>
-    </div>
+      <div class="flex items-center justify-between mb-4">
+
+  <h2 class="text-lg sm:text-xl font-semibold flex items-center gap-2">
+  Jogos Adicionados
+  <span id="games-total"
+        class="text-sm font-medium text-gray-400">
+    0
+  </span>
+</h2>
+
+  <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+    <input
+      type="checkbox"
+      id="toggle-all-hidden"
+      class="w-4 h-4">
+
+    <span>Selecionar todos</span>
+  </label>
+
+</div>
+
+<div id="games-date-tabs"
+     class="flex gap-2 overflow-x-auto whitespace-nowrap mb-3 pb-1">
+</div>
+
+<div id="games-list" class="space-y-2"></div>
+
+</div>
 
     <!-- Adicionar Jogo -->
     <div id="tab-addgame" class="tab-content hidden">
@@ -136,7 +236,31 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   type="date"
   class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400">
 
+  <div class="bg-white border rounded p-2 mb-3">
+  <label class="flex items-center gap-2 cursor-pointer">
+    <input
+      type="checkbox"
+      id="game-hide-game"
+      class="w-4 h-4">
 
+    <span class="text-sm font-semibold">
+      Ocultar jogo
+    </span>
+  </label>
+</div>
+
+  <div class="bg-white border rounded p-2 mb-3">
+  <label class="flex items-center gap-2 cursor-pointer">
+    <input
+      type="checkbox"
+      id="game-hide-channels"
+      class="w-4 h-4">
+
+    <span class="text-sm font-semibold">
+      Ocultar canais
+    </span>
+  </label>
+</div>
 
         <!-- Campos fixos para Canais -->
         <label class="block text-sm font-semibold mt-2">Canal 1</label>
@@ -159,17 +283,22 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
 <button type="button"
   onclick="editSelectedButton(1)"
-  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-  <i class="fa-solid fa-pen-to-square"></i>
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square text-sm"></i>
+</button>
+
+<button type="button"
+  onclick="openInlineButtonAdd(1)"
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-green-600 text-white rounded-lg hover:bg-green-700">
+  <i class="fa-solid fa-plus text-sm"></i>
 </button>
 
 <button type="button"
   onclick="clearSelect('game-channel1')"
-  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-  ✕
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-red-500 text-white rounded-lg hover:bg-red-600">
+  <i class="fa-solid fa-xmark text-sm"></i>
 </button>
 </div>
-
 
 <label class="block text-sm font-semibold mt-2">Canal 2</label>
 <div class="flex items-center gap-2">
@@ -191,17 +320,22 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
 <button type="button"
   onclick="editSelectedButton(2)"
-  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-  <i class="fa-solid fa-pen-to-square"></i>
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square text-sm"></i>
+</button>
+
+<button type="button"
+  onclick="openInlineButtonAdd(2)"
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-green-600 text-white rounded-lg hover:bg-green-700">
+  <i class="fa-solid fa-plus text-sm"></i>
 </button>
 
 <button type="button"
   onclick="clearSelect('game-channel2')"
-  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-  ✕
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-red-500 text-white rounded-lg hover:bg-red-600">
+  <i class="fa-solid fa-xmark text-sm"></i>
 </button>
 </div>
-
 
 <label class="block text-sm font-semibold mt-2">Canal 3</label>
 <div class="flex items-center gap-2">
@@ -223,17 +357,22 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
 <button type="button"
   onclick="editSelectedButton(3)"
-  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-  <i class="fa-solid fa-pen-to-square"></i>
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square text-sm"></i>
+</button>
+
+<button type="button"
+  onclick="openInlineButtonAdd(3)"
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-green-600 text-white rounded-lg hover:bg-green-700">
+  <i class="fa-solid fa-plus text-sm"></i>
 </button>
 
 <button type="button"
   onclick="clearSelect('game-channel3')"
-  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-  ✕
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-red-500 text-white rounded-lg hover:bg-red-600">
+  <i class="fa-solid fa-xmark text-sm"></i>
 </button>
 </div>
-
 
 <label class="block text-sm font-semibold mt-2">Canal 4</label>
 <div class="flex items-center gap-2">
@@ -255,17 +394,80 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
 <button type="button"
   onclick="editSelectedButton(4)"
-  class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
-  <i class="fa-solid fa-pen-to-square"></i>
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+  <i class="fa-solid fa-pen-to-square text-sm"></i>
+</button>
+
+<button type="button"
+  onclick="openInlineButtonAdd(4)"
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-green-600 text-white rounded-lg hover:bg-green-700">
+  <i class="fa-solid fa-plus text-sm"></i>
 </button>
 
 <button type="button"
   onclick="clearSelect('game-channel4')"
-  class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
-  ✕
+  class="w-[30px] h-[30px] min-w-[30px] flex-shrink-0 flex items-center justify-center bg-red-500 text-white rounded-lg hover:bg-red-600">
+  <i class="fa-solid fa-xmark text-sm"></i>
 </button>
 </div>
 
+<!-- Seletor múltiplo de canais -->
+<div id="channel-picker"
+     onclick="if(event.target === this) closeChannelPicker()"
+     class="hidden fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+    
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-md h-[620px] max-h-[75vh] flex flex-col">
+
+    <div class="p-4 border-b flex justify-between items-center">
+      <div>
+        <h3 class="font-bold text-lg">Selecionar canais</h3>
+        <p class="text-xs text-gray-500">Escolha até 4 canais</p>
+      </div>
+
+      <button type="button"
+        onclick="closeChannelPicker()"
+        class="text-gray-500 text-2xl px-2">
+        ✕
+      </button>
+    </div>
+
+    <div class="px-3 pt-3">
+  <div class="relative">
+
+    <input
+      id="channel-picker-search"
+      type="text"
+      placeholder="🔍 Pesquisar canal..."
+      class="w-full p-3 pr-11 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+
+    <button
+      type="button"
+      id="clear-channel-picker-search"
+      class="hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-lg font-bold text-gray-400 hover:text-red-500 rounded-full hover:bg-gray-100">
+      ✕
+    </button>
+
+  </div>
+</div>
+
+<div id="channel-picker-list"
+     class="px-3 py-2 overflow-y-auto flex-1 min-h-0 space-y-1">
+</div>
+
+    <div class="p-3 border-t flex items-center justify-between gap-3">
+      <span id="channel-picker-count" class="text-sm text-gray-500">
+        0 de 4 selecionados
+      </span>
+
+      <button type="button"
+        onclick="addSelectedChannels()"
+        class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2 rounded">
+        Adicionar
+      </button>
+    </div>
+
+  </div>
+</div>
 
 <div id="inline-button-editor"
      class="hidden bg-white border rounded-lg p-4 mt-4 shadow">
@@ -315,7 +517,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
 </div>
 
-
 <hr class="my-4">
 
 <label class="block text-sm font-semibold mb-2">
@@ -331,6 +532,18 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
       </form>
     </div>
 
+<!-- Versões -->
+<div id="tab-versions" class="tab-content hidden">
+
+  <h2 class="text-lg sm:text-xl font-semibold mb-4">
+    Versões
+  </h2>
+
+  <div id="versions-list" class="space-y-3">
+
+  </div>
+
+</div>
 
 <!-- Analytics -->
 <div id="tab-analytics" class="tab-content hidden">
@@ -351,14 +564,20 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
   </div>
 </div>
 
-
-
-
 <!-- Importar (imagem -> jogos) -->
 <div id="tab-import" class="tab-content hidden">
   <h2 class="text-lg sm:text-xl font-semibold mb-4">Importar jogos por imagem</h2>
 
   <div class="bg-white rounded shadow p-4 mb-3">
+    <label class="block text-sm font-semibold mb-2">
+  Data dos jogos
+</label>
+
+<input
+  id="import-date"
+  type="date"
+  class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400 mb-3">
+    
     <input id="img-file" type="file" accept="image/*"
            class="block w-full mb-3">
     <button id="btn-ocr" class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
@@ -387,7 +606,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     </div>
   </div>
 </div>
-
 
     <!-- Times -->
     <div id="tab-times" class="tab-content hidden">
@@ -591,7 +809,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     </div>
   </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <!-- Firebase + Script -->
 <script type="module">
@@ -623,10 +840,282 @@ let currentButtonEditId = null;
 let currentChampEditId = null;
 let currentTeamEditId = null;
 let currentInlineButtonId = null;
+let currentInlineChannelNumber = null;
 let teamsMemory = [];
 let champsMemory = [];
 let buttonsMemory = [];
 let gamesMemory = [];
+let channelSelectionOrder = [];
+
+// ===== Abas de datas da Home =====
+let selectedGamesDate = "today";
+
+function getTodaySP() {
+  return new Date().toLocaleDateString("en-CA", {
+    timeZone: "America/Sao_Paulo"
+  });
+}
+
+function formatGamesDate(date) {
+  const [year, month, day] = date.split("-");
+  return `${day}/${month}`;
+}
+
+
+// ===== Seletor de múltiplos canais =====
+
+window.openChannelPicker = function() {
+
+  const container = document.getElementById("channel-picker-list");
+  const modal = document.getElementById("channel-picker");
+
+  container.innerHTML = "";
+
+  // Canais já selecionados nos quatro campos
+  const currentValues = [
+    document.getElementById("game-channel1").value,
+    document.getElementById("game-channel2").value,
+    document.getElementById("game-channel3").value,
+    document.getElementById("game-channel4").value
+  ].filter(Boolean);
+  
+  // Mantém a ordem dos canais que já estavam selecionados
+channelSelectionOrder = [...currentValues];
+
+  // Ordena os canais alfabeticamente
+  const ordered = [...buttonsMemory].sort((a, b) =>
+    a.name.localeCompare(b.name, "pt", { sensitivity: "base" })
+  );
+
+  // Separa selecionados dos não selecionados
+  const selectedButtons = ordered.filter(b =>
+    currentValues.includes(b.link)
+  );
+
+  const otherButtons = ordered.filter(b =>
+    !currentValues.includes(b.link)
+  );
+
+  // Pesquisa
+  const searchInput = document.getElementById("channel-picker-search");
+  const clearSearch = document.getElementById("clear-channel-picker-search");
+
+  searchInput.value = "";
+  clearSearch.classList.add("hidden");
+
+  // Cria cada canal
+  function createChannelRow(button) {
+
+    const row = document.createElement("label");
+
+    row.className =
+      "flex items-center gap-3 p-3 border-b cursor-pointer hover:bg-gray-50";
+
+    const checkbox = document.createElement("input");
+
+    checkbox.type = "checkbox";
+    checkbox.className = "channel-picker-checkbox w-5 h-5";
+    checkbox.value = button.link;
+    checkbox.checked = currentValues.includes(button.link);
+
+    const name = document.createElement("span");
+    name.className = "text-sm font-medium flex-1";
+    name.textContent = button.name;
+
+    const channelLabel = document.createElement("span");
+
+channelLabel.className =
+  "text-[10px] text-gray-400 font-medium ml-auto whitespace-nowrap";
+
+channelLabel.textContent = "";
+
+channelLabel.dataset.channelLabel = "true";
+
+row.appendChild(checkbox);
+row.appendChild(name);
+row.appendChild(channelLabel);
+
+    
+checkbox.addEventListener("change", () => {
+
+  if (checkbox.checked) {
+
+    if (channelSelectionOrder.length >= 4) {
+      checkbox.checked = false;
+      alert("Você pode selecionar no máximo 4 canais.");
+      return;
+    }
+
+    // Adiciona na ordem de seleção
+    channelSelectionOrder.push(checkbox.value);
+
+    // Move imediatamente para os selecionados no topo
+    selectedArea.appendChild(row);
+    row.style.display = "flex";
+
+  } else {
+
+    // Remove da ordem
+    channelSelectionOrder =
+      channelSelectionOrder.filter(link => link !== checkbox.value);
+
+    // Devolve para a lista de outros botões
+    otherArea.appendChild(row);
+
+    // Respeita a pesquisa atual
+    const term = searchInput.value.toLowerCase().trim();
+    const name = row.querySelector("span")?.textContent.toLowerCase() || "";
+
+    row.style.display = name.includes(term) ? "flex" : "none";
+  }
+
+  updateChannelLabels();
+updateChannelPickerCount();
+});
+
+
+    return row;
+  }
+  
+  
+  function updateChannelLabels() {
+
+  selectedArea.querySelectorAll("label").forEach(row => {
+
+    const checkbox = row.querySelector("input");
+    const label = row.querySelector("[data-channel-label]");
+
+    const position = channelSelectionOrder.indexOf(checkbox.value);
+
+    label.textContent =
+      position !== -1 ? `Canal ${position + 1}` : "";
+
+  });
+
+}
+
+  // Área dos já selecionados
+  const selectedArea = document.createElement("div");
+  selectedArea.id = "selected-channels-area";
+
+  selectedButtons.forEach(button => {
+    selectedArea.appendChild(createChannelRow(button));
+  });
+
+  container.appendChild(selectedArea);
+
+  
+
+  // Área dos demais canais
+  const otherArea = document.createElement("div");
+  otherArea.id = "other-channels-area";
+
+  otherButtons.forEach(button => {
+    otherArea.appendChild(createChannelRow(button));
+  });
+
+  container.appendChild(otherArea);
+
+  // Atualiza pesquisa
+  searchInput.oninput = function() {
+
+  const term = this.value.toLowerCase().trim();
+
+  clearSearch.classList.toggle("hidden", !this.value);
+
+  // Os já selecionados permanecem sempre visíveis
+  selectedArea.querySelectorAll("label").forEach(row => {
+    row.style.display = "flex";
+  });
+
+  // A pesquisa filtra somente os demais canais
+  otherArea.querySelectorAll("label").forEach(row => {
+
+    const name = row.querySelector("span")?.textContent.toLowerCase() || "";
+
+    row.style.display = name.includes(term) ? "flex" : "none";
+
+  });
+
+
+
+    // Esconde o separador se uma das áreas não tiver resultados
+    const selectedVisible = Array.from(
+      selectedArea.querySelectorAll("label")
+    ).some(row => row.style.display !== "none");
+
+    const otherVisible = Array.from(
+      otherArea.querySelectorAll("label")
+    ).some(row => row.style.display !== "none");
+
+    const separator = container.querySelector(".border-t");
+
+    if (separator) {
+      separator.style.display =
+        selectedVisible && otherVisible ? "block" : "none";
+    }
+  };
+
+  clearSearch.onclick = function() {
+
+    searchInput.value = "";
+    searchInput.dispatchEvent(new Event("input"));
+    searchInput.focus();
+
+  };
+
+  updateChannelLabels();
+updateChannelPickerCount();
+
+modal.classList.remove("hidden");
+};
+
+
+
+function updateChannelPickerCount() {
+
+  const total = document.querySelectorAll(
+    "#channel-picker-list .channel-picker-checkbox:checked"
+  ).length;
+
+  document.getElementById("channel-picker-count").textContent =
+    `${total} de 4 selecionados`;
+}
+
+
+window.closeChannelPicker = function() {
+  document.getElementById("channel-picker").classList.add("hidden");
+};
+
+
+window.addSelectedChannels = function() {
+
+  const selected = [...channelSelectionOrder];
+
+  // Limita a quatro canais
+  if (selected.length > 4) {
+    alert("Selecione no máximo 4 canais.");
+    return;
+  }
+
+  // Limpa os quatro campos
+  for (let i = 1; i <= 4; i++) {
+    $(`#game-channel${i}`).val(null).trigger("change");
+  }
+
+  // Preenche conforme a ordem em que foram selecionados
+  selected.forEach((link, index) => {
+
+    const channelNumber = index + 1;
+
+    $(`#game-channel${channelNumber}`)
+      .val(link)
+      .trigger("change");
+
+  });
+
+  closeChannelPicker();
+};
 
 import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
@@ -658,8 +1147,6 @@ function startGamesListener() {
     }
   );
 }
-
-
 
 // ===== Auth & Tabs =====
 window.login = function() {
@@ -716,6 +1203,18 @@ if (tab === "buttons") {
   renderMoreGamesList();
 }
 
+if (tab === "import") {
+  const importDate = document.getElementById("import-date");
+
+  if (!importDate.value) {
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo"
+    });
+
+    importDate.value = today;
+  }
+}
+
   // Reseta estilos dos botões
   document.querySelectorAll(".tab-btn").forEach(el => {
     el.classList.remove("bg-blue-500", "text-white");
@@ -738,7 +1237,6 @@ if (tab === "buttons") {
     document.getElementById("game-form").reset();
 
     setTodayDate();
-
 
     // Reseta selects manualmente
     $('#game-champ').val(null).trigger('change');
@@ -796,9 +1294,6 @@ if(found){
   });
 }
 
-
-
-
 // ===== Times =====
 document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
@@ -843,8 +1338,6 @@ document.getElementById("team-form").addEventListener("submit", async e => {
   // 🔥 Apenas renderiza usando cache, sem nova leitura
   await loadTeams();
 });
-
-
 
 async function loadTeams(filter = "", force = false){
 
@@ -909,11 +1402,11 @@ teamsMemory
   });
 
   window.teamsCache = {};
-  teamsArr.forEach(t => { 
-    window.teamsCache[t.name] = t.logo; 
-  });
-}
 
+teamsMemory.forEach(t => {
+  window.teamsCache[t.name] = t.logo;
+});
+}
 
 window.deleteTeam = async function(id){
   await deleteDoc(doc(db,"teams",id));
@@ -925,7 +1418,6 @@ window.deleteTeam = async function(id){
 };
   
   
-
 
 window.cancelButtonEdit = function(){
   currentButtonEditId = null;
@@ -988,7 +1480,6 @@ window.cancelTeamEdit = function(){
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-
 const teamSearchInput = document.getElementById("team-search");
 const clearTeamBtn = document.getElementById("clear-team-search");
 
@@ -1009,9 +1500,6 @@ clearTeamBtn.addEventListener("click", function() {
   clearTeamBtn.classList.add("hidden");
   loadTeams();
 });
-
-
-
 
 // ===== Campeonatos =====
 document.getElementById("champ-form").addEventListener("submit", async e=>{
@@ -1107,7 +1595,6 @@ async function loadChamps(force = false){
   });
 }
 
-
 window.deleteChamp = async function(id){
   await deleteDoc(doc(db,"championships",id));
 
@@ -1147,7 +1634,6 @@ window.editChamp = function(id, name, logo){
   }, 150);
 };
 
-
 window.cancelChampEdit = function(){
   currentChampEditId = null;
 
@@ -1165,8 +1651,6 @@ autoResizeTextarea(logoEl);
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
-
-
 
 // ===== Botões =====
 document.getElementById("button-form").addEventListener("submit", async e=>{
@@ -1275,7 +1759,6 @@ const captureM3u8 =
   await loadButtons();
 });
 
-
 async function loadButtons(filter = "", force = false){
 
   if(!buttonsMemory.length || force){
@@ -1356,8 +1839,6 @@ ${b.captureM3u8 ? "true" : "false"}
 
 populateChannelSelects(orderedButtons);
 }
-
-
 
 window.deleteButton = async function(id){
   await deleteDoc(doc(db,"buttons",id));
@@ -1461,6 +1942,17 @@ document.getElementById("game-form").addEventListener("submit", async e=>{
   const away  = document.getElementById("game-away-team").value;
   const time  = document.getElementById("game-time").value;
   const date  = document.getElementById("game-date").value;
+  
+  
+  const hideGame =
+  document.getElementById(
+    "game-hide-game"
+  ).checked;
+  
+  const hideChannels =
+  document.getElementById(
+    "game-hide-channels"
+  ).checked;
 
   // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
   // coleta canais selecionados (valor = link, nome = texto real do botão)
@@ -1509,7 +2001,9 @@ teamsMemory.forEach(t => {
   away,
   away_logo: awayLogo,
   time,
-  date, // 🔥 NOVO CAMPO
+  date,
+  hideGame,
+  hideChannels,
   channels: selected
 };
 
@@ -1534,7 +2028,6 @@ for (const gameId of checkedIds) {
   });
 }
 
-
   document.getElementById("game-form").reset();
   
   showTab('home');
@@ -1542,34 +2035,123 @@ for (const gameId of checkedIds) {
 
 function renderGames() {
 
-  const gamesArr = [...gamesMemory];
+  const today = getTodaySP();
+
+  // Todas as datas que possuem jogos cadastrados
+  const dates = [...new Set(
+  gamesMemory
+    .filter(g => !(
+      g.home?.toLowerCase() === "aviso" &&
+      g.away?.toLowerCase() === "aviso"
+    ))
+    .map(g => g.date)
+    .filter(date => date)
+)].sort((a, b) => a.localeCompare(b));
+
+  // Hoje sempre aparece.
+  // Outras datas aparecem somente se tiverem jogos.
+  const availableDates = [
+    today,
+    ...dates.filter(date => date !== today)
+  ].sort((a, b) => {
+    if (a === today) return -1;
+    if (b === today) return 1;
+    return a.localeCompare(b);
+  });
+
+  // Se a data selecionada não tiver mais jogos, volta para Hoje.
+  if (
+    selectedGamesDate !== "today" &&
+    !dates.includes(selectedGamesDate)
+  ) {
+    selectedGamesDate = "today";
+  }
+
+  const activeDate =
+    selectedGamesDate === "today"
+      ? today
+      : selectedGamesDate;
+
+  // Cria as abas
+  const tabsContainer =
+    document.getElementById("games-date-tabs");
+
+  tabsContainer.innerHTML = "";
+
+  availableDates.forEach(date => {
+
+    const isToday = date === today;
+
+    const button = document.createElement("button");
+
+    button.type = "button";
+
+    button.textContent = isToday
+      ? "Hoje"
+      : formatGamesDate(date);
+
+    const active = activeDate === date;
+
+    button.className = active
+      ? "bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0"
+      : "bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold flex-shrink-0";
+
+    button.addEventListener("click", () => {
+      selectedGamesDate = isToday ? "today" : date;
+      renderGames();
+    });
+
+    tabsContainer.appendChild(button);
+  });
+
+  // Filtra somente os jogos da data selecionada
+  const gamesArr = gamesMemory.filter(g => {
+
+  const isAviso =
+    g.home?.toLowerCase() === "aviso" &&
+    g.away?.toLowerCase() === "aviso";
+
+  // Avisos aparecem em todas as datas
+  if (isAviso) return true;
+
+  return g.date === activeDate;
+});
 
   gamesArr.sort((a, b) => {
 
-  // 🔔 Aviso sempre no topo
-  const aIsAviso = a.home?.toLowerCase() === "aviso" && a.away?.toLowerCase() === "aviso";
-  const bIsAviso = b.home?.toLowerCase() === "aviso" && b.away?.toLowerCase() === "aviso";
+    // Aviso sempre no topo
+    const aIsAviso =
+      a.home?.toLowerCase() === "aviso" &&
+      a.away?.toLowerCase() === "aviso";
 
-  if (aIsAviso && !bIsAviso) return -1;
-  if (!aIsAviso && bIsAviso) return 1;
+    const bIsAviso =
+      b.home?.toLowerCase() === "aviso" &&
+      b.away?.toLowerCase() === "aviso";
 
-  // 🔥 Ordenar por DATA (mais futura primeiro)
-  const dateA = a.date || "";
-  const dateB = b.date || "";
+    if (aIsAviso && !bIsAviso) return -1;
+    if (!aIsAviso && bIsAviso) return 1;
 
-  if (dateA !== dateB) {
-    return dateB.localeCompare(dateA); // DESC
-  }
+    // Horário decrescente
+    const timeA = parseInt(
+      (a.time || "").replace("h", "").replace(":", "")
+    ) || 0;
 
-  // 🔥 Dentro da mesma data → ordenar por HORÁRIO DESC
-  const timeA = parseInt((a.time || "").replace("h", "").replace(":", ""));
-  const timeB = parseInt((b.time || "").replace("h", "").replace(":", ""));
+    const timeB = parseInt(
+      (b.time || "").replace("h", "").replace(":", "")
+    ) || 0;
 
-  return timeB - timeA;
-});
+    return timeB - timeA;
+  });
 
   const ul = document.getElementById("games-list");
+
   ul.innerHTML = "";
+
+  document.getElementById("games-total").textContent =
+    gamesArr.filter(g =>
+      !(g.home?.toLowerCase() === "aviso" &&
+        g.away?.toLowerCase() === "aviso")
+    ).length;
 
   gamesArr.forEach(g => {
 
@@ -1583,8 +2165,32 @@ function renderGames() {
          </div>`
       : "";
 
+    const hideChannelsLabel = `
+      <label class="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
+        <input
+          type="checkbox"
+          class="home-hide-channels w-3 h-3"
+          data-id="${g.id}"
+          ${g.hideChannels ? "checked" : ""}>
+        <span>Ocultar canais</span>
+      </label>
+    `;
+
+    const hideGameLabel = `
+      <label class="flex items-center gap-1 text-[11px] text-gray-500 mt-1">
+        <input
+          type="checkbox"
+          class="home-hide-game w-3 h-3"
+          data-id="${g.id}"
+          ${g.hideGame ? "checked" : ""}>
+        <span>Ocultar jogo</span>
+      </label>
+    `;
+
     const li = document.createElement("li");
-    li.className = "bg-white p-4 rounded shadow flex flex-col gap-1.5";
+
+    li.className =
+      "bg-white p-4 rounded shadow flex flex-col gap-1.5";
 
     if (isAviso) {
 
@@ -1598,14 +2204,27 @@ function renderGames() {
             <div class="flex items-center gap-2">
               <span class="text-[12px] text-gray-500">${g.champ}</span>
             </div>
+
             <div class="flex gap-2">
-              <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
-              <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
+              <button onclick="editGame('${g.id}')"
+                class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
+                Editar
+              </button>
+
+              <button onclick="deleteGame('${g.id}')"
+                class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
+                Excluir
+              </button>
             </div>
           </div>
 
-          <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
+          <div class="text-base font-semibold leading-tight mt-0">
+            ${g.home} x ${g.away}
+          </div>
+
           ${canaisLabel}
+          ${hideGameLabel}
+          ${hideChannelsLabel}
         </div>
       `;
 
@@ -1620,18 +2239,43 @@ function renderGames() {
 
       li.innerHTML = `
         <div class="flex justify-between items-start">
-          <div class="flex items-center gap-2">
-            <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">${g.time}</span>
-            <span class="text-[12px] text-gray-500">${g.champ}</span>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="editGame('${g.id}')" class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">Editar</button>
-            <button onclick="deleteGame('${g.id}')" class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">Excluir</button>
-          </div>
-        </div>
 
-        <div class="text-base font-semibold leading-tight mt-0">${g.home} x ${g.away}</div>
-        ${canaisLabel}
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded">
+                ${g.time}
+              </span>
+
+              <span class="text-[12px] text-gray-500">
+                ${g.champ}
+              </span>
+            </div>
+
+            <div class="text-base font-semibold leading-tight mt-2">
+              ${g.home} x ${g.away}
+            </div>
+
+            ${canaisLabel}
+          </div>
+
+          <div class="flex flex-col items-start gap-2">
+            <div class="flex gap-2">
+              <button onclick="editGame('${g.id}')"
+                class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
+                Editar
+              </button>
+
+              <button onclick="deleteGame('${g.id}')"
+                class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
+                Excluir
+              </button>
+            </div>
+
+            ${hideGameLabel}
+            ${hideChannelsLabel}
+          </div>
+
+        </div>
       `;
     }
 
@@ -1680,6 +2324,17 @@ $('#game-channel4').val(findButtonValue(ch[3])).trigger('change.select2');
 
   document.getElementById("game-time").value = g.time || "";
   document.getElementById("game-date").value = g.date || "";
+  
+  document.getElementById(
+  "game-hide-game"
+).checked =
+  g.hideGame || false;
+  
+  
+  document.getElementById(
+  "game-hide-channels"
+).checked =
+  g.hideChannels || false;
 
   currentEditId = id;
   document.getElementById("form-title").innerText = "Editar Jogo";
@@ -1700,6 +2355,42 @@ window.clearSelect = function(id) {
   $('#' + id).val(null).trigger('change');
 };
 
+
+// ===== Adicionar canal diretamente no campo =====
+
+window.openInlineButtonAdd = function(channelNumber) {
+
+  currentInlineButtonId = null;
+  currentInlineChannelNumber = channelNumber;
+
+  const nameEl = document.getElementById("inline-button-name");
+  const linkEl = document.getElementById("inline-button-link");
+
+  nameEl.value = "";
+  linkEl.value = "";
+
+  document.getElementById("inline-button-capture").value = "false";
+
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(linkEl);
+
+  document.querySelector(
+    "#inline-button-editor h3"
+  ).innerText = "Adicionar novo canal";
+
+  document.querySelector(
+    "#inline-button-editor button[onclick='saveInlineButtonEdit()']"
+  ).innerText = "Adicionar";
+
+  document
+    .getElementById("inline-button-editor")
+    .classList.remove("hidden");
+
+  document.getElementById("inline-button-editor").scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+};
 
 window.editSelectedButton = function(channelNumber){
 
@@ -1725,6 +2416,16 @@ window.editSelectedButton = function(channelNumber){
   }
 
   currentInlineButtonId = button.id;
+  
+  currentInlineChannelNumber = null;
+
+document.querySelector(
+  "#inline-button-editor h3"
+).innerText = "Editar Botão";
+
+document.querySelector(
+  "#inline-button-editor button[onclick='saveInlineButtonEdit()']"
+).innerText = "Atualizar";
 
   const nameEl = document.getElementById("inline-button-name");
 const linkEl = document.getElementById("inline-button-link");
@@ -1764,27 +2465,52 @@ document
   });
 };
 
-
 window.saveInlineButtonEdit = async function(){
 
-  if(!currentInlineButtonId) return;
+  const name = document.getElementById("inline-button-name").value.trim();
 
-  const name =
-    document.getElementById(
-      "inline-button-name"
-    ).value.trim();
-
-  const link =
-    document.getElementById(
-      "inline-button-link"
-    ).value.trim();
+  const link = document.getElementById("inline-button-link").value.trim();
 
   const captureM3u8 =
-    document.getElementById(
-      "inline-button-capture"
-    ).value === "true";
+    document.getElementById("inline-button-capture").value === "true";
 
-  if(!name || !link) return;
+  if(!name || !link) {
+    alert("Preencha o nome e o link do canal.");
+    return;
+  }
+
+  // ===== MODO ADICIONAR NOVO CANAL =====
+  if(!currentInlineButtonId && currentInlineChannelNumber) {
+
+    const channelNumber = currentInlineChannelNumber;
+
+    const docRef = await addDoc(collection(db, "buttons"), {
+      name,
+      link,
+      captureM3u8
+    });
+
+    buttonsMemory.push({
+      id: docRef.id,
+      name,
+      link,
+      captureM3u8
+    });
+
+    // Atualiza a lista de botões
+    await loadButtons();
+
+    // Coloca o novo canal diretamente no campo correspondente
+    $(`#game-channel${channelNumber}`)
+      .val(link)
+      .trigger("change");
+
+    cancelInlineButtonEdit();
+
+    return;
+  }
+
+  // ===== MODO EDITAR CANAL EXISTENTE =====
 
   const oldButton =
     buttonsMemory.find(
@@ -1856,10 +2582,19 @@ window.saveInlineButtonEdit = async function(){
   cancelInlineButtonEdit();
 };
 
-
 window.cancelInlineButtonEdit = function(){
 
   currentInlineButtonId = null;
+  
+  currentInlineChannelNumber = null;
+
+document.querySelector(
+  "#inline-button-editor h3"
+).innerText = "Editar Botão";
+
+document.querySelector(
+  "#inline-button-editor button[onclick='saveInlineButtonEdit()']"
+).innerText = "Atualizar";
 
   document
     .getElementById(
@@ -1889,25 +2624,113 @@ window.cancelInlineButtonEdit = function(){
     ).value = "false";
 };
 
-
 // Ativa busca nos selects
 $(document).ready(function () {
-  $('#game-champ').select2({ placeholder: "Selecione o Campeonato", allowClear: true, width: '100%' });
-  $('#game-home-team').select2({ placeholder: "Selecione o Time da Casa", allowClear: true, width: '100%' });
-  $('#game-away-team').select2({ placeholder: "Selecione o Time Visitante", allowClear: true, width: '100%' });
 
-  // ✅ habilita limpar nos canais
-  $('#game-channel1, #game-channel2, #game-channel3, #game-channel4').select2({
-    placeholder: "Selecione um botão",
-    allowClear: true,     // <- mostra o “x” para limpar
+  $('#game-champ').select2({
+    placeholder: "Selecione o Campeonato",
+    allowClear: true,
     width: '100%'
   });
+
+  $('#game-home-team').select2({
+    placeholder: "Selecione o Time da Casa",
+    allowClear: true,
+    width: '100%'
+  });
+
+  $('#game-away-team').select2({
+    placeholder: "Selecione o Time Visitante",
+    allowClear: true,
+    width: '100%'
+  });
+
+  // Mantém os quatro campos individuais
+  $('#game-channel1, #game-channel2, #game-channel3, #game-channel4').select2({
+    placeholder: "Selecione um botão",
+    allowClear: true,
+    width: '100%'
+  });
+
+  // Ao tocar em qualquer canal, abre a nova lista
+$('#game-channel1, #game-channel2, #game-channel3, #game-channel4')
+.on('select2:opening', function(e) {
+
+  e.preventDefault();
+
+  window.openChannelPicker();
+
+});
+
 });
 
 // ===== Contadores em tempo real (Realtime Database) =====
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-database.js";
 
 const rtdb = getDatabase(app);
+
+const versionCounts = {};
+
+function updateVersionCard(version,total){
+
+  let el =
+    document.getElementById(
+      "version-" +
+      version.replaceAll(".","-")
+    );
+
+  if(!el){
+
+    el = document.createElement("span");
+
+    el.id =
+      "version-" +
+      version.replaceAll(".","-");
+
+    el.className = "version-badge";
+
+    el.innerHTML = `
+  <span class="version-count">
+    ${total}
+  </span>
+  🔄
+  <span style="color:#6b7280;">
+    ${version}
+  </span>
+`;
+
+    document
+      .getElementById("versionStats")
+      .appendChild(el);
+
+    versionCounts[version] = total;
+
+    return;
+  }
+
+  const old =
+    versionCounts[version] || 0;
+
+  if(old === total) return;
+
+  const count =
+    el.querySelector(".version-count");
+
+  count.textContent = total;
+
+  count.classList.remove(
+    "up",
+    "down"
+  );
+
+  void count.offsetWidth;
+
+  count.classList.add(
+    total > old ? "up" : "down"
+  );
+
+  versionCounts[version] = total;
+}
 
 function listenRealtimeCounters() {
   const nodes = ["online", "webview", "m3u8", "instalados"];
@@ -1933,6 +2756,90 @@ function listenRealtimeCounters() {
     });
   });
 
+function compareVersions(a, b){
+
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+
+  const max = Math.max(pa.length, pb.length);
+
+  for(let i=0;i<max;i++){
+
+    const va = pa[i] || 0;
+    const vb = pb[i] || 0;
+
+    if(va !== vb){
+      return vb - va;
+    }
+  }
+
+  return 0;
+}
+
+function renderVersions(versions){
+
+  const container =
+    document.getElementById("versions-list");
+
+  if(!container) return;
+
+  container.innerHTML = "";
+
+  const ordered =
+    Object.entries(versions)
+      .sort((a,b)=>
+        compareVersions(a[0], b[0])
+      );
+
+  ordered.forEach(([version,total],index)=>{
+
+    const latest = index === 0;
+
+    const div =
+      document.createElement("div");
+
+    div.className =
+      "bg-white rounded shadow p-4";
+
+    div.innerHTML = `
+  <div class="flex justify-between items-center">
+
+    <div>
+
+      <div class="text-2xl font-bold text-gray-900">
+        ${total}
+      </div>
+
+      <div class="text-sm text-gray-500">
+        Versão ${version}
+      </div>
+
+    </div>
+
+    ${
+      latest
+      ? `
+        <span class="
+          bg-green-100
+          text-green-700
+          px-3
+          py-1
+          rounded-full
+          text-xs
+          font-bold">
+          ÚLTIMA
+        </span>
+      `
+      : ""
+    }
+
+  </div>
+`;
+
+    container.appendChild(div);
+  });
+}
+
   // 🔥 Contagem por versão
   const installsRef = ref(rtdb, "instalados");
 
@@ -1946,29 +2853,29 @@ function listenRealtimeCounters() {
       versions[version] = (versions[version] || 0) + 1;
     });
 
-    let html = "";
+    renderVersions(versions);
 
-    Object.entries(versions)
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .forEach(([version, total]) => {
-        html += `<span style="margin-right:20px">${total} 🔄 ${version}</span>`;
-      });
+const container =
+  document.getElementById("versionStats");
 
-    document.getElementById("versionStats").innerHTML =
-      html || "Nenhuma instalação";
+Object.entries(versions)
+  .sort((a,b)=>compareVersions(a[0], b[0]))
+  .slice(0, 3)
+  .forEach(([version,total]) => {
+
+    updateVersionCard(
+      version,
+      total
+    );
+
   });
-}
+
+}); // fecha o onValue
+
+} // fecha listenRealtimeCounters
 
 // ⏱️ Inicia a escuta assim que o painel carregar
 listenRealtimeCounters();
-
-
-
-
-
-
-
-
 
 // refs da UI
 const fileInput = document.getElementById('img-file');
@@ -2059,10 +2966,17 @@ function cutAfterDash(s){
   const parts = s.split(/[-–—]/);
   return (parts[0] || s).trim();
 }
-function resolveChamp365(raw){
-  const cut = cutAfterDash(norm((raw||'').replace(/^[=\-\*\.\s]+/,'')));
-  const match = fuzzyFindName(cut, window.champsCache, 0.62);
-  return match || cut; // se não casar, fica o nome lido do 365
+function resolveChamp365(raw) {
+  const name = norm(
+    String(raw || "").replace(/^[^A-Za-zÀ-ÿ0-9]+/, "")
+  );
+
+  if (!name) return "Amistoso";
+
+  const match = fuzzyFindName(name, window.champsCache, 0.78);
+
+  // Mantém o nome completo, inclusive o texto depois do hífen.
+  return match || name;
 }
 
 /* ===== regex e filtros ===== */
@@ -2075,97 +2989,274 @@ function looksLikeTeam(s){
   return t.length >= 2;
 }
 
-/* ===== pré-processamento (rápido) ===== */
-async function preprocessImage(file){
-  const img = await new Promise(res=>{
-    const i = new Image();
-    i.onload = ()=>res(i);
-    i.src = URL.createObjectURL(file);
-  });
-  const scale = 2;
-  const canvas = document.createElement('canvas');
-  canvas.width  = img.width * scale;
-  canvas.height = img.height * scale;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  const imgData = ctx.getImageData(0,0,canvas.width,canvas.height);
-  const d = imgData.data;
-  for (let p=0; p<d.length; p+=4){
-    const g = (d[p]*0.299 + d[p+1]*0.587 + d[p+2]*0.114);
-    const v = g > 180 ? 255 : 0;
-    d[p]=d[p+1]=d[p+2]=v;
-  }
-  ctx.putImageData(imgData,0,0);
-  return new Promise(res=>canvas.toBlob(res, 'image/png'));
+
+/* ===== OCR INTELIGENTE: LINHAS DE JOGOS ===== */
+
+function cleanOCRTeam(value) {
+  return String(value || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/[|]/g, " ")
+    .replace(/[^\p{L}\p{N}\s.'’&-]/gu, " ")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-/* ===== parser OCR → linhas ===== */
-function parseTextToRows(text){
-  text = text
-    .replace(/[\u200B-\u200D\uFEFF]/g,'')
-    .replace(/[|]/g,'l')
-    .replace(/O(?=\d)/g,'0');
+function normalizeOCRTime(raw) {
+  let value = String(raw || "")
+    .toLowerCase()
+    .replace(/\s/g, "")
+    .replace("h", ":");
 
-  const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
+  if (/^\d{3,4}$/.test(value)) {
+    value = value.padStart(4, "0");
+    value = value.slice(0, 2) + ":" + value.slice(2);
+  }
 
-  const lines = rawLines
-    .map(l => l.replace(/\t/g,' ').replace(/\s+/g,' ').trim())
-    .filter(l => l && !JUNK_RE.test(l));
+  const match = value.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
 
-  let currentChamp = '';
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  if (hours > 23 || minutes > 59) return null;
+
+  return `${String(hours).padStart(2, "0")}h${String(minutes).padStart(2, "0")}`;
+}
+
+// Procura o nome cadastrado mesmo quando o OCR mistura símbolos
+// ou erra algumas letras.
+function matchOCRTeam(raw) {
+  const cleaned = cleanOCRTeam(raw);
+  if (!cleaned) return "";
+
+  const teams = Object.keys(window.teamsCache || {});
+  if (!teams.length) return cleaned;
+
+  const rawKey = baseKey(cleaned);
+
+  // Correspondência exata
+  const exact = teams.find(name => baseKey(name) === rawKey);
+  if (exact) return exact;
+
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  let bestName = "";
+  let bestScore = 0;
+
+  // Testa combinações de palavras para remover ruídos nas pontas.
+  for (let start = 0; start < words.length; start++) {
+    for (let size = 1; size <= 6 && start + size <= words.length; size++) {
+      const candidate = words.slice(start, start + size).join(" ");
+
+      if (baseKey(candidate).length < 4) continue;
+
+      for (const team of teams) {
+        const score = sim(candidate, team);
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestName = team;
+        }
+      }
+    }
+  }
+
+  // Só corrige automaticamente quando há confiança suficiente.
+  if (bestScore >= 0.58) return bestName;
+
+  return cleaned;
+}
+
+
+function parseTextToRows(text) {
+  const rawLines = String(text || "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map(line => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+
   const rows = [];
+  const unmatched = [];
 
-  for (let i=0; i<lines.length; i++){
-    const line = lines[i];
+  let currentChamp = "Amistoso";
 
-    // Cabeçalho de competição (texto, sem hora)
-    const looksHeader = !TIME_INLINE_RE.test(line) &&
-      /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i.test(line);
+  const timeRegex =
+    /(\d{1,2}\s*[:h]\s*\d{2}|\b\d{3,4}\b)/i;
 
-    if (looksHeader && !/\d/.test(line)){
-      currentChamp = resolveChamp365(line);
+  const headerRegex =
+    /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i;
+
+  for (const line of rawLines) {
+
+    const timeMatch = line.match(timeRegex);
+
+    // Identifica cabeçalhos mesmo com números e símbolos do OCR.
+    if (headerRegex.test(line)) {
+
+      const possibleHeader = line
+        .replace(/^[^A-Za-zÀ-ÿ0-9]*/, "")
+        .replace(/^[0-9]+\s*/, "");
+
+      const hasValidTime =
+        timeMatch && normalizeOCRTime(timeMatch[1]);
+
+      if (!hasValidTime) {
+        currentChamp = resolveChamp365(possibleHeader);
+        continue;
+      }
+    }
+
+    if (!timeMatch) {
       continue;
     }
 
-    // Casa / HH:MM / Fora (hora isolada no meio)
-    if (TIME_LINE_RE.test(line)) {
-      const prev = norm(lines[i-1] || '');
-      const next = norm(lines[i+1] || '');
-      const home = prev.replace(/^[\*\-•⭐]+/,'');
-      const away = next.replace(/^[\*\-•⭐]+/,'');
-      if (looksLikeTeam(home) && looksLikeTeam(away)) {
-        const [,hh,mm] = line.match(TIME_LINE_RE);
-        rows.push({ time: normalizeTime(`${hh}:${mm}`), champ: currentChamp || 'Amistoso', home, away });
-        i++;
-        continue;
-      }
+    // Normaliza o horário encontrado.
+    const time = normalizeOCRTime(timeMatch[1]);
+
+    if (!time) {
+      unmatched.push(line);
+      continue;
     }
 
-    // "Casa HH:MM Fora" numa linha
-    if (TIME_INLINE_RE.test(line)) {
-      const m = line.match(TIME_INLINE_RE);
-      const timeRaw = m[1];
-      const left  = norm(line.slice(0, m.index)).replace(/^[\*\-•⭐]+/,'');
-      const right = norm(line.slice(m.index + timeRaw.length)).replace(/^[\*\-•⭐]+/,'');
-      if (looksLikeTeam(left) && looksLikeTeam(right)) {
-        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
-        continue;
-      }
+    const position = timeMatch.index;
+
+    const leftRaw = line.slice(0, position);
+    const rightRaw = line.slice(
+      position + timeMatch[0].length
+    );
+
+    const home = matchOCRTeam(leftRaw);
+    const away = matchOCRTeam(rightRaw);
+
+    if (
+      !home ||
+      !away ||
+      home.length < 2 ||
+      away.length < 2 ||
+      baseKey(home) === baseKey(away)
+    ) {
+      unmatched.push(line);
+      continue;
     }
+
+    rows.push({
+      time: time,
+      champ: currentChamp || "Amistoso",
+      home,
+      away
+    });
   }
 
-  // times: limpeza e tentativa de casar com o painel
-  return rows.map(r => {
-    const homeClean = cleanTeamRaw(r.home);
-    const awayClean = cleanTeamRaw(r.away);
-    const homeMatch = fuzzyFindName(homeClean, window.teamsCache);
-    const awayMatch = fuzzyFindName(awayClean, window.teamsCache);
-    return {
-      time: r.time,
-      champ: resolveChamp365(r.champ), // <- campeonato já no formato final
-      home: homeMatch || homeClean,
-      away: awayMatch || awayClean
-    };
+  // Remove jogos duplicados.
+  const uniqueRows = [];
+  const seen = new Set();
+
+  for (const row of rows) {
+
+    const key = [
+      row.time,
+      baseKey(row.champ),
+      baseKey(row.home),
+      baseKey(row.away)
+    ].join("|");
+
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    uniqueRows.push(row);
+  }
+
+  window.ocrUnmatchedLines = unmatched;
+
+  console.log("JOGOS IDENTIFICADOS:", uniqueRows.length);
+  console.log("LINHAS NÃO INTERPRETADAS:", unmatched);
+
+  return uniqueRows;
+}
+
+
+
+
+/* ===== PRÉ-PROCESSAMENTO OCR ===== */
+async function preprocessImage(file) {
+
+  const img = await new Promise((resolve, reject) => {
+    const image = new Image();
+
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Não foi possível carregar a imagem"));
+
+    image.src = URL.createObjectURL(file);
+  });
+
+  // Limita o tamanho para evitar excesso de memória
+  const maxWidth = 2200;
+  const maxHeight = 5000;
+
+  const scale = Math.min(
+    2.5,
+    maxWidth / img.width,
+    maxHeight / img.height
+  );
+
+  const canvas = document.createElement("canvas");
+
+  canvas.width = Math.max(1, Math.round(img.width * scale));
+  canvas.height = Math.max(1, Math.round(img.height * scale));
+
+  const ctx = canvas.getContext("2d", {
+    willReadFrequently: true
+  });
+
+  if (!ctx) {
+    throw new Error("Não foi possível processar a imagem");
+  }
+
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+  const imageData = ctx.getImageData(
+    0, 0,
+    canvas.width,
+    canvas.height
+  );
+
+  const d = imageData.data;
+
+  // Escala de cinza e contraste moderado
+  for (let p = 0; p < d.length; p += 4) {
+
+    const gray =
+      d[p] * 0.299 +
+      d[p + 1] * 0.587 +
+      d[p + 2] * 0.114;
+
+    const contrast = 1.35;
+
+    const value = Math.max(
+      0,
+      Math.min(255, (gray - 128) * contrast + 128)
+    );
+
+    d[p] = value;
+    d[p + 1] = value;
+    d[p + 2] = value;
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  return new Promise((resolve, reject) => {
+
+    canvas.toBlob(blob => {
+
+      if (!blob) {
+        reject(new Error("Falha ao preparar a imagem"));
+        return;
+      }
+
+      resolve(blob);
+
+    }, "image/png");
   });
 }
 
@@ -2179,20 +3270,34 @@ btnOCR.addEventListener('click', async () => {
   if (!fileInput.files?.length) return;
   btnOCR.disabled = true;
   ocrStatus.textContent = 'Lendo imagem (OCR)…';
-
+  
   try {
+
     const pre = await preprocessImage(fileInput.files[0]);
-    const { data: { text} } = await Tesseract.recognize(pre, 'por+eng', {
-      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzÀ-ÖØ-öø-ÿ 0123456789:-.h*•⭐',
-      psm: 6,
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          ocrStatus.textContent = `OCR ${Math.round(m.progress*100)}%`;
-        }
+
+const { data: { text } } = await Tesseract.recognize(
+  pre,
+  'por+eng',
+  {
+    tessedit_pageseg_mode: 6,
+    preserve_interword_spaces: 1,
+
+    logger: m => {
+      if (m.status === 'recognizing text') {
+        ocrStatus.textContent =
+          `OCR ${Math.round(m.progress * 100)}%`;
       }
-    });
+    }
+  }
+);
+
+console.log(text);
+console.log("TOTAL DE LINHAS OCR:", text.split("\n").length);
+console.log("TEXTO COMPLETO OCR:", text);
 
     importedRows = parseTextToRows(text);
+    console.table(importedRows);
+console.log("TOTAL FINAL:", importedRows.length);
 
     // preview (mostra o que será salvo)
     tbody.innerHTML = '';
@@ -2211,11 +3316,10 @@ btnOCR.addEventListener('click', async () => {
     ocrStatus.textContent = importedRows.length ? 'Pronto' : 'Nada detectado';
 
   } catch (e) {
-    console.error(e);
-    ocrStatus.textContent = 'Falha ao ler imagem';
-  } finally {
-    btnOCR.disabled = false;
-  }
+  console.error("ERRO OCR:", e);
+  ocrStatus.textContent = 'Erro: ' + (e.message || e);
+  alert("Erro ao ler imagem: " + (e.message || e));
+}
 });
 
 /* ===== SALVAR ===== */
@@ -2230,27 +3334,33 @@ btnSaveAll.addEventListener('click', async () => {
 
   try {
 
-  const today = new Date().toLocaleDateString("en-CA", {
-    timeZone: "America/Sao_Paulo"
-  });
+  const selectedDate = document.getElementById("import-date").value;
+
+if (!selectedDate) {
+  alert("Selecione a data dos jogos.");
+  return;
+}
 
   for (const r of importedRows) {
 
-    const payload = {
-      champ: r.champ,
-      champ_logo: window.champsCache[r.champ] || '',
-      home: r.home,
-      home_logo: window.teamsCache[r.home] || '',
-      away: r.away,
-      away_logo: window.teamsCache[r.away] || '',
-      time: r.time,
-      date: today, // 🔥 AGORA SALVA A DATA
-      channels: []
-    };
+  const payload = {
+    champ: r.champ,
+    champ_logo: window.champsCache[r.champ] || '',
+    home: r.home,
+    home_logo: window.teamsCache[r.home] || '',
+    away: r.away,
+    away_logo: window.teamsCache[r.away] || '',
+    time: r.time,
+    date: selectedDate,
 
-    await addDoc(collection(db,'games'), payload);
-  }
-    
+    hideGame: true,
+    hideChannels: true,
+
+    channels: []
+  };
+
+  await addDoc(collection(db,'games'), payload);
+}
 
     importedRows = [];
     preview.classList.add('hidden');
@@ -2266,8 +3376,6 @@ btnSaveAll.addEventListener('click', async () => {
     btnSaveAll.textContent = 'Salvar todos';
   }
 });
-
-
 
 // ===== Auto resize textarea (versão estável iPhone) =====
 function autoResizeTextarea(el){
@@ -2296,8 +3404,6 @@ setupAutoResize("team-logo");
 setupAutoResize("inline-button-name");
 setupAutoResize("inline-button-link");
 
-
-
 window.moveChannel = function(position, direction){
 
   const current = document.getElementById(`game-channel${position}`);
@@ -2320,10 +3426,6 @@ window.moveChannel = function(position, direction){
   $(`#game-channel${position}`).trigger('change.select2');
   $(`#game-channel${targetPosition}`).trigger('change.select2');
 };
-
-
-
-
 
 let analyticsUnsubscribe = null;
 let currentListeningDay = null;
@@ -2411,7 +3513,6 @@ function listenAnalytics() {
   setInterval(startListening, 30000);
 }
 
-
 function renderMoreGamesList() {
 
   const container = document.getElementById("more-games-list");
@@ -2477,14 +3578,71 @@ function renderMoreGamesList() {
   });
 }
 
-
-
 function setTodayDate() {
   const today = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/Sao_Paulo"
   });
   document.getElementById("game-date").value = today;
 }
+
+document.addEventListener("change", async (e) => {
+
+  if (!e.target.classList.contains("home-hide-channels"))
+    return;
+
+  const gameId = e.target.dataset.id;
+  const checked = e.target.checked;
+
+  await updateDoc(
+    doc(db, "games", gameId),
+    {
+      hideChannels: checked
+    }
+  );
+
+});
+
+document.addEventListener("change", async (e) => {
+
+  if (!e.target.classList.contains("home-hide-game"))
+    return;
+
+  const gameId = e.target.dataset.id;
+  const checked = e.target.checked;
+
+  await updateDoc(
+    doc(db, "games", gameId),
+    {
+      hideGame: checked
+    }
+  );
+
+});
+
+document.addEventListener("change", async (e) => {
+
+  if (e.target.id !== "toggle-all-hidden")
+    return;
+
+  const checked = e.target.checked;
+
+  const updates = gamesMemory
+    .filter(game => !(
+      game.home?.toLowerCase() === "aviso" &&
+      game.away?.toLowerCase() === "aviso"
+    ))
+    .map(game =>
+      updateDoc(
+        doc(db, "games", game.id),
+        {
+          hideGame: checked
+        }
+      )
+    );
+
+  await Promise.all(updates);
+
+});
 
 
 
