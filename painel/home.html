@@ -2975,6 +2975,8 @@ const { data: { text } } = await Tesseract.recognize(
 );
 
 console.log(text);
+console.log("TOTAL DE LINHAS OCR:", text.split("\n").length);
+console.log("TEXTO COMPLETO OCR:", text);
 
     importedRows = parseTextToRows(text);
 
