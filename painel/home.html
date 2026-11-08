@@ -569,11 +569,21 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   Data dos jogos
 </label>
 
-<input
-  id="import-date"
-  type="date"
-  class="w-full p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mb-3"
-  style="height: 42px; font-size: 16px;">
+<div class="mb-3">
+  <input
+    id="import-date"
+    type="date"
+    class="block w-full border border-gray-300 rounded-lg px-3 text-base bg-white"
+    style="
+      height: 44px;
+      min-height: 44px;
+      padding-top: 0;
+      padding-bottom: 0;
+      box-sizing: border-box;
+      -webkit-appearance: none;
+      appearance: none;
+    ">
+</div>
     
     <input id="img-file" type="file" accept="image/*"
            class="block w-full mb-3">
