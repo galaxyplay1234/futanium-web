@@ -2779,10 +2779,17 @@ function cutAfterDash(s){
   const parts = s.split(/[-–—]/);
   return (parts[0] || s).trim();
 }
-function resolveChamp365(raw){
-  const cut = cutAfterDash(norm((raw||'').replace(/^[=\-\*\.\s]+/,'')));
-  const match = fuzzyFindName(cut, window.champsCache, 0.62);
-  return match || cut; // se não casar, fica o nome lido do 365
+function resolveChamp365(raw) {
+  const name = norm(
+    String(raw || "").replace(/^[^A-Za-zÀ-ÿ0-9]+/, "")
+  );
+
+  if (!name) return "Amistoso";
+
+  const match = fuzzyFindName(name, window.champsCache, 0.78);
+
+  // Mantém o nome completo, inclusive o texto depois do hífen.
+  return match || name;
 }
 
 /* ===== regex e filtros ===== */
@@ -2795,48 +2802,31 @@ function looksLikeTeam(s){
   return t.length >= 2;
 }
 
+
 /* ===== OCR INTELIGENTE: LINHAS DE JOGOS ===== */
 
 function cleanOCRTeam(value) {
-
-  let name = value || "";
-
-  name = name
+  return String(value || "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
     .replace(/[|]/g, " ")
     .replace(/[^\p{L}\p{N}\s.'’&-]/gu, " ")
     .replace(/\([^)]*\)/g, " ")
     .replace(/\s+/g, " ")
     .trim();
-
-  // Remove ruídos comuns nas extremidades,
-  // sem apagar abreviações legítimas como FC, AC e SC.
-  name = name
-    .replace(/^(?:[a-z]{1,2}\s+)+(?=[A-ZÀ-Þ])/i, "")
-    .replace(/(?:\s+[a-z]{1,2})+$/i, "");
-
-  // Remove marcadores isolados de transmissão
-  name = name.replace(/\s+\b(?:FT|HT)\b$/i, "");
-
-  return name.trim();
 }
 
-
 function normalizeOCRTime(raw) {
-
   let value = String(raw || "")
     .toLowerCase()
     .replace(/\s/g, "")
     .replace("h", ":");
 
-  // 0830 -> 08:30
   if (/^\d{3,4}$/.test(value)) {
     value = value.padStart(4, "0");
     value = value.slice(0, 2) + ":" + value.slice(2);
   }
 
   const match = value.match(/^(\d{1,2}):(\d{2})$/);
-
   if (!match) return null;
 
   const hours = Number(match[1]);
@@ -2847,116 +2837,120 @@ function normalizeOCRTime(raw) {
   return `${String(hours).padStart(2, "0")}h${String(minutes).padStart(2, "0")}`;
 }
 
-
-function matchOCRTeam(name) {
-
-  const cleaned = cleanOCRTeam(name);
-
+// Procura o nome cadastrado mesmo quando o OCR mistura símbolos
+// ou erra algumas letras.
+function matchOCRTeam(raw) {
+  const cleaned = cleanOCRTeam(raw);
   if (!cleaned) return "";
 
-  const teams = window.teamsCache || {};
+  const teams = Object.keys(window.teamsCache || {});
+  if (!teams.length) return cleaned;
 
-  // Primeiro tenta encontrar o nome cadastrado
-  if (typeof fuzzyFindName === "function") {
+  const rawKey = baseKey(cleaned);
 
-    const matched = fuzzyFindName(
-      cleaned,
-      teams,
-      0.85
-    );
+  // Correspondência exata
+  const exact = teams.find(name => baseKey(name) === rawKey);
+  if (exact) return exact;
 
-    if (matched) return matched;
+  const words = cleaned.split(/\s+/).filter(Boolean);
+  let bestName = "";
+  let bestScore = 0;
+
+  // Testa combinações de palavras para remover ruídos nas pontas.
+  for (let start = 0; start < words.length; start++) {
+    for (let size = 1; size <= 6 && start + size <= words.length; size++) {
+      const candidate = words.slice(start, start + size).join(" ");
+
+      if (baseKey(candidate).length < 4) continue;
+
+      for (const team of teams) {
+        const score = sim(candidate, team);
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestName = team;
+        }
+      }
+    }
   }
 
-  // Se não houver correspondência segura, mantém o nome lido
+  // Só corrige automaticamente quando há confiança suficiente.
+  if (bestScore >= 0.58) return bestName;
+
   return cleaned;
 }
 
-
 function parseTextToRows(text) {
-
-  text = String(text || "")
+  const rawLines = String(text || "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
-    .replace(/\r/g, "\n");
-
-  const rawLines = text
+    .replace(/\r/g, "\n")
     .split("\n")
     .map(line => line.replace(/\s+/g, " ").trim())
     .filter(Boolean);
 
   const rows = [];
+  const unmatched = [];
 
-  let currentChamp = "";
+  let currentChamp = "Amistoso";
 
-  const timeRegex =
-    /(?<![\p{L}\p{N}])(\d{1,2}\s*:\s*\d{2}|\d{1,2}\s*h\s*\d{2}|\d{3,4})(?![\p{L}\p{N}])/iu;
+  const timeRegex = /(\d{1,2}\s*[:h]\s*\d{2}|\b\d{3,4}\b)/i;
 
   const headerRegex =
     /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i;
 
-  for (const originalLine of rawLines) {
+  for (const line of rawLines) {
+    const timeMatch = line.match(timeRegex);
 
-    const line = originalLine.trim();
-
-    // Detecta cabeçalho de campeonato
-    const hasTime = timeRegex.test(line);
-
-    if (!hasTime && headerRegex.test(line)) {
-
+    // Cabeçalho de campeonato
+    if (!timeMatch && headerRegex.test(line)) {
       currentChamp = resolveChamp365(line);
       continue;
     }
-
-    // Procura o horário
-    const timeMatch = line.match(timeRegex);
 
     if (!timeMatch) continue;
 
     const time = normalizeOCRTime(timeMatch[1]);
 
-    if (!time) continue;
+    if (!time) {
+      unmatched.push(line);
+      continue;
+    }
 
     const position = timeMatch.index;
-
     const leftRaw = line.slice(0, position);
-    const rightRaw = line.slice(
-      position + timeMatch[0].length
-    );
+    const rightRaw = line.slice(position + timeMatch[0].length);
 
     const home = matchOCRTeam(leftRaw);
     const away = matchOCRTeam(rightRaw);
 
-    // Não descarta silenciosamente:
-    // só adiciona quando os dois nomes foram identificados.
-    if (!home || !away) continue;
+    if (!home || !away || home.length < 2 || away.length < 2) {
+      unmatched.push(line);
+      continue;
+    }
 
-    if (
-      home.length < 2 ||
-      away.length < 2 ||
-      home.toLowerCase() === away.toLowerCase()
-    ) {
+    if (baseKey(home) === baseKey(away)) {
+      unmatched.push(line);
       continue;
     }
 
     rows.push({
       time,
-      champ: resolveChamp365(currentChamp || "Amistoso"),
+      champ: currentChamp || "Amistoso",
       home,
       away
     });
   }
 
-  // Remove duplicações causadas por linhas repetidas do OCR
+  // Remove jogos duplicados
   const uniqueRows = [];
   const seen = new Set();
 
   for (const row of rows) {
-
     const key = [
       row.time,
-      row.champ,
-      row.home.toLowerCase(),
-      row.away.toLowerCase()
+      baseKey(row.champ),
+      baseKey(row.home),
+      baseKey(row.away)
     ].join("|");
 
     if (seen.has(key)) continue;
@@ -2965,8 +2959,15 @@ function parseTextToRows(text) {
     uniqueRows.push(row);
   }
 
+  // Deixa as linhas não interpretadas disponíveis no console.
+  window.ocrUnmatchedLines = unmatched;
+
+  console.log("JOGOS IDENTIFICADOS:", uniqueRows.length);
+  console.log("LINHAS NÃO INTERPRETADAS:", unmatched);
+
   return uniqueRows;
 }
+
 
 
 /* ===== PRÉ-PROCESSAMENTO OCR ===== */
