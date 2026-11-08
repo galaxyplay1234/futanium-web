@@ -2795,20 +2795,28 @@ function looksLikeTeam(s){
   return t.length >= 2;
 }
 
-/* ===== pré-processamento (rápido) ===== */
+/* ===== pré-processamento da imagem ===== */
 async function preprocessImage(file) {
 
   const img = await new Promise((resolve, reject) => {
+
     const image = new Image();
+    const url = URL.createObjectURL(file);
 
-    image.onload = () => resolve(image);
-    image.onerror = reject;
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
 
-    image.src = URL.createObjectURL(file);
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Não foi possível carregar a imagem."));
+    };
+
+    image.src = url;
   });
 
-  // Amplia sem perder os detalhes das letras
-  const scale = 3;
+  const scale = 2;
 
   const canvas = document.createElement("canvas");
 
@@ -2828,39 +2836,37 @@ async function preprocessImage(file) {
     canvas.height
   );
 
-  const imageData = ctx.getImageData(
+  const imgData = ctx.getImageData(
     0,
     0,
     canvas.width,
     canvas.height
   );
 
-  const pixels = imageData.data;
+  const d = imgData.data;
 
-  // Melhora o contraste sem apagar partes das letras
-  for (let i = 0; i < pixels.length; i += 4) {
+  for (let p = 0; p < d.length; p += 4) {
 
     const gray =
-      pixels[i] * 0.299 +
-      pixels[i + 1] * 0.587 +
-      pixels[i + 2] * 0.114;
+      d[p] * 0.299 +
+      d[p + 1] * 0.587 +
+      d[p + 2] * 0.114;
 
     const contrast = 1.25;
 
-    let value = (gray - 128) * contrast + 128;
+    let value = ((gray - 128) * contrast) + 128;
 
     value = Math.max(0, Math.min(255, value));
 
-    pixels[i] = value;
-    pixels[i + 1] = value;
-    pixels[i + 2] = value;
+    d[p] = value;
+    d[p + 1] = value;
+    d[p + 2] = value;
   }
 
-  ctx.putImageData(imageData, 0, 0);
+  ctx.putImageData(imgData, 0, 0);
 
-  return new Promise(resolve => {
-    canvas.toBlob(resolve, "image/png");
-  });
+  // Retorna uma imagem Data URL em vez de Blob
+  return canvas.toDataURL("image/png");
 }
 
 /* ===== parser OCR → linhas ===== */
@@ -2952,7 +2958,7 @@ btnOCR.addEventListener('click', async () => {
 
     const pre = await preprocessImage(fileInput.files[0]);
 
-  const { data: { text } } = await Tesseract.recognize(
+const { data: { text } } = await Tesseract.recognize(
   pre,
   'por+eng',
   {
