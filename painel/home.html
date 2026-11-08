@@ -152,6 +152,12 @@ Versões
   class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
   Analytics
 </button>
+
+<button onclick="showTab('console')"
+  class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">
+  Console
+</button>
+
     <button onclick="showTab('buttons')"
             class="tab-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Botões</button>
     <button onclick="showTab('import')"
@@ -564,6 +570,71 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   </div>
 </div>
 
+
+<!-- Console Firestore -->
+<div id="tab-console" class="tab-content hidden">
+
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-lg sm:text-xl font-semibold">
+      Monitor Firestore
+    </h2>
+
+    <button onclick="clearFirestoreConsole()"
+      class="bg-red-500 text-white px-3 py-1 rounded text-sm">
+      Limpar
+    </button>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 mb-4">
+
+    <div class="bg-white rounded shadow p-3">
+      <div class="text-sm text-gray-500">Leituras</div>
+      <div id="console-reads"
+        class="text-2xl font-bold text-blue-600">0</div>
+    </div>
+
+    <div class="bg-white rounded shadow p-3">
+      <div class="text-sm text-gray-500">Gravações</div>
+      <div id="console-writes"
+        class="text-2xl font-bold text-green-600">0</div>
+    </div>
+
+    <div class="bg-white rounded shadow p-3">
+      <div class="text-sm text-gray-500">Atualizações</div>
+      <div id="console-updates"
+        class="text-2xl font-bold text-yellow-600">0</div>
+    </div>
+
+    <div class="bg-white rounded shadow p-3">
+      <div class="text-sm text-gray-500">Exclusões</div>
+      <div id="console-deletes"
+        class="text-2xl font-bold text-red-600">0</div>
+    </div>
+
+  </div>
+
+  <div class="bg-white rounded shadow overflow-hidden">
+
+    <div class="p-3 border-b flex justify-between items-center">
+      <span class="font-semibold">Atividades recentes</span>
+      <span id="console-total"
+        class="text-xs text-gray-500">0 operações</span>
+    </div>
+
+    <div id="console-log"
+      class="p-3 space-y-2 max-h-[550px] overflow-y-auto text-xs font-mono">
+
+      <div class="text-gray-400">
+        Aguardando operações do Firestore...
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
 <!-- Importar (imagem -> jogos) -->
 <div id="tab-import" class="tab-content hidden">
   <h2 class="text-lg sm:text-xl font-semibold mb-4">Importar jogos por imagem</h2>
@@ -813,7 +884,16 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 <!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, updateDoc, getDoc, doc } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  addDoc as fbAddDoc,
+  getDocs as fbGetDocs,
+  deleteDoc as fbDeleteDoc,
+  updateDoc as fbUpdateDoc,
+  getDoc as fbGetDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
@@ -827,6 +907,218 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+// ===== MONITOR FIRESTORE =====
+
+const firestoreStats = {
+  reads: 0,
+  writes: 0,
+  updates: 0,
+  deletes: 0
+};
+
+let firestoreLogs = [];
+
+function logFirestore(type, collectionName, amount = 1) {
+
+  const now = new Date().toLocaleTimeString("pt-BR", {
+    timeZone: "America/Sao_Paulo"
+  });
+
+  const colors = {
+    READ: "text-blue-600",
+    WRITE: "text-green-600",
+    UPDATE: "text-yellow-600",
+    DELETE: "text-red-600"
+  };
+
+  if (type === "READ") firestoreStats.reads += amount;
+  if (type === "WRITE") firestoreStats.writes += amount;
+  if (type === "UPDATE") firestoreStats.updates += amount;
+  if (type === "DELETE") firestoreStats.deletes += amount;
+
+  firestoreLogs.unshift({
+    time: now,
+    type,
+    collection: collectionName,
+    amount
+  });
+
+  firestoreLogs = firestoreLogs.slice(0, 100);
+
+  renderFirestoreConsole();
+}
+
+function renderFirestoreConsole() {
+
+  const reads = document.getElementById("console-reads");
+  if (!reads) return;
+
+  document.getElementById("console-reads").textContent =
+    firestoreStats.reads;
+
+  document.getElementById("console-writes").textContent =
+    firestoreStats.writes;
+
+  document.getElementById("console-updates").textContent =
+    firestoreStats.updates;
+
+  document.getElementById("console-deletes").textContent =
+    firestoreStats.deletes;
+
+  document.getElementById("console-total").textContent =
+    `${firestoreLogs.length} operações registradas`;
+
+  const container = document.getElementById("console-log");
+
+  if (!firestoreLogs.length) {
+    container.innerHTML =
+      '<div class="text-gray-400">Aguardando operações...</div>';
+    return;
+  }
+
+  container.innerHTML = firestoreLogs.map(log => {
+
+    const colors = {
+      READ: "text-blue-600",
+      WRITE: "text-green-600",
+      UPDATE: "text-yellow-600",
+      DELETE: "text-red-600"
+    };
+
+    return `
+      <div class="border-b pb-2">
+        <div class="flex justify-between gap-2">
+          <span class="${colors[log.type]} font-bold">
+            ${log.type}
+          </span>
+
+          <span class="text-gray-400">
+            ${log.time}
+          </span>
+        </div>
+
+        <div class="text-gray-700 mt-1">
+          ${log.collection}
+          <span class="text-gray-400">
+            · ${log.amount} documento(s)
+          </span>
+        </div>
+      </div>
+    `;
+
+  }).join("");
+}
+
+window.clearFirestoreConsole = function() {
+
+  firestoreStats.reads = 0;
+  firestoreStats.writes = 0;
+  firestoreStats.updates = 0;
+  firestoreStats.deletes = 0;
+
+  firestoreLogs = [];
+
+  renderFirestoreConsole();
+};
+
+
+// ===== INTERCEPTADORES FIRESTORE =====
+
+async function getDocs(...args) {
+
+  const result = await fbGetDocs(...args);
+
+  const collectionName =
+    args[0]._query?.path?.segments?.[0] ||
+    "consulta";
+
+  logFirestore("READ", collectionName, result.size);
+
+  return result;
+}
+
+async function getDoc(...args) {
+
+  const result = await fbGetDoc(...args);
+
+  const collectionName =
+    args[0].parent?.id || "documento";
+
+  logFirestore("READ", collectionName, 1);
+
+  return result;
+}
+
+async function addDoc(...args) {
+
+  const result = await fbAddDoc(...args);
+
+  const collectionName = args[0].id;
+
+  logFirestore("WRITE", collectionName, 1);
+
+  return result;
+}
+
+async function updateDoc(...args) {
+
+  const result = await fbUpdateDoc(...args);
+
+  const collectionName =
+    args[0].parent?.id || "documento";
+
+  logFirestore("UPDATE", collectionName, 1);
+
+  return result;
+}
+
+async function deleteDoc(...args) {
+
+  const result = await fbDeleteDoc(...args);
+
+  const collectionName =
+    args[0].parent?.id || "documento";
+
+  logFirestore("DELETE", collectionName, 1);
+
+  return result;
+}
+
+function onSnapshot(reference, callback, errorCallback) {
+
+  return fbOnSnapshot(
+    reference,
+
+    snapshot => {
+
+      let changes = 0;
+
+      if (typeof snapshot.docChanges === "function") {
+        changes = snapshot.docChanges().filter(change =>
+          change.type === "added" ||
+          change.type === "modified"
+        ).length;
+      } else {
+        changes = 1;
+      }
+
+      if (changes > 0) {
+
+        const collectionName =
+          reference._query?.path?.segments?.[0] ||
+          "listener";
+
+        logFirestore("READ", collectionName, changes);
+      }
+
+      callback(snapshot);
+    },
+
+    errorCallback
+  );
+}
+
 import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 enableIndexedDbPersistence(db).catch((err) => {
@@ -1117,7 +1409,9 @@ window.addSelectedChannels = function() {
   closeChannelPicker();
 };
 
-import { onSnapshot } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+import {
+  onSnapshot as fbOnSnapshot
+} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 let gamesUnsubscribe = null;
 
