@@ -565,6 +565,15 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   <h2 class="text-lg sm:text-xl font-semibold mb-4">Importar jogos por imagem</h2>
 
   <div class="bg-white rounded shadow p-4 mb-3">
+    <label class="block text-sm font-semibold mb-2">
+  Data dos jogos
+</label>
+
+<input
+  id="import-date"
+  type="date"
+  class="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400 mb-3">
+    
     <input id="img-file" type="file" accept="image/*"
            class="block w-full mb-3">
     <button id="btn-ocr" class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
@@ -895,10 +904,21 @@ channelSelectionOrder = [...currentValues];
     name.className = "text-sm font-medium flex-1";
     name.textContent = button.name;
 
-    row.appendChild(checkbox);
-    row.appendChild(name);
+    const channelLabel = document.createElement("span");
 
-    checkbox.addEventListener("change", () => {
+channelLabel.className =
+  "text-[10px] text-gray-400 font-medium ml-auto whitespace-nowrap";
+
+channelLabel.textContent = "";
+
+channelLabel.dataset.channelLabel = "true";
+
+row.appendChild(checkbox);
+row.appendChild(name);
+row.appendChild(channelLabel);
+
+    
+checkbox.addEventListener("change", () => {
 
   if (checkbox.checked) {
 
@@ -908,22 +928,53 @@ channelSelectionOrder = [...currentValues];
       return;
     }
 
-    // Adiciona no final, respeitando a ordem do clique
+    // Adiciona na ordem de seleção
     channelSelectionOrder.push(checkbox.value);
+
+    // Move imediatamente para os selecionados no topo
+    selectedArea.appendChild(row);
+    row.style.display = "flex";
 
   } else {
 
-    // Remove da ordem quando desmarcar
+    // Remove da ordem
     channelSelectionOrder =
       channelSelectionOrder.filter(link => link !== checkbox.value);
 
+    // Devolve para a lista de outros botões
+    otherArea.appendChild(row);
+
+    // Respeita a pesquisa atual
+    const term = searchInput.value.toLowerCase().trim();
+    const name = row.querySelector("span")?.textContent.toLowerCase() || "";
+
+    row.style.display = name.includes(term) ? "flex" : "none";
   }
 
-  updateChannelPickerCount();
+  updateChannelLabels();
+updateChannelPickerCount();
 });
+
 
     return row;
   }
+  
+  
+  function updateChannelLabels() {
+
+  selectedArea.querySelectorAll("label").forEach(row => {
+
+    const checkbox = row.querySelector("input");
+    const label = row.querySelector("[data-channel-label]");
+
+    const position = channelSelectionOrder.indexOf(checkbox.value);
+
+    label.textContent =
+      position !== -1 ? `Canal ${position + 1}` : "";
+
+  });
+
+}
 
   // Área dos já selecionados
   const selectedArea = document.createElement("div");
@@ -995,10 +1046,12 @@ channelSelectionOrder = [...currentValues];
 
   };
 
-  updateChannelPickerCount();
+  updateChannelLabels();
+updateChannelPickerCount();
 
-  modal.classList.remove("hidden");
+modal.classList.remove("hidden");
 };
+
 
 
 function updateChannelPickerCount() {
@@ -1130,6 +1183,18 @@ if (tab === "buttons") {
   
   if (tab === "addgame") {
   renderMoreGamesList();
+}
+
+if (tab === "import") {
+  const importDate = document.getElementById("import-date");
+
+  if (!importDate.value) {
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo"
+    });
+
+    importDate.value = today;
+  }
 }
 
   // Reseta estilos dos botões
@@ -3148,9 +3213,12 @@ btnSaveAll.addEventListener('click', async () => {
 
   try {
 
-  const today = new Date().toLocaleDateString("en-CA", {
-    timeZone: "America/Sao_Paulo"
-  });
+  const selectedDate = document.getElementById("import-date").value;
+
+if (!selectedDate) {
+  alert("Selecione a data dos jogos.");
+  return;
+}
 
   for (const r of importedRows) {
 
@@ -3162,7 +3230,7 @@ btnSaveAll.addEventListener('click', async () => {
     away: r.away,
     away_logo: window.teamsCache[r.away] || '',
     time: r.time,
-    date: today,
+    date: selectedDate,
 
     hideGame: true,
     hideChannels: true,
