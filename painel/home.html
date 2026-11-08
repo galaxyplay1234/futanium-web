@@ -565,6 +565,15 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   <h2 class="text-lg sm:text-xl font-semibold mb-4">Importar jogos por imagem</h2>
 
   <div class="bg-white rounded shadow p-4 mb-3">
+    <label class="block text-sm font-semibold mb-2">
+  Data dos jogos
+</label>
+
+<input
+  id="import-date"
+  type="date"
+  class="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4">
+    
     <input id="img-file" type="file" accept="image/*"
            class="block w-full mb-3">
     <button id="btn-ocr" class="bg-blue-600 text-white px-4 py-2 rounded disabled:opacity-60"
@@ -1130,6 +1139,18 @@ if (tab === "buttons") {
   
   if (tab === "addgame") {
   renderMoreGamesList();
+}
+
+if (tab === "import") {
+  const importDate = document.getElementById("import-date");
+
+  if (!importDate.value) {
+    const today = new Date().toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo"
+    });
+
+    importDate.value = today;
+  }
 }
 
   // Reseta estilos dos botões
@@ -3148,9 +3169,12 @@ btnSaveAll.addEventListener('click', async () => {
 
   try {
 
-  const today = new Date().toLocaleDateString("en-CA", {
-    timeZone: "America/Sao_Paulo"
-  });
+  const selectedDate = document.getElementById("import-date").value;
+
+if (!selectedDate) {
+  alert("Selecione a data dos jogos.");
+  return;
+}
 
   for (const r of importedRows) {
 
@@ -3162,7 +3186,7 @@ btnSaveAll.addEventListener('click', async () => {
     away: r.away,
     away_logo: window.teamsCache[r.away] || '',
     time: r.time,
-    date: today,
+    date: selectedDate,
 
     hideGame: true,
     hideChannels: true,
