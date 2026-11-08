@@ -1319,9 +1319,10 @@ teamsMemory
   });
 
   window.teamsCache = {};
-  teamsArr.forEach(t => { 
-    window.teamsCache[t.name] = t.logo; 
-  });
+
+teamsMemory.forEach(t => {
+  window.teamsCache[t.name] = t.logo;
+});
 }
 
 window.deleteTeam = async function(id){
