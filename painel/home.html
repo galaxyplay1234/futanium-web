@@ -904,8 +904,18 @@ channelSelectionOrder = [...currentValues];
     name.className = "text-sm font-medium flex-1";
     name.textContent = button.name;
 
-    row.appendChild(checkbox);
-    row.appendChild(name);
+    const channelLabel = document.createElement("span");
+
+channelLabel.className =
+  "text-[10px] text-gray-400 font-medium ml-auto whitespace-nowrap";
+
+channelLabel.textContent = "";
+
+channelLabel.dataset.channelLabel = "true";
+
+row.appendChild(checkbox);
+row.appendChild(name);
+row.appendChild(channelLabel);
 
     
 checkbox.addEventListener("change", () => {
@@ -941,12 +951,30 @@ checkbox.addEventListener("change", () => {
     row.style.display = name.includes(term) ? "flex" : "none";
   }
 
-  updateChannelPickerCount();
+  updateChannelLabels();
+updateChannelPickerCount();
 });
 
 
     return row;
   }
+  
+  
+  function updateChannelLabels() {
+
+  selectedArea.querySelectorAll("label").forEach(row => {
+
+    const checkbox = row.querySelector("input");
+    const label = row.querySelector("[data-channel-label]");
+
+    const position = channelSelectionOrder.indexOf(checkbox.value);
+
+    label.textContent =
+      position !== -1 ? `Canal ${position + 1}` : "";
+
+  });
+
+}
 
   // Área dos já selecionados
   const selectedArea = document.createElement("div");
@@ -1022,6 +1050,7 @@ checkbox.addEventListener("change", () => {
 
   modal.classList.remove("hidden");
 };
+
 
 
 function updateChannelPickerCount() {
