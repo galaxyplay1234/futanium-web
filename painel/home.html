@@ -2954,7 +2954,7 @@ btnOCR.addEventListener('click', async () => {
 
   const { data: { text } } = await Tesseract.recognize(
   pre,
-  'por+eng+spa+ita',
+  'por+eng',
   {
     tessedit_pageseg_mode: 6,
     preserve_interword_spaces: 1,
@@ -2989,11 +2989,10 @@ console.log(text);
     ocrStatus.textContent = importedRows.length ? 'Pronto' : 'Nada detectado';
 
   } catch (e) {
-    console.error(e);
-    ocrStatus.textContent = 'Falha ao ler imagem';
-  } finally {
-    btnOCR.disabled = false;
-  }
+  console.error("ERRO OCR:", e);
+  ocrStatus.textContent = 'Erro: ' + (e.message || e);
+  alert("Erro ao ler imagem: " + (e.message || e));
+}
 });
 
 /* ===== SALVAR ===== */
