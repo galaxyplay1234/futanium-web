@@ -907,7 +907,8 @@ channelSelectionOrder = [...currentValues];
     row.appendChild(checkbox);
     row.appendChild(name);
 
-    checkbox.addEventListener("change", () => {
+    
+checkbox.addEventListener("change", () => {
 
   if (checkbox.checked) {
 
@@ -917,19 +918,32 @@ channelSelectionOrder = [...currentValues];
       return;
     }
 
-    // Adiciona no final, respeitando a ordem do clique
+    // Adiciona na ordem de seleção
     channelSelectionOrder.push(checkbox.value);
+
+    // Move imediatamente para os selecionados no topo
+    selectedArea.appendChild(row);
+    row.style.display = "flex";
 
   } else {
 
-    // Remove da ordem quando desmarcar
+    // Remove da ordem
     channelSelectionOrder =
       channelSelectionOrder.filter(link => link !== checkbox.value);
 
+    // Devolve para a lista de outros botões
+    otherArea.appendChild(row);
+
+    // Respeita a pesquisa atual
+    const term = searchInput.value.toLowerCase().trim();
+    const name = row.querySelector("span")?.textContent.toLowerCase() || "";
+
+    row.style.display = name.includes(term) ? "flex" : "none";
   }
 
   updateChannelPickerCount();
 });
+
 
     return row;
   }
