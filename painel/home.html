@@ -2039,10 +2039,14 @@ function renderGames() {
 
   // Todas as datas que possuem jogos cadastrados
   const dates = [...new Set(
-    gamesMemory
-      .map(g => g.date)
-      .filter(date => date)
-  )].sort((a, b) => a.localeCompare(b));
+  gamesMemory
+    .filter(g => !(
+      g.home?.toLowerCase() === "aviso" &&
+      g.away?.toLowerCase() === "aviso"
+    ))
+    .map(g => g.date)
+    .filter(date => date)
+)].sort((a, b) => a.localeCompare(b));
 
   // Hoje sempre aparece.
   // Outras datas aparecem somente se tiverem jogos.
@@ -2101,9 +2105,17 @@ function renderGames() {
   });
 
   // Filtra somente os jogos da data selecionada
-  const gamesArr = gamesMemory.filter(g =>
-    g.date === activeDate
-  );
+  const gamesArr = gamesMemory.filter(g => {
+
+  const isAviso =
+    g.home?.toLowerCase() === "aviso" &&
+    g.away?.toLowerCase() === "aviso";
+
+  // Avisos aparecem em todas as datas
+  if (isAviso) return true;
+
+  return g.date === activeDate;
+});
 
   gamesArr.sort((a, b) => {
 
