@@ -2881,6 +2881,7 @@ function matchOCRTeam(raw) {
   return cleaned;
 }
 
+
 function parseTextToRows(text) {
   const rawLines = String(text || "")
     .replace(/[\u200B-\u200D\uFEFF]/g, "")
@@ -2894,71 +2895,79 @@ function parseTextToRows(text) {
 
   let currentChamp = "Amistoso";
 
-  const timeRegex = /(\d{1,2}\s*[:h]\s*\d{2}|\b\d{3,4}\b)/i;
+  const timeRegex =
+    /(\d{1,2}\s*[:h]\s*\d{2}|\b\d{3,4}\b)/i;
 
   const headerRegex =
     /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i;
 
   for (const line of rawLines) {
-    // Cabeçalho de campeonato: identifica mesmo quando o OCR
-// coloca números ou símbolos antes do nome.
-if (headerRegex.test(line)) {
-  currentChamp = resolveChamp365(
-    line.replace(/^[^A-Za-zÀ-ÿ0-9]*/, "")
-       .replace(/^[0-9]+\s*/, "")
-  );
-  continue;
-}
 
-const timeMatch = line.match(timeRegex);
+    const timeMatch = line.match(timeRegex);
 
-// Só considera cabeçalho quando não existe horário válido.
-if (headerRegex.test(line)) {
-  const possibleHeader = line
-    .replace(/^[^A-Za-zÀ-ÿ0-9]*/, "")
-    .replace(/^[0-9]+\s*/, "");
+    // Identifica cabeçalhos mesmo com números e símbolos do OCR.
+    if (headerRegex.test(line)) {
 
-  const hasValidTime = timeMatch &&
-    normalizeOCRTime(timeMatch[1]);
+      const possibleHeader = line
+        .replace(/^[^A-Za-zÀ-ÿ0-9]*/, "")
+        .replace(/^[0-9]+\s*/, "");
 
-  if (!hasValidTime) {
-    currentChamp = resolveChamp365(possibleHeader);
-    continue;
-  }
-}
+      const hasValidTime =
+        timeMatch && normalizeOCRTime(timeMatch[1]);
 
-if (!timeMatch) continue;
+      if (!hasValidTime) {
+        currentChamp = resolveChamp365(possibleHeader);
+        continue;
+      }
+    }
 
-    const position = timeMatch.index;
-    const leftRaw = line.slice(0, position);
-    const rightRaw = line.slice(position + timeMatch[0].length);
+    if (!timeMatch) {
+      continue;
+    }
 
-    const home = matchOCRTeam(leftRaw);
-    const away = matchOCRTeam(rightRaw);
+    // Normaliza o horário encontrado.
+    const time = normalizeOCRTime(timeMatch[1]);
 
-    if (!home || !away || home.length < 2 || away.length < 2) {
+    if (!time) {
       unmatched.push(line);
       continue;
     }
 
-    if (baseKey(home) === baseKey(away)) {
+    const position = timeMatch.index;
+
+    const leftRaw = line.slice(0, position);
+    const rightRaw = line.slice(
+      position + timeMatch[0].length
+    );
+
+    const home = matchOCRTeam(leftRaw);
+    const away = matchOCRTeam(rightRaw);
+
+    if (
+      !home ||
+      !away ||
+      home.length < 2 ||
+      away.length < 2 ||
+      baseKey(home) === baseKey(away)
+    ) {
       unmatched.push(line);
       continue;
     }
 
     rows.push({
-      time,
+      time: time,
       champ: currentChamp || "Amistoso",
       home,
       away
     });
   }
 
-  // Remove jogos duplicados
+  // Remove jogos duplicados.
   const uniqueRows = [];
   const seen = new Set();
 
   for (const row of rows) {
+
     const key = [
       row.time,
       baseKey(row.champ),
@@ -2972,7 +2981,6 @@ if (!timeMatch) continue;
     uniqueRows.push(row);
   }
 
-  // Deixa as linhas não interpretadas disponíveis no console.
   window.ocrUnmatchedLines = unmatched;
 
   console.log("JOGOS IDENTIFICADOS:", uniqueRows.length);
@@ -2980,6 +2988,7 @@ if (!timeMatch) continue;
 
   return uniqueRows;
 }
+
 
 
 
