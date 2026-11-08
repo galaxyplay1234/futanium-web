@@ -280,6 +280,12 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </button>
 
 <button type="button"
+  onclick="openInlineButtonAdd(1)"
+  class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+  <i class="fa-solid fa-plus"></i>
+</button>
+
+<button type="button"
   onclick="clearSelect('game-channel1')"
   class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
   ✕
@@ -308,6 +314,12 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   onclick="editSelectedButton(2)"
   class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
   <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="openInlineButtonAdd(2)"
+  class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+  <i class="fa-solid fa-plus"></i>
 </button>
 
 <button type="button"
@@ -342,6 +354,12 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </button>
 
 <button type="button"
+  onclick="openInlineButtonAdd(3)"
+  class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+  <i class="fa-solid fa-plus"></i>
+</button>
+
+<button type="button"
   onclick="clearSelect('game-channel3')"
   class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-sm">
   ✕
@@ -370,6 +388,12 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   onclick="editSelectedButton(4)"
   class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
   <i class="fa-solid fa-pen-to-square"></i>
+</button>
+
+<button type="button"
+  onclick="openInlineButtonAdd(4)"
+  class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+  <i class="fa-solid fa-plus"></i>
 </button>
 
 <button type="button"
@@ -2133,6 +2157,43 @@ window.clearSelect = function(id) {
   $('#' + id).val(null).trigger('change');
 };
 
+
+// ===== Adicionar canal diretamente no campo =====
+
+window.openInlineButtonAdd = function(channelNumber) {
+
+  currentInlineButtonId = null;
+  currentInlineChannelNumber = channelNumber;
+
+  const nameEl = document.getElementById("inline-button-name");
+  const linkEl = document.getElementById("inline-button-link");
+
+  nameEl.value = "";
+  linkEl.value = "";
+
+  document.getElementById("inline-button-capture").value = "false";
+
+  autoResizeTextarea(nameEl);
+  autoResizeTextarea(linkEl);
+
+  document.querySelector(
+    "#inline-button-editor h3"
+  ).innerText = "Adicionar novo canal";
+
+  document.querySelector(
+    "#inline-button-editor button[onclick='saveInlineButtonEdit()']"
+  ).innerText = "Adicionar";
+
+  document
+    .getElementById("inline-button-editor")
+    .classList.remove("hidden");
+
+  document.getElementById("inline-button-editor").scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+};
+
 window.editSelectedButton = function(channelNumber){
 
   const select =
@@ -2157,6 +2218,16 @@ window.editSelectedButton = function(channelNumber){
   }
 
   currentInlineButtonId = button.id;
+  
+  currentInlineChannelNumber = null;
+
+document.querySelector(
+  "#inline-button-editor h3"
+).innerText = "Editar Botão";
+
+document.querySelector(
+  "#inline-button-editor button[onclick='saveInlineButtonEdit()']"
+).innerText = "Atualizar";
 
   const nameEl = document.getElementById("inline-button-name");
 const linkEl = document.getElementById("inline-button-link");
@@ -2198,24 +2269,50 @@ document
 
 window.saveInlineButtonEdit = async function(){
 
-  if(!currentInlineButtonId) return;
+  const name = document.getElementById("inline-button-name").value.trim();
 
-  const name =
-    document.getElementById(
-      "inline-button-name"
-    ).value.trim();
-
-  const link =
-    document.getElementById(
-      "inline-button-link"
-    ).value.trim();
+  const link = document.getElementById("inline-button-link").value.trim();
 
   const captureM3u8 =
-    document.getElementById(
-      "inline-button-capture"
-    ).value === "true";
+    document.getElementById("inline-button-capture").value === "true";
 
-  if(!name || !link) return;
+  if(!name || !link) {
+    alert("Preencha o nome e o link do canal.");
+    return;
+  }
+
+  // ===== MODO ADICIONAR NOVO CANAL =====
+  if(!currentInlineButtonId && currentInlineChannelNumber) {
+
+    const channelNumber = currentInlineChannelNumber;
+
+    const docRef = await addDoc(collection(db, "buttons"), {
+      name,
+      link,
+      captureM3u8
+    });
+
+    buttonsMemory.push({
+      id: docRef.id,
+      name,
+      link,
+      captureM3u8
+    });
+
+    // Atualiza a lista de botões
+    await loadButtons();
+
+    // Coloca o novo canal diretamente no campo correspondente
+    $(`#game-channel${channelNumber}`)
+      .val(link)
+      .trigger("change");
+
+    cancelInlineButtonEdit();
+
+    return;
+  }
+
+  // ===== MODO EDITAR CANAL EXISTENTE =====
 
   const oldButton =
     buttonsMemory.find(
@@ -2290,6 +2387,16 @@ window.saveInlineButtonEdit = async function(){
 window.cancelInlineButtonEdit = function(){
 
   currentInlineButtonId = null;
+  
+  currentInlineChannelNumber = null;
+
+document.querySelector(
+  "#inline-button-editor h3"
+).innerText = "Editar Botão";
+
+document.querySelector(
+  "#inline-button-editor button[onclick='saveInlineButtonEdit()']"
+).innerText = "Atualizar";
 
   document
     .getElementById(
