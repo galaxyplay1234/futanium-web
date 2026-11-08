@@ -2870,77 +2870,145 @@ async function preprocessImage(file) {
 }
 
 /* ===== parser OCR → linhas ===== */
-function parseTextToRows(text){
-  text = text
-    .replace(/[\u200B-\u200D\uFEFF]/g,'')
-    .replace(/[|]/g,'l')
-    .replace(/O(?=\d)/g,'0')
-    .replace(/I(?=\d)/g,'1')
-    .replace(/l(?=\d)/g,'1')
-    .replace(/S(?=\d)/g,'5')
-    .replace(/B(?=\d)/g,'8');
+/* ===== parser OCR → linhas ===== */
+function parseTextToRows(text) {
 
-  const rawLines = text.split('\n').map(x => x.trim()).filter(Boolean);
+  const normalizeText = str =>
+    (str || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
 
-  const lines = rawLines
-    .map(l => l.replace(/\t/g,' ').replace(/\s+/g,' ').trim())
-    .filter(l => l && !JUNK_RE.test(l));
+  const lines = text
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .split("\n")
+    .map(line => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
 
-  let currentChamp = '';
+  let currentChamp = "";
   const rows = [];
 
-  for (let i=0; i<lines.length; i++){
-    const line = lines[i];
+  // Identifica os campeonatos, mesmo com pequenos erros do OCR
+  function detectChamp(line) {
 
-    // Cabeçalho de competição (texto, sem hora)
-    const looksHeader = !TIME_INLINE_RE.test(line) &&
-      /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i.test(line);
+    const s = normalizeText(line);
 
-    if (looksHeader && !/\d/.test(line)){
-      currentChamp = resolveChamp365(line);
+    if (s.includes("taliano") || s.includes("italiano"))
+      return "Campeonato Italiano";
+
+    if (s.includes("espanhol"))
+      return "Campeonato Espanhol";
+
+    if (s.includes("ingles"))
+      return "Campeonato Inglês";
+
+    if (s.includes("frances"))
+      return "Campeonato Francês";
+
+    if (s.includes("alemao"))
+      return "Campeonato Alemão";
+
+    if (s.includes("portugues"))
+      return "Campeonato Português";
+
+    if (s.includes("brasileirao") || s.includes("serie b"))
+      return "Brasileirão - Série B";
+
+    if (s.includes("copa do brasil"))
+      return "Copa do Brasil - Semifinal";
+
+    if (s.includes("argentino"))
+      return "Campeonato Argentino - Clausura - Grupo A";
+
+    return null;
+  }
+
+  // Tenta corrigir o nome usando os times cadastrados
+  function resolveTeam(raw) {
+
+    let name = cleanTeamRaw(raw);
+
+    const normalized = normalizeText(name);
+
+    // Correções de erros frequentes do OCR
+    if (normalized.includes("marseile") ||
+        normalized.includes("marseille"))
+      return "Olympique de Marseille";
+
+    if (normalized.includes("koln"))
+      return "1. FC Köln";
+
+    if (normalized.includes("lanus"))
+      return "Lanús";
+
+    if (normalized.includes("vitoria guimaraes"))
+      return "Vitória Guimarães";
+
+    if (normalized.includes("schalke"))
+      return "Schalke 04";
+
+    // Procura correspondência nos times cadastrados
+    const match = fuzzyFindName(
+      name,
+      window.teamsCache || {},
+      0.62
+    );
+
+    return match || name;
+  }
+
+  for (const line of lines) {
+
+    // Primeiro verifica se é um cabeçalho de campeonato
+    const detectedChamp = detectChamp(line);
+
+    if (detectedChamp) {
+      currentChamp = detectedChamp;
       continue;
     }
 
-    // Casa / HH:MM / Fora (hora isolada no meio)
-    if (TIME_LINE_RE.test(line)) {
-      const prev = norm(lines[i-1] || '');
-      const next = norm(lines[i+1] || '');
-      const home = prev.replace(/^[\*\-•⭐]+/,'');
-      const away = next.replace(/^[\*\-•⭐]+/,'');
-      if (looksLikeTeam(home) && looksLikeTeam(away)) {
-        const [,hh,mm] = line.match(TIME_LINE_RE);
-        rows.push({ time: normalizeTime(`${hh}:${mm}`), champ: currentChamp || 'Amistoso', home, away });
-        i++;
-        continue;
-      }
-    }
+    // Localiza horários com ou sem dois-pontos
+    const timeMatch = line.match(
+      /\b(\d{1,2}\s*:\s*\d{2}|\d{1,2}\s*h\s*\d{2}|\d{3,4})\b/i
+    );
 
-    // "Casa HH:MM Fora" numa linha
-    if (TIME_INLINE_RE.test(line)) {
-      const m = line.match(TIME_INLINE_RE);
-      const timeRaw = m[1];
-      const left  = norm(line.slice(0, m.index)).replace(/^[\*\-•⭐]+/,'');
-      const right = norm(line.slice(m.index + timeRaw.length)).replace(/^[\*\-•⭐]+/,'');
-      if (looksLikeTeam(left) && looksLikeTeam(right)) {
-        rows.push({ time: normalizeTime(timeRaw), champ: currentChamp || 'Amistoso', home: left, away: right });
-        continue;
-      }
-    }
+    if (!timeMatch) continue;
+
+    const timeRaw = timeMatch[1];
+
+    const time = normalizeTime(timeRaw);
+
+    if (!time) continue;
+
+    // Separa o texto antes e depois do horário
+    const timeIndex = timeMatch.index;
+
+    const homeRaw = line.slice(0, timeIndex);
+    const awayRaw = line.slice(timeIndex + timeRaw.length);
+
+    const home = resolveTeam(homeRaw);
+    const away = resolveTeam(awayRaw);
+
+    // Ignora linhas que não parecem jogos
+    if (!home || !away) continue;
+
+    if (home.length < 2 || away.length < 2) continue;
+
+    rows.push({
+      time,
+      champ: currentChamp || "Amistoso",
+      home,
+      away
+    });
   }
 
-  // times: limpeza e tentativa de casar com o painel
-  return rows.map(r => {
-    const homeClean = cleanTeamRaw(r.home);
-    const awayClean = cleanTeamRaw(r.away);
-    const homeMatch = fuzzyFindName(homeClean, window.teamsCache, 0.85);
-const awayMatch = fuzzyFindName(awayClean, window.teamsCache, 0.85);
-    return {
-      time: r.time,
-      champ: resolveChamp365(r.champ), // <- campeonato já no formato final
-      home: homeMatch || homeClean,
-      away: awayMatch || awayClean
-    };
-  });
+  console.log("JOGOS IDENTIFICADOS:", rows.length);
+  console.table(rows);
+
+  return rows;
 }
 
 /* ===== UI ===== */
