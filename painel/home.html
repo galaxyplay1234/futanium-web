@@ -2900,13 +2900,17 @@ function parseTextToRows(text) {
     /(campeonato|liga|league|serie|bundesliga|brasileir|copa|cup|clausura|apertura|torneo|superbet|laliga)/i;
 
   for (const line of rawLines) {
-    const timeMatch = line.match(timeRegex);
+    // Cabeçalho de campeonato: identifica mesmo quando o OCR
+// coloca números ou símbolos antes do nome.
+if (headerRegex.test(line)) {
+  currentChamp = resolveChamp365(
+    line.replace(/^[^A-Za-zÀ-ÿ0-9]*/, "")
+       .replace(/^[0-9]+\s*/, "")
+  );
+  continue;
+}
 
-    // Cabeçalho de campeonato
-    if (!timeMatch && headerRegex.test(line)) {
-      currentChamp = resolveChamp365(line);
-      continue;
-    }
+const timeMatch = line.match(timeRegex);
 
     if (!timeMatch) continue;
 
