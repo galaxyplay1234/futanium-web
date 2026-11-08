@@ -2912,14 +2912,22 @@ if (headerRegex.test(line)) {
 
 const timeMatch = line.match(timeRegex);
 
-    if (!timeMatch) continue;
+// Só considera cabeçalho quando não existe horário válido.
+if (headerRegex.test(line)) {
+  const possibleHeader = line
+    .replace(/^[^A-Za-zÀ-ÿ0-9]*/, "")
+    .replace(/^[0-9]+\s*/, "");
 
-    const time = normalizeOCRTime(timeMatch[1]);
+  const hasValidTime = timeMatch &&
+    normalizeOCRTime(timeMatch[1]);
 
-    if (!time) {
-      unmatched.push(line);
-      continue;
-    }
+  if (!hasValidTime) {
+    currentChamp = resolveChamp365(possibleHeader);
+    continue;
+  }
+}
+
+if (!timeMatch) continue;
 
     const position = timeMatch.index;
     const leftRaw = line.slice(0, position);
@@ -3093,6 +3101,8 @@ console.log("TOTAL DE LINHAS OCR:", text.split("\n").length);
 console.log("TEXTO COMPLETO OCR:", text);
 
     importedRows = parseTextToRows(text);
+    console.table(importedRows);
+console.log("TOTAL FINAL:", importedRows.length);
 
     // preview (mostra o que será salvo)
     tbody.innerHTML = '';
