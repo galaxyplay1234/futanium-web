@@ -3741,7 +3741,10 @@ if (!selectedDate) {
     channels: []
   };
 
-  await addDoc(collection(db,'games'), payload);
+  await apiRequest("/api/games", {
+  method: "POST",
+  body: JSON.stringify(payload)
+});
 }
 
     importedRows = [];
