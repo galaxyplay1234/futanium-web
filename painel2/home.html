@@ -905,8 +905,51 @@ const firebaseConfig = {
     measurementId: "G-L2RV01TXJC"
   };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+
+// ===== API FUTANIUM PAINEL 2 =====
+
+const API_URL = "https://futanium-painel-2-api.galaxyplay1234.workers.dev";
+
+let API_TOKEN = "";
+
+async function apiRequest(path, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
+
+  if (API_TOKEN) {
+    headers.Authorization = `Bearer ${API_TOKEN}`;
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || "Erro na API");
+  }
+
+  return result;
+}
+
+async function apiLogin(username, password) {
+  const result = await apiRequest("/api/login", {
+    method: "POST",
+    body: JSON.stringify({
+      username,
+      password
+    })
+  });
+
+  API_TOKEN = result.token;
+
+  return result;
+}
+
 
 // ===== MONITOR FIRESTORE =====
 
