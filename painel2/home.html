@@ -1486,18 +1486,33 @@ function startGamesListener() {
 }
 
 // ===== Auth & Tabs =====
-window.login = function() {
+
+window.login = async function() {
   const u = document.getElementById("username").value;
   const p = document.getElementById("password").value;
+
   if (u === USER && p === PASS) {
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-    showTab('home', true); // abre Home direto e força ativo
-    loadData();
+    try {
+      await apiLogin(u, p);
+
+      document.getElementById("login-error").classList.add("hidden");
+      document.getElementById("login-screen").classList.add("hidden");
+      document.getElementById("dashboard").classList.remove("hidden");
+
+      showTab("home", true);
+      await loadData();
+
+    } catch (error) {
+      console.error("Erro ao conectar com Worker:", error);
+
+      alert("Erro ao conectar com a API. Verifique os Secrets do Worker.");
+
+    }
   } else {
     document.getElementById("login-error").classList.remove("hidden");
   }
 };
+
 
 window.showTab = function(tab, forceActive = false, resetForm = false) {
   // Esconde todas as abas
