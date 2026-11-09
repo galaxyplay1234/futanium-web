@@ -2653,61 +2653,75 @@ function renderGames() {
 
   
 
-window.deleteGame = async function(id){
-  await deleteDoc(doc(db,"games",id));
+
+window.deleteGame = async function(id) {
+  try {
+    await apiRequest(`/api/games/${id}`, {
+      method: "DELETE"
+    });
+
+    await startGamesListener();
+
+    alert("Jogo excluído com sucesso!");
+
+  } catch (error) {
+    console.error("Erro ao excluir jogo:", error);
+    alert("Erro ao excluir jogo: " + error.message);
+  }
 };
 
-window.editGame = async function(id){
-  const snap = await getDoc(doc(db,"games",id));
-  if(!snap.exists()) return;
-  const g = snap.data();
 
-  // garante que selects estejam populados
-  await loadChamps();
-  await loadTeams();
-  await loadButtons();
+window.editGame = async function(id) {
+  try {
+    const g = await apiRequest(`/api/games/${id}`);
 
-  // 👇 força sincronização do Select2 depois de preencher os selects
-  $('#game-champ').val(g.champ || "").trigger('change.select2');
-  $('#game-home-team').val(g.home || "").trigger('change.select2');
-  $('#game-away-team').val(g.away || "").trigger('change.select2');
+    // Garante que os selects estejam populados
+    await loadChamps();
+    await loadTeams();
+    await loadButtons();
 
-  const ch = g.channels || [];
+    $('#game-champ').val(g.champ || "").trigger('change.select2');
+    $('#game-home-team').val(g.home || "").trigger('change.select2');
+    $('#game-away-team').val(g.away || "").trigger('change.select2');
 
-function findButtonValue(channel) {
+    const ch = g.channels || [];
 
-  if (!channel) return null;
+    function findButtonValue(channel) {
+      if (!channel) return null;
 
-  const btn = buttonsMemory.find(
-    b => b.name === channel.name
-  );
+      const btn = buttonsMemory.find(
+        b => b.name === channel.name
+      );
 
-  return btn ? btn.link : channel.url;
-}
+      return btn ? btn.link : channel.url;
+    }
 
-$('#game-channel1').val(findButtonValue(ch[0])).trigger('change.select2');
-$('#game-channel2').val(findButtonValue(ch[1])).trigger('change.select2');
-$('#game-channel3').val(findButtonValue(ch[2])).trigger('change.select2');
-$('#game-channel4').val(findButtonValue(ch[3])).trigger('change.select2');
+    $('#game-channel1').val(findButtonValue(ch[0])).trigger('change.select2');
+    $('#game-channel2').val(findButtonValue(ch[1])).trigger('change.select2');
+    $('#game-channel3').val(findButtonValue(ch[2])).trigger('change.select2');
+    $('#game-channel4').val(findButtonValue(ch[3])).trigger('change.select2');
 
-  document.getElementById("game-time").value = g.time || "";
-  document.getElementById("game-date").value = g.date || "";
-  
-  document.getElementById(
-  "game-hide-game"
-).checked =
-  g.hideGame || false;
-  
-  
-  document.getElementById(
-  "game-hide-channels"
-).checked =
-  g.hideChannels || false;
+    document.getElementById("game-time").value = g.time || "";
+    document.getElementById("game-date").value = g.date || "";
 
-  currentEditId = id;
-  document.getElementById("form-title").innerText = "Editar Jogo";
-  showTab('addgame');
+    document.getElementById("game-hide-game").checked =
+      g.hideGame || false;
+
+    document.getElementById("game-hide-channels").checked =
+      g.hideChannels || false;
+
+    currentEditId = id;
+
+    document.getElementById("form-title").innerText = "Editar Jogo";
+
+    showTab("addgame");
+
+  } catch (error) {
+    console.error("Erro ao carregar jogo para edição:", error);
+    alert("Erro ao abrir jogo: " + error.message);
+  }
 };
+
 
 // ===== Carregar tudo =====
 async function loadData(){
