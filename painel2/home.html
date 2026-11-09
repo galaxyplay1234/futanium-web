@@ -2277,114 +2277,129 @@ window.copyButtonLink = async function(link) {
   }
 };
 
+
 // ===== Jogos (Adicionar / Editar) =====
-document.getElementById("game-form").addEventListener("submit", async e=>{
+
+document.getElementById("game-form").addEventListener("submit", async e => {
   e.preventDefault();
 
-  // 👇 força atualização dos selects Select2 antes de coletar valores
-  $('#game-champ').trigger('change.select2');
-  $('#game-home-team').trigger('change.select2');
-  $('#game-away-team').trigger('change.select2');
-  $('#game-channel1').trigger('change.select2');
-  $('#game-channel2').trigger('change.select2');
-  $('#game-channel3').trigger('change.select2');
-  $('#game-channel4').trigger('change.select2');
+  try {
+    // Atualiza os Select2
+    $('#game-champ').trigger('change.select2');
+    $('#game-home-team').trigger('change.select2');
+    $('#game-away-team').trigger('change.select2');
 
-  const champ = document.getElementById("game-champ").value;
-  const home  = document.getElementById("game-home-team").value;
-  const away  = document.getElementById("game-away-team").value;
-  const time  = document.getElementById("game-time").value;
-  const date  = document.getElementById("game-date").value;
-  
-  
-  const hideGame =
-  document.getElementById(
-    "game-hide-game"
-  ).checked;
-  
-  const hideChannels =
-  document.getElementById(
-    "game-hide-channels"
-  ).checked;
+    [1, 2, 3, 4].forEach(n => {
+      $(`#game-channel${n}`).trigger('change.select2');
+    });
 
-  // coleta canais selecionados (valor = link). Nome "Canal X" é fixo.
-  // coleta canais selecionados (valor = link, nome = texto real do botão)
-const selected = [1, 2, 3, 4]
-.map(n => {
+    const champ = document.getElementById("game-champ").value;
+    const home = document.getElementById("game-home-team").value;
+    const away = document.getElementById("game-away-team").value;
+    const time = document.getElementById("game-time").value;
+    const date = document.getElementById("game-date").value;
 
-  const select =
-    document.getElementById(`game-channel${n}`);
+    const hideGame = document.getElementById("game-hide-game").checked;
+    const hideChannels = document.getElementById("game-hide-channels").checked;
 
-  const btn =
-    buttonsMemory.find(
-      b => b.link === select.value
-    );
+    // Coleta os canais selecionados
+    const selected = [1, 2, 3, 4]
+      .map(n => {
+        const select = document.getElementById(`game-channel${n}`);
 
-  return {
-    name: select.selectedOptions[0]?.text || "",
-    url: select.value,
-    captureM3u8: btn?.captureM3u8 || false
-  };
+        const btn = buttonsMemory.find(
+          b => b.link === select.value
+        );
 
-})
-.filter(c => c.url);
+        return {
+          name: select.selectedOptions[0]?.text || "",
+          url: select.value,
+          captureM3u8: btn?.captureM3u8 || false
+        };
+      })
+      .filter(c => c.url);
 
-  if(!champ || !home || !away || !time) return;
+    if (!champ || !home || !away || !time) {
+      alert("Preencha os campos obrigatórios.");
+      return;
+    }
 
-  // Buscar logo do campeonato
-  let champLogo = "";
-champsMemory.forEach(c => {
-  if(c.name === champ) champLogo = c.logo;
+    // Logo do campeonato
+    let champLogo = "";
+    champsMemory.forEach(c => {
+      if (c.name === champ) champLogo = c.logo;
+    });
+
+    // Logos dos times
+    let homeLogo = "";
+    let awayLogo = "";
+
+    teamsMemory.forEach(t => {
+      if (t.name === home) homeLogo = t.logo;
+      if (t.name === away) awayLogo = t.logo;
+    });
+
+    const payload = {
+      champ,
+      champ_logo: champLogo,
+      home,
+      home_logo: homeLogo,
+      away,
+      away_logo: awayLogo,
+      time,
+      date,
+      hideGame,
+      hideChannels,
+      channels: selected
+    };
+
+    // Jogos que receberão os mesmos canais
+    const checkedIds = Array.from(
+      document.querySelectorAll(".copy-game-checkbox:checked")
+    ).map(cb => cb.value);
+
+    // Salvar ou editar jogo no D1
+    if (currentEditId) {
+      await apiRequest(`/api/games/${currentEditId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload)
+      });
+
+      currentEditId = null;
+      document.getElementById("form-title").innerText = "Adicionar Jogo";
+
+    } else {
+      await apiRequest("/api/games", {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+    }
+
+    // Copiar canais para os outros jogos no D1
+    for (const gameId of checkedIds) {
+      await apiRequest(`/api/games/${gameId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          channels: selected
+        })
+      });
+    }
+
+    alert("Jogo salvo com sucesso!");
+
+    document.getElementById("game-form").reset();
+
+    showTab("home");
+
+    // Atualiza a lista
+    await startGamesListener();
+
+  } catch (error) {
+    console.error("Erro ao salvar jogo:", error);
+    alert("Erro ao salvar jogo: " + error.message);
+  }
 });
 
-  // Buscar logo dos times
-  let homeLogo = "";
-let awayLogo = "";
-
-teamsMemory.forEach(t => {
-  if(t.name === home) homeLogo = t.logo;
-  if(t.name === away) awayLogo = t.logo;
-});
-
-  const payload = {
-  champ,
-  champ_logo: champLogo,
-  home,
-  home_logo: homeLogo,
-  away,
-  away_logo: awayLogo,
-  time,
-  date,
-  hideGame,
-  hideChannels,
-  channels: selected
-};
-
-  // 🔥 PEGA OS IDS MARCADOS ANTES DE SALVAR
-const checkedIds = Array.from(
-  document.querySelectorAll(".copy-game-checkbox:checked")
-).map(cb => cb.value);
-
-// 🔥 SALVA O JOGO ATUAL
-if(currentEditId){
-  await updateDoc(doc(db,"games",currentEditId), payload);
-  currentEditId = null;
-  document.getElementById("form-title").innerText = "Adicionar Jogo";
-} else {
-  await addDoc(collection(db,"games"), payload);
-}
-
-// 🔥 AGORA COPIA PARA OS OUTROS
-for (const gameId of checkedIds) {
-  await updateDoc(doc(db, "games", gameId), {
-    channels: selected
-  });
-}
-
-  document.getElementById("game-form").reset();
-  
-  showTab('home');
-});
 
 function renderGames() {
 
