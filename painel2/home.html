@@ -1461,29 +1461,30 @@ let gamesUnsubscribe = null;
 import { query, orderBy } from 
 "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
-function startGamesListener() {
 
-  if (gamesUnsubscribe) return;
+async function startGamesListener() {
+  try {
+    const games = await apiRequest("/api/games");
 
-  gamesUnsubscribe = onSnapshot(
-    collection(db, "games"),
-    snapshot => {
+    gamesMemory = Array.isArray(games) ? games : [];
 
-      gamesMemory = [];
+    renderGames();
 
-      snapshot.forEach(docSnap => {
-        gamesMemory.push({ id: docSnap.id, ...docSnap.data() });
-      });
-
-      renderGames();
-
-      // 🔥 Se estiver na aba adicionar jogo, atualiza lista copiar canais
-      if (!document.getElementById("tab-addgame").classList.contains("hidden")) {
-        renderMoreGamesList();
-      }
+    // Atualiza a lista de jogos para copiar canais
+    if (
+      !document
+        .getElementById("tab-addgame")
+        .classList.contains("hidden")
+    ) {
+      renderMoreGamesList();
     }
-  );
+
+  } catch (error) {
+    console.error("Erro ao carregar jogos do D1:", error);
+    alert("Não foi possível carregar os jogos do D1.");
+  }
 }
+
 
 // ===== Auth & Tabs =====
 
