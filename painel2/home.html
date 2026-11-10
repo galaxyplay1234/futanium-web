@@ -1065,59 +1065,89 @@ function renderConsoleHistory(logs) {
   `).join("");
 }
 
+
+// ===== ANALYTICS REAL DO CLOUDFLARE D1 =====
+
 let consoleLoading = false;
 
 window.loadConsoleHistory = async function() {
-  const container = document.getElementById("console-log");
 
-  if (!container || !API_TOKEN || consoleLoading) return;
+  if (!API_TOKEN || consoleLoading) return;
 
   consoleLoading = true;
 
-  container.innerHTML =
-    '<div class="text-gray-400">Carregando atividades...</div>';
+  const readsEl = document.getElementById("console-reads");
+  const writesEl = document.getElementById("console-writes");
+
+  const readsPercent = document.getElementById("console-reads-percent");
+  const writesPercent = document.getElementById("console-writes-percent");
 
   try {
-    // Sem parâmetro de data:
-    // o Worker retorna automaticamente o dia UTC atual.
-    const logs = await apiRequest("/api/activity-logs");
 
-    renderConsoleHistory(Array.isArray(logs) ? logs : []);
+    readsPercent.textContent = "Consultando Cloudflare...";
+    writesPercent.textContent = "Consultando Cloudflare...";
+
+    // Consulta os dados reais do D1
+    const data = await apiRequest("/api/d1-usage");
+
+    if (!data.success) {
+      throw new Error("Resposta inválida do Analytics.");
+    }
+
+    const number = value =>
+      Number(value || 0).toLocaleString("pt-BR");
+
+    // Leituras
+    readsEl.textContent = number(data.reads.rows);
+
+    readsPercent.textContent =
+      `${number(data.reads.percentage)}% utilizado`;
+
+    // Gravações
+    writesEl.textContent = number(data.writes.rows);
+
+    writesPercent.textContent =
+      `${number(data.writes.percentage)}% utilizado`;
+
+    // Atualizações
+    document.getElementById("console-updates").textContent =
+      number(data.updates);
+
+    // Exclusões
+    document.getElementById("console-deletes").textContent =
+      number(data.deletes);
+
+    console.log("Cloudflare D1 Analytics:", data);
 
   } catch (error) {
-    console.error("Erro ao carregar histórico:", error);
 
-    container.innerHTML = `
-      <div class="text-red-500">
-        Erro ao carregar histórico:
-        ${escapeConsoleHTML(error.message)}
-      </div>
-    `;
+    console.error("Erro ao consultar D1:", error);
+
+    readsPercent.textContent = "Erro: " + error.message;
+    writesPercent.textContent = "Erro ao consultar";
+
   } finally {
+
     consoleLoading = false;
+
   }
 };
 
-// Detecta a virada diária do Cloudflare.
-// Só faz uma nova consulta quando o dia UTC muda.
-let lastConsoleDay = getCloudflareDay();
-
+// Atualização automática a cada 60 segundos
 setInterval(() => {
-  const currentDay = getCloudflareDay();
 
-  if (currentDay !== lastConsoleDay) {
-    lastConsoleDay = currentDay;
+  const tab = document.getElementById("tab-console");
 
-    const consoleTab = document.getElementById("tab-console");
-
-    if (
-      consoleTab &&
-      !consoleTab.classList.contains("hidden")
-    ) {
-      loadConsoleHistory();
-    }
+  if (
+    tab &&
+    !tab.classList.contains("hidden") &&
+    API_TOKEN
+  ) {
+    loadConsoleHistory();
   }
-}, 30000);
+
+}, 60000);
+
 
 
 
