@@ -571,18 +571,34 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </div>
 
 
-<!-- Console Firestore -->
+
+<!-- Console Cloudflare D1 -->
 <div id="tab-console" class="tab-content hidden">
 
-  <div class="flex justify-between items-center mb-4">
+  <div class="flex justify-between items-center mb-4 gap-2">
     <h2 class="text-lg sm:text-xl font-semibold">
-      Monitor Firestore
+      Monitor Cloudflare D1
     </h2>
 
-    <button onclick="clearFirestoreConsole()"
-      class="bg-red-500 text-white px-3 py-1 rounded text-sm">
-      Limpar
+    <button onclick="loadConsoleHistory()"
+      class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+      Atualizar
     </button>
+  </div>
+
+  <div class="bg-white rounded shadow p-3 mb-4">
+    <label for="console-date"
+      class="block text-sm font-semibold mb-2">
+      Histórico diário
+    </label>
+
+    <select id="console-date"
+      class="w-full p-2 border rounded">
+    </select>
+
+    <p class="text-xs text-gray-500 mt-2">
+      O dia acompanha a virada UTC do Cloudflare (21h em Brasília).
+    </p>
   </div>
 
   <div class="grid grid-cols-2 gap-3 mb-4">
@@ -616,16 +632,19 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   <div class="bg-white rounded shadow overflow-hidden">
 
     <div class="p-3 border-b flex justify-between items-center">
-      <span class="font-semibold">Atividades recentes</span>
+      <span class="font-semibold">Histórico de atividades</span>
+
       <span id="console-total"
-        class="text-xs text-gray-500">0 operações</span>
+        class="text-xs text-gray-500">
+        0 operações
+      </span>
     </div>
 
     <div id="console-log"
       class="p-3 space-y-2 max-h-[550px] overflow-y-auto text-xs font-mono">
 
       <div class="text-gray-400">
-        Aguardando operações do Firestore...
+        Carregando histórico...
       </div>
 
     </div>
@@ -633,6 +652,7 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   </div>
 
 </div>
+
 
 
 <!-- Importar (imagem -> jogos) -->
@@ -927,27 +947,7 @@ async function apiRequest(path, options = {}) {
     throw new Error(result.error || "Erro na API");
   }
 
-  // Registra operações do D1, sem contar o login
-  if (!path.startsWith("/api/login")) {
-
-    const collectionName = path.split("/")[2] || "API";
-
-    const types = {
-      GET: "READ",
-      POST: "WRITE",
-      PUT: "UPDATE",
-      PATCH: "UPDATE",
-      DELETE: "DELETE"
-    };
-
-    const type = types[method];
-
-    if (type) {
-      logFirestore(type, collectionName, 1);
-    }
-  }
-
-  return result;
+    return result;
 }
 
 
@@ -973,26 +973,70 @@ async function apiLogin(username, password) {
 }
 
 
-// ===== MONITOR D1 =====
 
+// ===== HISTÓRICO PERMANENTE DO D1 =====
 
+function getCloudflareDay() {
+  return new Date().toISOString().slice(0, 10);
+}
 
-// ===== MONITOR FIRESTORE =====
+function escapeConsoleHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
+}
 
-const firestoreStats = {
-  reads: 0,
-  writes: 0,
-  updates: 0,
-  deletes: 0
-};
-
-let firestoreLogs = [];
-
-function logFirestore(type, collectionName, amount = 1) {
-
-  const now = new Date().toLocaleTimeString("pt-BR", {
-    timeZone: "America/Sao_Paulo"
+function formatConsoleTime(value) {
+  return new Date(value).toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
   });
+}
+
+function renderConsoleHistory(logs) {
+  const stats = {
+    READ: 0,
+    WRITE: 0,
+    UPDATE: 0,
+    DELETE: 0
+  };
+
+  logs.forEach(log => {
+    if (stats[log.type] !== undefined) {
+      stats[log.type]++;
+    }
+  });
+
+  document.getElementById("console-reads").textContent =
+    stats.READ;
+
+  document.getElementById("console-writes").textContent =
+    stats.WRITE;
+
+  document.getElementById("console-updates").textContent =
+    stats.UPDATE;
+
+  document.getElementById("console-deletes").textContent =
+    stats.DELETE;
+
+  document.getElementById("console-total").textContent =
+    `${logs.length} operações`;
+
+  const container = document.getElementById("console-log");
+
+  if (!logs.length) {
+    container.innerHTML =
+      '<div class="text-gray-400">Nenhuma atividade registrada neste dia.</div>';
+    return;
+  }
 
   const colors = {
     READ: "text-blue-600",
@@ -1001,95 +1045,93 @@ function logFirestore(type, collectionName, amount = 1) {
     DELETE: "text-red-600"
   };
 
-  if (type === "READ") firestoreStats.reads += amount;
-  if (type === "WRITE") firestoreStats.writes += amount;
-  if (type === "UPDATE") firestoreStats.updates += amount;
-  if (type === "DELETE") firestoreStats.deletes += amount;
+  const labels = {
+    READ: "LEITURA",
+    WRITE: "GRAVAÇÃO",
+    UPDATE: "ATUALIZAÇÃO",
+    DELETE: "EXCLUSÃO"
+  };
 
-  firestoreLogs.unshift({
-    time: now,
-    type,
-    collection: collectionName,
-    amount
-  });
+  container.innerHTML = logs.map(log => `
+    <div class="border-b pb-2">
+      <div class="flex justify-between gap-2">
+        <span class="${colors[log.type] || "text-gray-600"} font-bold">
+          ${labels[log.type] || escapeConsoleHTML(log.type)}
+        </span>
 
-  firestoreLogs = firestoreLogs.slice(0, 100);
+        <span class="text-gray-400 whitespace-nowrap">
+          ${escapeConsoleHTML(formatConsoleTime(log.created_at))}
+        </span>
+      </div>
 
-  renderFirestoreConsole();
+      <div class="text-gray-700 mt-1">
+        ${escapeConsoleHTML(log.description)}
+      </div>
+
+      <div class="text-gray-400 mt-1">
+        Coleção: ${escapeConsoleHTML(log.collection)}
+      </div>
+    </div>
+  `).join("");
 }
 
-function renderFirestoreConsole() {
-
-  const reads = document.getElementById("console-reads");
-  if (!reads) return;
-
-  document.getElementById("console-reads").textContent =
-    firestoreStats.reads;
-
-  document.getElementById("console-writes").textContent =
-    firestoreStats.writes;
-
-  document.getElementById("console-updates").textContent =
-    firestoreStats.updates;
-
-  document.getElementById("console-deletes").textContent =
-    firestoreStats.deletes;
-
-  document.getElementById("console-total").textContent =
-    `${firestoreLogs.length} operações registradas`;
-
+window.loadConsoleHistory = async function() {
   const container = document.getElementById("console-log");
+  const dateSelect = document.getElementById("console-date");
 
-  if (!firestoreLogs.length) {
-    container.innerHTML =
-      '<div class="text-gray-400">Aguardando operações...</div>';
-    return;
-  }
+  if (!container || !dateSelect) return;
 
-  container.innerHTML = firestoreLogs.map(log => {
+  container.innerHTML =
+    '<div class="text-gray-400">Carregando histórico...</div>';
 
-    const colors = {
-      READ: "text-blue-600",
-      WRITE: "text-green-600",
-      UPDATE: "text-yellow-600",
-      DELETE: "text-red-600"
-    };
+  try {
+    // Busca os dias que já possuem registros.
+    const dates = await apiRequest("/api/activity-logs/dates");
 
-    return `
-      <div class="border-b pb-2">
-        <div class="flex justify-between gap-2">
-          <span class="${colors[log.type]} font-bold">
-            ${log.type}
-          </span>
+    const today = getCloudflareDay();
+    const previousDate = dateSelect.value;
 
-          <span class="text-gray-400">
-            ${log.time}
-          </span>
-        </div>
+    const availableDates = [...new Set([
+      today,
+      ...(Array.isArray(dates) ? dates : [])
+    ])].sort((a, b) => b.localeCompare(a));
 
-        <div class="text-gray-700 mt-1">
-          ${log.collection}
-          <span class="text-gray-400">
-            · ${log.amount} documento(s)
-          </span>
-        </div>
+    dateSelect.innerHTML = availableDates.map(date => `
+      <option value="${escapeConsoleHTML(date)}">
+        ${escapeConsoleHTML(date)}
+        ${date === today ? " (hoje)" : ""}
+      </option>
+    `).join("");
+
+    dateSelect.value = availableDates.includes(previousDate)
+      ? previousDate
+      : today;
+
+    // Busca as atividades do dia selecionado.
+    const selectedDate = dateSelect.value;
+
+    const logs = await apiRequest(
+      `/api/activity-logs?date=${encodeURIComponent(selectedDate)}`
+    );
+
+    renderConsoleHistory(Array.isArray(logs) ? logs : []);
+
+  } catch (error) {
+    console.error("Erro ao carregar histórico:", error);
+
+    container.innerHTML = `
+      <div class="text-red-500">
+        Erro ao carregar histórico: ${escapeConsoleHTML(error.message)}
       </div>
     `;
-
-  }).join("");
-}
-
-window.clearFirestoreConsole = function() {
-
-  firestoreStats.reads = 0;
-  firestoreStats.writes = 0;
-  firestoreStats.updates = 0;
-  firestoreStats.deletes = 0;
-
-  firestoreLogs = [];
-
-  renderFirestoreConsole();
+  }
 };
+
+// Troca o histórico quando selecionar outro dia.
+document.getElementById("console-date").addEventListener(
+  "change",
+  window.loadConsoleHistory
+);
 
 
 
@@ -1472,6 +1514,10 @@ if (tab === "buttons") {
   
   if (tab === "addgame") {
   renderMoreGamesList();
+}
+
+if (tab === "console") {
+  loadConsoleHistory();
 }
 
 if (tab === "import") {
