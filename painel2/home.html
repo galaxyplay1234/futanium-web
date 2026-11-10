@@ -1875,8 +1875,9 @@ clearTeamBtn.addEventListener("click", function() {
   loadTeams();
 });
 
-// ===== Campeonatos =====
-document.getElementById("champ-form").addEventListener("submit", async e=>{
+// ===== Campeonatos - D1 =====
+
+document.getElementById("champ-form").addEventListener("submit", async e => {
   e.preventDefault();
 
   const nameEl = document.getElementById("champ-name");
@@ -1884,66 +1885,84 @@ document.getElementById("champ-form").addEventListener("submit", async e=>{
 
   const name = nameEl.value.trim();
   const logo = logoEl.value.trim();
-  if(!name || !logo) return;
 
-  if(currentChampEditId){
+  if (!name || !logo) return;
 
-    await updateDoc(doc(db,"championships",currentChampEditId), { name, logo });
+  try {
+    if (currentChampEditId) {
 
-    // 🔥 Atualiza apenas na memória
-    const index = champsMemory.findIndex(c => c.id === currentChampEditId);
-    if(index !== -1){
-      champsMemory[index].name = name;
-      champsMemory[index].logo = logo;
+      await apiRequest(`/api/championships/${currentChampEditId}`, {
+        method: "PUT",
+        body: JSON.stringify({ name, logo })
+      });
+
+      const index = champsMemory.findIndex(
+        c => c.id === currentChampEditId
+      );
+
+      if (index !== -1) {
+        champsMemory[index].name = name;
+        champsMemory[index].logo = logo;
+      }
+
+      currentChampEditId = null;
+      document.getElementById("champ-submit").innerText = "Adicionar";
+
+    } else {
+
+      const result = await apiRequest("/api/championships", {
+        method: "POST",
+        body: JSON.stringify({ name, logo })
+      });
+
+      champsMemory.push({
+        id: result.id,
+        name,
+        logo
+      });
     }
 
-    currentChampEditId = null;
-    document.getElementById("champ-submit").innerText = "Adicionar";
+    nameEl.value = "";
+    logoEl.value = "";
 
-  } else {
+    autoResizeTextarea(nameEl);
+    autoResizeTextarea(logoEl);
 
-    const docRef = await addDoc(collection(db,"championships"), { name, logo });
+    await loadChamps();
 
-    // 🔥 Adiciona só o novo campeonato na memória
-    champsMemory.push({
-      id: docRef.id,
-      name,
-      logo
-    });
+    alert("Campeonato salvo no D1!");
+
+  } catch (error) {
+    console.error("Erro ao salvar campeonato:", error);
+    alert("Erro ao salvar campeonato: " + error.message);
   }
-
-  nameEl.value = "";
-  logoEl.value = "";
-  autoResizeTextarea(nameEl);
-  autoResizeTextarea(logoEl);
-
-  await loadChamps(); // ⚡ SEM force
 });
 
-async function loadChamps(force = false){
 
-  if(!champsMemory.length || force){
-    const q = await getDocs(collection(db,"championships"));
-    champsMemory = [];
-    q.forEach(docSnap =>
-      champsMemory.push({ id: docSnap.id, ...docSnap.data() })
-    );
+async function loadChamps(force = false) {
+
+  if (!champsMemory.length || force) {
+    const result = await apiRequest("/api/championships");
+    champsMemory = Array.isArray(result) ? result : [];
   }
 
   const champsArr = [...champsMemory];
 
   champsArr.sort((a, b) =>
-    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
+    a.name.localeCompare(b.name, "pt", { sensitivity: "base" })
   );
 
   const tbody = document.getElementById("champions-list");
   tbody.innerHTML = "";
 
   const champSel = document.getElementById("game-champ");
+
   resetSelect(champSel, "Selecione o Campeonato");
 
   champsArr.forEach(c => {
+
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
       <td class="p-2">${c.name}</td>
       <td class="p-2"><img src="${c.logo}" class="h-6"></td>
@@ -1952,40 +1971,55 @@ async function loadChamps(force = false){
           class="bg-yellow-500 text-white px-2 py-1 rounded">
           Editar
         </button>
+
         <button onclick="deleteChamp('${c.id}')"
           class="bg-red-500 text-white px-2 py-1 rounded">
           Excluir
         </button>
       </td>
     `;
+
     tbody.appendChild(tr);
 
     champSel.appendChild(new Option(c.name, c.name));
   });
 
   window.champsCache = {};
+
   champsArr.forEach(c => {
     window.champsCache[c.name] = c.logo;
   });
 }
 
-window.deleteChamp = async function(id){
-  await deleteDoc(doc(db,"championships",id));
 
-  // 🔥 Remove só da memória
-  champsMemory = champsMemory.filter(c => c.id !== id);
+window.deleteChamp = async function(id) {
 
-  await loadChamps();
+  try {
+    await apiRequest(`/api/championships/${id}`, {
+      method: "DELETE"
+    });
+
+    champsMemory = champsMemory.filter(c => c.id !== id);
+
+    await loadChamps();
+
+    alert("Campeonato excluído do D1!");
+
+  } catch (error) {
+    console.error("Erro ao excluir campeonato:", error);
+    alert("Erro ao excluir campeonato: " + error.message);
+  }
 };
 
-window.editChamp = function(id, name, logo){
+
+window.editChamp = function(id, name, logo) {
+
   const nameEl = document.getElementById("champ-name");
   const logoEl = document.getElementById("champ-logo");
 
   nameEl.value = name;
   logoEl.value = logo;
 
-  // 🔥 força recalcular o tamanho imediatamente
   nameEl.style.height = "auto";
   nameEl.style.height = nameEl.scrollHeight + "px";
 
@@ -1993,9 +2027,10 @@ window.editChamp = function(id, name, logo){
   logoEl.style.height = logoEl.scrollHeight + "px";
 
   currentChampEditId = id;
+
   document.getElementById("champ-submit").innerText = "Atualizar";
 
-  showTab('champions');
+  showTab("champions");
 
   setTimeout(() => {
     const form = document.getElementById("champ-form");
@@ -2008,7 +2043,9 @@ window.editChamp = function(id, name, logo){
   }, 150);
 };
 
-window.cancelChampEdit = function(){
+
+window.cancelChampEdit = function() {
+
   currentChampEditId = null;
 
   const nameEl = document.getElementById("champ-name");
@@ -2017,9 +2054,8 @@ window.cancelChampEdit = function(){
   nameEl.value = "";
   logoEl.value = "";
 
-  // 🔥 volta pro tamanho padrão
   autoResizeTextarea(nameEl);
-autoResizeTextarea(logoEl);
+  autoResizeTextarea(logoEl);
 
   document.getElementById("champ-submit").innerText = "Adicionar";
 
