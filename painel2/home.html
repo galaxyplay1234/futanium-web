@@ -951,6 +951,31 @@ async function apiRequest(path, options = {}) {
 }
 
 
+// ===== LOGIN NO WORKER =====
+
+async function apiLogin(username, password) {
+
+  const result = await apiRequest("/api/login", {
+    method: "POST",
+    body: JSON.stringify({
+      username,
+      password
+    })
+  });
+
+  API_TOKEN = result.token;
+
+  if (!API_TOKEN) {
+    throw new Error("O Worker não retornou o token.");
+  }
+
+  return result;
+}
+
+
+// ===== MONITOR D1 =====
+
+
 
 // ===== MONITOR FIRESTORE =====
 
@@ -2740,7 +2765,7 @@ async function loadData(){
   await loadTeams();
   await loadChamps();
   await loadButtons();
-  startGamesListener(); // 👈 aqui
+  await startGamesListener();
   listenAnalytics();
 }
 
