@@ -1773,13 +1773,22 @@ teamsMemory.forEach(t => {
 });
 }
 
-window.deleteTeam = async function(id){
-  await deleteDoc(doc(db,"teams",id));
+window.deleteTeam = async function(id) {
+  try {
+    await apiRequest(`/api/teams/${id}`, {
+      method: "DELETE"
+    });
 
-  // 🔥 Remove só da memória
-  teamsMemory = teamsMemory.filter(t => t.id !== id);
+    teamsMemory = teamsMemory.filter(t => t.id !== id);
 
-  await loadTeams();
+    await loadTeams();
+
+    alert("Time excluído do D1!");
+
+  } catch (error) {
+    console.error("Erro ao excluir time:", error);
+    alert("Erro ao excluir time: " + error.message);
+  }
 };
   
   
