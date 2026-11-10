@@ -1709,13 +1709,10 @@ document.getElementById("team-form").addEventListener("submit", async e => {
 
 async function loadTeams(filter = "", force = false){
 
-  if(!teamsMemory.length || force){
-    const q = await getDocs(collection(db, "teams"));
-    teamsMemory = [];
-    q.forEach(docSnap => 
-      teamsMemory.push({ id: docSnap.id, ...docSnap.data() })
-    );
-  }
+  if (!teamsMemory.length || force) {
+  const result = await apiRequest("/api/teams");
+  teamsMemory = Array.isArray(result) ? result : [];
+}
 
   let teamsArr = [...teamsMemory];
 
