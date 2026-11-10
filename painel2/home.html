@@ -2966,6 +2966,7 @@ document
   });
 };
 
+
 window.saveInlineButtonEdit = async function(){
 
   const name = document.getElementById("inline-button-name").value.trim();
@@ -2975,86 +2976,85 @@ window.saveInlineButtonEdit = async function(){
   const captureM3u8 =
     document.getElementById("inline-button-capture").value === "true";
 
-  if(!name || !link) {
+  if (!name || !link) {
     alert("Preencha o nome e o link do canal.");
     return;
   }
 
-  // ===== MODO ADICIONAR NOVO CANAL =====
-  if(!currentInlineButtonId && currentInlineChannelNumber) {
+  try {
 
-    const channelNumber = currentInlineChannelNumber;
+    // ===== ADICIONAR NOVO CANAL =====
+    if (!currentInlineButtonId && currentInlineChannelNumber) {
 
-    const docRef = await addDoc(collection(db, "buttons"), {
-      name,
-      link,
-      captureM3u8
-    });
+      const channelNumber = currentInlineChannelNumber;
 
-    buttonsMemory.push({
-      id: docRef.id,
-      name,
-      link,
-      captureM3u8
-    });
+      const result = await apiRequest("/api/buttons", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          link,
+          captureM3u8
+        })
+      });
 
-    // Atualiza a lista de botões
-    await loadButtons();
+      buttonsMemory.push({
+        id: result.id,
+        name,
+        link,
+        captureM3u8
+      });
 
-    // Coloca o novo canal diretamente no campo correspondente
-    $(`#game-channel${channelNumber}`)
-      .val(link)
-      .trigger("change");
+      await loadButtons("", true);
 
-    cancelInlineButtonEdit();
+      $(`#game-channel${channelNumber}`)
+        .val(link)
+        .trigger("change");
 
-    return;
-  }
+      cancelInlineButtonEdit();
 
-  // ===== MODO EDITAR CANAL EXISTENTE =====
+      alert("Canal adicionado no D1!");
 
-  const oldButton =
-    buttonsMemory.find(
-      b => b.id === currentInlineButtonId
-    );
-
-  const oldName =
-    oldButton?.name || name;
-
-  await updateDoc(
-    doc(
-      db,
-      "buttons",
-      currentInlineButtonId
-    ),
-    {
-      name,
-      link,
-      captureM3u8
+      return;
     }
-  );
 
-  const index =
-    buttonsMemory.findIndex(
+    // ===== EDITAR CANAL EXISTENTE =====
+
+    const oldButton = buttonsMemory.find(
       b => b.id === currentInlineButtonId
     );
 
-  if(index !== -1){
+    const oldName = oldButton?.name || name;
 
-    buttonsMemory[index].name = name;
-    buttonsMemory[index].link = link;
-    buttonsMemory[index].captureM3u8 =
-      captureM3u8;
-  }
+    await apiRequest(`/api/buttons/${currentInlineButtonId}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        name,
+        link,
+        captureM3u8
+      })
+    });
 
-  for(const game of gamesMemory){
+    const index = buttonsMemory.findIndex(
+      b => b.id === currentInlineButtonId
+    );
 
-    let changed = false;
+    if (index !== -1) {
+      buttonsMemory[index] = {
+        ...buttonsMemory[index],
+        name,
+        link,
+        captureM3u8
+      };
+    }
 
-    const channels =
-      (game.channels || []).map(ch => {
+    // Atualiza os jogos que utilizam esse canal
+    for (const game of gamesMemory) {
 
-        if(ch.name === oldName){
+      let changed = false;
+
+      const channels = (game.channels || []).map(ch => {
+
+        if (ch.name === oldName) {
 
           changed = true;
 
@@ -3069,19 +3069,32 @@ window.saveInlineButtonEdit = async function(){
         return ch;
       });
 
-    if(changed){
+      if (changed) {
 
-      await updateDoc(
-        doc(db,"games",game.id),
-        { channels }
-      );
+        await apiRequest(`/api/games/${game.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ channels })
+        });
+
+        game.channels = channels;
+      }
     }
+
+    await loadButtons("", true);
+
+    cancelInlineButtonEdit();
+
+    alert("Canal atualizado no D1!");
+
+  } catch (error) {
+
+    console.error("Erro no editor de canais:", error);
+
+    alert("Erro ao salvar canal: " + error.message);
+
   }
-
-  await loadButtons();
-
-  cancelInlineButtonEdit();
 };
+
 
 window.cancelInlineButtonEdit = function(){
 
