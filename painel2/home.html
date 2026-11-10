@@ -903,7 +903,10 @@ const API_URL = "https://futanium-painel-2-api.galaxyplay1234.workers.dev";
 
 let API_TOKEN = "";
 
+
 async function apiRequest(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {})
@@ -924,22 +927,29 @@ async function apiRequest(path, options = {}) {
     throw new Error(result.error || "Erro na API");
   }
 
+  // Registra operações do D1, sem contar o login
+  if (!path.startsWith("/api/login")) {
+
+    const collectionName = path.split("/")[2] || "API";
+
+    const types = {
+      GET: "READ",
+      POST: "WRITE",
+      PUT: "UPDATE",
+      PATCH: "UPDATE",
+      DELETE: "DELETE"
+    };
+
+    const type = types[method];
+
+    if (type) {
+      logFirestore(type, collectionName, 1);
+    }
+  }
+
   return result;
 }
 
-async function apiLogin(username, password) {
-  const result = await apiRequest("/api/login", {
-    method: "POST",
-    body: JSON.stringify({
-      username,
-      password
-    })
-  });
-
-  API_TOKEN = result.token;
-
-  return result;
-}
 
 
 // ===== MONITOR FIRESTORE =====
