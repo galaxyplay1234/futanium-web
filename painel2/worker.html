@@ -147,6 +147,7 @@ async function handleActivityLogs(request, env, url, parts) {
 // ===== ANALYTICS REAL DO CLOUDFLARE D1 ================
 // ======================================================
 
+
 async function handleD1Usage(request, env) {
 
   if (!isAuthorized(request, env)) {
@@ -159,21 +160,22 @@ async function handleD1Usage(request, env) {
 
   if (!env.CF_ACCOUNT_ID || !env.CF_ANALYTICS_TOKEN) {
     return response({
-      error: "Configure CF_ACCOUNT_ID e CF_ANALYTICS_TOKEN nos Secrets do Worker."
+      error: "Configure CF_ACCOUNT_ID e CF_ANALYTICS_TOKEN."
     }, 500);
   }
 
   try {
 
-    // Dia UTC atual
     const today = new Date().toISOString().slice(0, 10);
 
-    // Consulta oficial GraphQL da Cloudflare
+    const DATABASE_ID = "4bb07901-3762-4688-910a-318ac4297e51";
+
     const query = `
       query D1Usage(
         $accountTag: String!
         $start: Date
         $end: Date
+        $databaseId: String
       ) {
         viewer {
           accounts(filter: {
@@ -184,6 +186,7 @@ async function handleD1Usage(request, env) {
               filter: {
                 date_geq: $start
                 date_leq: $end
+                databaseId: $databaseId
               }
             ) {
               sum {
@@ -202,19 +205,17 @@ async function handleD1Usage(request, env) {
       "https://api.cloudflare.com/client/v4/graphql",
       {
         method: "POST",
-
         headers: {
           "Authorization": `Bearer ${env.CF_ANALYTICS_TOKEN}`,
           "Content-Type": "application/json"
         },
-
         body: JSON.stringify({
           query,
-
           variables: {
             accountTag: env.CF_ACCOUNT_ID,
             start: today,
-            end: today
+            end: today,
+            databaseId: DATABASE_ID
           }
         })
       }
@@ -223,11 +224,7 @@ async function handleD1Usage(request, env) {
     const cfData = await cfResponse.json();
 
     if (!cfResponse.ok || cfData.errors?.length) {
-
-      console.error(
-        "Erro Cloudflare Analytics:",
-        cfData
-      );
+      console.error("Cloudflare D1 Analytics:", cfData);
 
       return response({
         error: "Erro ao consultar Analytics da Cloudflare",
@@ -239,24 +236,12 @@ async function handleD1Usage(request, env) {
       cfData.data?.viewer?.accounts?.[0]
         ?.d1AnalyticsAdaptiveGroups || [];
 
-    // Soma todos os bancos D1 da conta
     const totals = groups.reduce((acc, group) => {
 
-      acc.readQueries += Number(
-        group.sum?.readQueries || 0
-      );
-
-      acc.writeQueries += Number(
-        group.sum?.writeQueries || 0
-      );
-
-      acc.rowsRead += Number(
-        group.sum?.rowsRead || 0
-      );
-
-      acc.rowsWritten += Number(
-        group.sum?.rowsWritten || 0
-      );
+      acc.readQueries += Number(group.sum?.readQueries || 0);
+      acc.writeQueries += Number(group.sum?.writeQueries || 0);
+      acc.rowsRead += Number(group.sum?.rowsRead || 0);
+      acc.rowsWritten += Number(group.sum?.rowsWritten || 0);
 
       return acc;
 
@@ -267,12 +252,9 @@ async function handleD1Usage(request, env) {
       rowsWritten: 0
     });
 
-    // ===== ATUALIZAÇÕES E EXCLUSÕES =====
-
+    // Atualizações e exclusões do histórico
     const logs = await env.DB.prepare(`
-      SELECT
-        type,
-        SUM(amount) AS total
+      SELECT type, SUM(amount) AS total
       FROM activity_logs
       WHERE substr(created_at, 1, 10) = ?
         AND type IN ('UPDATE', 'DELETE')
@@ -285,47 +267,42 @@ async function handleD1Usage(request, env) {
     };
 
     for (const log of logs.results || []) {
-
-      operations[log.type] = Number(
-        log.total || 0
-      );
-
+      operations[log.type] = Number(log.total || 0);
     }
 
-    // ===== RESPOSTA =====
-
     return response({
-
       success: true,
-
       date: today,
 
       reads: {
         queries: totals.readQueries,
         rows: totals.rowsRead,
-        limit: 5000000
+        limit: 5000000,
+        percentage: Number(
+          (totals.rowsRead / 5000000 * 100).toFixed(2)
+        )
       },
 
       writes: {
         queries: totals.writeQueries,
         rows: totals.rowsWritten,
-        limit: 100000
+        limit: 100000,
+        percentage: Number(
+          (totals.rowsWritten / 100000 * 100).toFixed(2)
+        )
       },
 
       updates: operations.UPDATE,
-
       deletes: operations.DELETE,
 
+      databaseId: DATABASE_ID,
       source: "Cloudflare D1 Analytics"
 
     });
 
   } catch (error) {
 
-    console.error(
-      "Erro ao consultar D1 Analytics:",
-      error
-    );
+    console.error("Erro D1 Analytics:", error);
 
     return response({
       error: "Erro interno ao consultar Analytics",
@@ -334,6 +311,7 @@ async function handleD1Usage(request, env) {
 
   }
 }
+
 
 // ===== LEITURA DAS COLEÇÕES =====
 
