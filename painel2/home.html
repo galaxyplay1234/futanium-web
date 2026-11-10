@@ -592,57 +592,59 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
     </button>
   </div>
 
-  <div class="grid grid-cols-2 gap-3 mb-4">
 
-    <div class="bg-white rounded shadow p-3">
-      <div class="text-sm text-gray-500">Leituras</div>
-      <div id="console-reads"
-        class="text-2xl font-bold text-blue-600">0</div>
+<div class="grid grid-cols-2 gap-3 mb-4">
+
+  <!-- Leituras reais -->
+  <div class="bg-white rounded shadow p-3">
+    <div class="text-sm text-gray-500">Leituras</div>
+    <div id="console-reads"
+      class="text-2xl font-bold text-blue-600">0</div>
+    <div class="text-xs text-gray-400">
+      Limite: 5.000.000
     </div>
-
-    <div class="bg-white rounded shadow p-3">
-      <div class="text-sm text-gray-500">Gravações</div>
-      <div id="console-writes"
-        class="text-2xl font-bold text-green-600">0</div>
+    <div id="console-reads-percent"
+      class="text-xs text-gray-500 mt-1">
+      0% utilizado
     </div>
-
-    <div class="bg-white rounded shadow p-3">
-      <div class="text-sm text-gray-500">Atualizações</div>
-      <div id="console-updates"
-        class="text-2xl font-bold text-yellow-600">0</div>
-    </div>
-
-    <div class="bg-white rounded shadow p-3">
-      <div class="text-sm text-gray-500">Exclusões</div>
-      <div id="console-deletes"
-        class="text-2xl font-bold text-red-600">0</div>
-    </div>
-
   </div>
 
-  <div class="bg-white rounded shadow overflow-hidden">
-
-    <div class="p-3 border-b flex justify-between items-center">
-      <span class="font-semibold">Atividades de hoje</span>
-
-      <span id="console-total"
-        class="text-xs text-gray-500">
-        0 operações
-      </span>
+  <!-- Gravações reais -->
+  <div class="bg-white rounded shadow p-3">
+    <div class="text-sm text-gray-500">Gravações</div>
+    <div id="console-writes"
+      class="text-2xl font-bold text-green-600">0</div>
+    <div class="text-xs text-gray-400">
+      Limite: 100.000
     </div>
-
-    <div id="console-log"
-      class="p-3 space-y-2 max-h-[550px] overflow-y-auto text-xs font-mono">
-
-      <div class="text-gray-400">
-        Carregando atividades...
-      </div>
-
+    <div id="console-writes-percent"
+      class="text-xs text-gray-500 mt-1">
+      0% utilizado
     </div>
+  </div>
 
+  <!-- Atualizações -->
+  <div class="bg-white rounded shadow p-3">
+    <div class="text-sm text-gray-500">Atualizações</div>
+    <div id="console-updates"
+      class="text-2xl font-bold text-yellow-600">0</div>
+    <div class="text-xs text-gray-400">
+      Operações UPDATE
+    </div>
+  </div>
+
+  <!-- Exclusões -->
+  <div class="bg-white rounded shadow p-3">
+    <div class="text-sm text-gray-500">Exclusões</div>
+    <div id="console-deletes"
+      class="text-2xl font-bold text-red-600">0</div>
+    <div class="text-xs text-gray-400">
+      Operações DELETE
+    </div>
   </div>
 
 </div>
+
 
 
 
@@ -1008,11 +1010,6 @@ function renderConsoleHistory(logs) {
     }
   });
 
-  document.getElementById("console-reads").textContent =
-    stats.READ;
-
-  document.getElementById("console-writes").textContent =
-    stats.WRITE;
 
   document.getElementById("console-updates").textContent =
     stats.UPDATE;
