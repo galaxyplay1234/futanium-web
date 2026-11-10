@@ -2062,8 +2062,10 @@ window.cancelChampEdit = function() {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-// ===== Botões =====
-document.getElementById("button-form").addEventListener("submit", async e=>{
+
+// ===== Botões - D1 =====
+
+document.getElementById("button-form").addEventListener("submit", async e => {
   e.preventDefault();
 
   const nameEl = document.getElementById("button-name");
@@ -2072,202 +2074,250 @@ document.getElementById("button-form").addEventListener("submit", async e=>{
   const name = nameEl.value.trim();
   const link = linkEl.value.trim();
 
-const captureM3u8 =
-  document.getElementById("button-capture").value === "true";
-  if(!name || !link) return;
+  const captureM3u8 =
+    document.getElementById("button-capture").value === "true";
 
-  if(currentButtonEditId){
+  if (!name || !link) return;
 
-  // nome antigo antes da edição
-  const oldButton =
-    buttonsMemory.find(
-      b => b.id === currentButtonEditId
-    );
+  try {
 
-  const oldName = oldButton?.name || name;
+    if (currentButtonEditId) {
 
-  await updateDoc(doc(db,"buttons",currentButtonEditId), {
-    name,
-    link,
-    captureM3u8
-  });
+      const oldButton = buttonsMemory.find(
+        b => b.id === currentButtonEditId
+      );
 
-  // atualiza cache
-  const index = buttonsMemory.findIndex(
-    b => b.id === currentButtonEditId
-  );
+      const oldName = oldButton?.name || name;
 
-  if(index !== -1){
-    buttonsMemory[index].name = name;
-    buttonsMemory[index].link = link;
-    buttonsMemory[index].captureM3u8 = captureM3u8;
-  }
-
-  // 🔥 atualiza todos os jogos automaticamente
-  for (const game of gamesMemory) {
-
-    let changed = false;
-
-    const channels = (game.channels || []).map(ch => {
-
-      if (ch.name === oldName) {
-
-        changed = true;
-
-        return {
-          ...ch,
+      await apiRequest(`/api/buttons/${currentButtonEditId}`, {
+        method: "PUT",
+        body: JSON.stringify({
           name,
-          url: link,
+          link,
+          captureM3u8
+        })
+      });
+
+      const index = buttonsMemory.findIndex(
+        b => b.id === currentButtonEditId
+      );
+
+      if (index !== -1) {
+        buttonsMemory[index] = {
+          ...buttonsMemory[index],
+          name,
+          link,
           captureM3u8
         };
       }
 
-      return ch;
+      // Atualiza os canais dos jogos que utilizam este botão
+      for (const game of gamesMemory) {
+
+        let changed = false;
+
+        const channels = (game.channels || []).map(ch => {
+
+          if (ch.name === oldName) {
+            changed = true;
+
+            return {
+              ...ch,
+              name,
+              url: link,
+              captureM3u8
+            };
+          }
+
+          return ch;
+        });
+
+        if (changed) {
+
+          await apiRequest(`/api/games/${game.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ channels })
+          });
+
+          game.channels = channels;
+        }
+      }
+
+      currentButtonEditId = null;
+
+      document.getElementById("button-submit").innerText =
+        "Adicionar";
+
+    } else {
+
+      const result = await apiRequest("/api/buttons", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          link,
+          captureM3u8
+        })
+      });
+
+      buttonsMemory.push({
+        id: result.id,
+        name,
+        link,
+        captureM3u8
+      });
+    }
+
+    nameEl.value = "";
+    linkEl.value = "";
+
+    autoResizeTextarea(nameEl);
+    autoResizeTextarea(linkEl);
+
+    await loadButtons("", true);
+
+    alert("Botão salvo no D1!");
+
+  } catch (error) {
+    console.error("Erro ao salvar botão:", error);
+    alert("Erro ao salvar botão: " + error.message);
+  }
+});
+
+
+async function loadButtons(filter = "", force = false) {
+
+  try {
+
+    if (!buttonsMemory.length || force) {
+      const result = await apiRequest("/api/buttons");
+
+      buttonsMemory = Array.isArray(result) ? result : [];
+    }
+
+    let buttonsArr = [...buttonsMemory];
+
+    buttonsArr.sort((a, b) =>
+      a.name.localeCompare(b.name, "pt", {
+        sensitivity: "base"
+      })
+    );
+
+    if (filter) {
+      const f = filter.toLowerCase();
+
+      buttonsArr = buttonsArr.filter(b =>
+        b.name.toLowerCase().includes(f) ||
+        b.link.toLowerCase().includes(f)
+      );
+    }
+
+    const tbody = document.getElementById("buttons-list");
+
+    tbody.innerHTML = "";
+
+    buttonsArr.forEach(b => {
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td class="p-2">
+
+          <div
+            class="cursor-pointer text-black hover:text-gray-600 font-medium"
+            onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
+
+            ${b.name}
+
+          </div>
+
+          <div
+            class="inline-block mt-1 px-2 py-0.5 text-[11px]
+            bg-gray-200 text-gray-700 rounded-full">
+
+            ${b.captureM3u8 ? "SIM" : "NÃO"}
+
+          </div>
+
+        </td>
+
+        <td class="p-2">
+          <a href="${b.link}" target="_blank"
+            class="text-blue-600 underline break-all">
+            ${b.link}
+          </a>
+        </td>
+
+        <td class="p-2 flex gap-2">
+
+          <button onclick="editButton(
+            '${b.id}',
+            '${b.name.replace(/'/g,"\\'")}',
+            '${b.link.replace(/'/g,"\\'")}',
+            ${b.captureM3u8 ? "true" : "false"}
+          )"
+            class="bg-yellow-500 text-white px-2 py-1 rounded">
+            Editar
+          </button>
+
+          <button onclick="deleteButton('${b.id}')"
+            class="bg-red-500 text-white px-2 py-1 rounded">
+            Excluir
+          </button>
+
+        </td>
+      `;
+
+      tbody.appendChild(tr);
     });
 
-    if (changed) {
+    const orderedButtons = [...buttonsMemory].sort((a, b) =>
+      a.name.localeCompare(b.name, "pt", {
+        sensitivity: "base"
+      })
+    );
 
-      await updateDoc(
-        doc(db, "games", game.id),
-        { channels }
-      );
+    populateChannelSelects(orderedButtons);
 
-    }
+  } catch (error) {
+    console.error("Erro ao carregar botões:", error);
+    alert("Erro ao carregar botões: " + error.message);
   }
-
-  currentButtonEditId = null;
-
-  document.getElementById("button-submit").innerText =
-    "Adicionar";
-
 }
 
- else {
 
-    const docRef = await addDoc(collection(db,"buttons"), {
-  name,
-  link,
-  captureM3u8
-});
+window.deleteButton = async function(id) {
 
-    // 🔥 Adiciona só o novo botão na memória
-    buttonsMemory.push({
-  id: docRef.id,
-  name,
-  link,
-  captureM3u8
-});
+  if (!confirm("Deseja realmente excluir este botão?")) return;
+
+  try {
+
+    await apiRequest(`/api/buttons/${id}`, {
+      method: "DELETE"
+    });
+
+    buttonsMemory = buttonsMemory.filter(b => b.id !== id);
+
+    await loadButtons("", true);
+
+    alert("Botão excluído do D1!");
+
+  } catch (error) {
+    console.error("Erro ao excluir botão:", error);
+    alert("Erro ao excluir botão: " + error.message);
   }
-
-  // limpa campos
-  nameEl.value = "";
-  linkEl.value = "";
-  autoResizeTextarea(nameEl);
-  autoResizeTextarea(linkEl);
-
-  // 🔥 Apenas renderiza usando cache
-  await loadButtons();
-});
-
-async function loadButtons(filter = "", force = false){
-
-  if(!buttonsMemory.length || force){
-    const q = await getDocs(collection(db,"buttons"));
-    buttonsMemory = [];
-    q.forEach(docSnap => 
-      buttonsMemory.push({ id: docSnap.id, ...docSnap.data() })
-    );
-  }
-
-  let buttonsArr = [...buttonsMemory];
-
-  buttonsArr.sort((a, b) => 
-    a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
-  );
-
-  if(filter){
-    const f = filter.toLowerCase();
-    buttonsArr = buttonsArr.filter(b => 
-      b.name.toLowerCase().includes(f) ||
-      b.link.toLowerCase().includes(f)
-    );
-  }
-
-  const tbody = document.getElementById("buttons-list");
-  tbody.innerHTML = "";
-
-  buttonsArr.forEach(b => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="p-2">
-
-  <div
-    class="cursor-pointer text-black hover:text-gray-600 font-medium"
-    onclick="copyButtonLink('${b.link.replace(/'/g, "\\'")}')">
-
-    ${b.name}
-
-  </div>
-
-  <div
-    class="inline-block mt-1 px-2 py-0.5 text-[11px]
-    bg-gray-200 text-gray-700 rounded-full">
-
-    ${b.captureM3u8 ? "SIM" : "NÃO"}
-
-  </div>
-
-</td>
-      <td class="p-2">
-        <a href="${b.link}" target="_blank"
-          class="text-blue-600 underline break-all">
-          ${b.link}
-        </a>
-      </td>
-      <td class="p-2 flex gap-2">
-        <button onclick="editButton(
-'${b.id}',
-'${b.name.replace(/'/g,"\\'")}',
-'${b.link.replace(/'/g,"\\'")}',
-${b.captureM3u8 ? "true" : "false"}
-)"
-          class="bg-yellow-500 text-white px-2 py-1 rounded">
-          Editar
-        </button>
-        <button onclick="deleteButton('${b.id}')"
-          class="bg-red-500 text-white px-2 py-1 rounded">
-          Excluir
-        </button>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  const orderedButtons = [...buttonsMemory].sort((a, b) =>
-  a.name.localeCompare(b.name, 'pt', { sensitivity: 'base' })
-);
-
-populateChannelSelects(orderedButtons);
-}
-
-window.deleteButton = async function(id){
-  await deleteDoc(doc(db,"buttons",id));
-
-  // 🔥 Remove só da memória
-  buttonsMemory = buttonsMemory.filter(b => b.id !== id);
-
-  await loadButtons();
 };
+
 
 window.editButton = function(
   id,
   name,
   link,
   captureM3u8
-){
+) {
 
   currentButtonEditId = null;
-  showTab('buttons'); // 🔥 ativa primeiro
+
+  showTab("buttons");
 
   setTimeout(() => {
 
@@ -2276,63 +2326,75 @@ window.editButton = function(
 
     nameEl.value = name;
     linkEl.value = link;
-    
+
     document.getElementById("button-capture").value =
-  captureM3u8 ? "true" : "false";
+      captureM3u8 ? "true" : "false";
 
-    nameEl.style.height = "auto";
-    nameEl.style.height = nameEl.scrollHeight + "px";
-
-    linkEl.style.height = "auto";
-    linkEl.style.height = linkEl.scrollHeight + "px";
+    autoResizeTextarea(nameEl);
+    autoResizeTextarea(linkEl);
 
   }, 100);
 
   currentButtonEditId = id;
-  document.getElementById("button-submit").innerText = "Atualizar";
+
+  document.getElementById("button-submit").innerText =
+    "Atualizar";
 
   setTimeout(() => {
+
     const form = document.getElementById("button-form");
-    const y = form.getBoundingClientRect().top + window.scrollY - 230;
+
+    const y =
+      form.getBoundingClientRect().top +
+      window.scrollY - 230;
 
     window.scrollTo({
       top: y,
       behavior: "smooth"
     });
+
   }, 150);
 };
+
 
 const searchInput = document.getElementById("button-search");
 const clearBtn = document.getElementById("clear-search");
 
 searchInput.addEventListener("input", function() {
+
   const value = this.value;
-  
-  // Mostra ou esconde botão X
-  if (value.length > 0) {
-    clearBtn.classList.remove("hidden");
-  } else {
-    clearBtn.classList.add("hidden");
-  }
+
+  clearBtn.classList.toggle("hidden", !value.length);
 
   loadButtons(value);
 });
 
-// Botão limpar
+
 clearBtn.addEventListener("click", function() {
+
   searchInput.value = "";
+
   clearBtn.classList.add("hidden");
+
   loadButtons();
 });
 
+
 window.copyButtonLink = async function(link) {
+
   try {
+
     await navigator.clipboard.writeText(link);
+
     showCopyToast("Link copiado!");
+
   } catch (err) {
+
     console.error("Erro ao copiar:", err);
+
   }
 };
+
 
 
 // ===== Jogos (Adicionar / Editar) =====
