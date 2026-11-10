@@ -4102,6 +4102,7 @@ function setTodayDate() {
   document.getElementById("game-date").value = today;
 }
 
+// ===== Ocultar canais - D1 =====
 document.addEventListener("change", async (e) => {
 
   if (!e.target.classList.contains("home-hide-channels"))
@@ -4110,15 +4111,26 @@ document.addEventListener("change", async (e) => {
   const gameId = e.target.dataset.id;
   const checked = e.target.checked;
 
-  await updateDoc(
-    doc(db, "games", gameId),
-    {
-      hideChannels: checked
-    }
-  );
+  try {
+    await apiRequest(`/api/games/${gameId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        hideChannels: checked
+      })
+    });
 
+    const game = gamesMemory.find(g => g.id === gameId);
+    if (game) game.hideChannels = checked;
+
+  } catch (error) {
+    console.error("Erro ao ocultar canais:", error);
+    e.target.checked = !checked;
+    alert("Erro ao atualizar: " + error.message);
+  }
 });
 
+
+// ===== Ocultar jogo - D1 =====
 document.addEventListener("change", async (e) => {
 
   if (!e.target.classList.contains("home-hide-game"))
@@ -4127,15 +4139,26 @@ document.addEventListener("change", async (e) => {
   const gameId = e.target.dataset.id;
   const checked = e.target.checked;
 
-  await updateDoc(
-    doc(db, "games", gameId),
-    {
-      hideGame: checked
-    }
-  );
+  try {
+    await apiRequest(`/api/games/${gameId}`, {
+      method: "PATCH",
+      body: JSON.stringify({
+        hideGame: checked
+      })
+    });
 
+    const game = gamesMemory.find(g => g.id === gameId);
+    if (game) game.hideGame = checked;
+
+  } catch (error) {
+    console.error("Erro ao ocultar jogo:", error);
+    e.target.checked = !checked;
+    alert("Erro ao atualizar: " + error.message);
+  }
 });
 
+
+// ===== Selecionar todos - D1 =====
 document.addEventListener("change", async (e) => {
 
   if (e.target.id !== "toggle-all-hidden")
@@ -4143,22 +4166,33 @@ document.addEventListener("change", async (e) => {
 
   const checked = e.target.checked;
 
-  const updates = gamesMemory
-    .filter(game => !(
-      game.home?.toLowerCase() === "aviso" &&
-      game.away?.toLowerCase() === "aviso"
-    ))
-    .map(game =>
-      updateDoc(
-        doc(db, "games", game.id),
-        {
-          hideGame: checked
-        }
+  const games = gamesMemory.filter(game => !(
+    game.home?.toLowerCase() === "aviso" &&
+    game.away?.toLowerCase() === "aviso"
+  ));
+
+  try {
+
+    await Promise.all(
+      games.map(game =>
+        apiRequest(`/api/games/${game.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            hideGame: checked
+          })
+        })
       )
     );
 
-  await Promise.all(updates);
+    games.forEach(game => {
+      game.hideGame = checked;
+    });
 
+  } catch (error) {
+    console.error("Erro ao selecionar todos:", error);
+    e.target.checked = !checked;
+    alert("Erro ao atualizar jogos: " + error.message);
+  }
 });
 
 
