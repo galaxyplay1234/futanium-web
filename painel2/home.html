@@ -1617,7 +1617,6 @@ document.getElementById("team-form").addEventListener("submit", async e => {
 
     await loadTeams();
 
-    alert("Time salvo no D1 com sucesso!");
 
   } catch (error) {
     console.error("Erro ao salvar time no D1:", error);
@@ -1701,7 +1700,6 @@ window.deleteTeam = async function(id) {
 
     await loadTeams();
 
-    alert("Time excluído do D1!");
 
   } catch (error) {
     console.error("Erro ao excluir time:", error);
@@ -1848,7 +1846,6 @@ document.getElementById("champ-form").addEventListener("submit", async e => {
 
     await loadChamps();
 
-    alert("Campeonato salvo no D1!");
 
   } catch (error) {
     console.error("Erro ao salvar campeonato:", error);
@@ -1920,8 +1917,6 @@ window.deleteChamp = async function(id) {
     champsMemory = champsMemory.filter(c => c.id !== id);
 
     await loadChamps();
-
-    alert("Campeonato excluído do D1!");
 
   } catch (error) {
     console.error("Erro ao excluir campeonato:", error);
@@ -2093,8 +2088,6 @@ document.getElementById("button-form").addEventListener("submit", async e => {
 
     await loadButtons("", true);
 
-    alert("Botão salvo no D1!");
-
   } catch (error) {
     console.error("Erro ao salvar botão:", error);
     alert("Erro ao salvar botão: " + error.message);
@@ -2205,8 +2198,6 @@ async function loadButtons(filter = "", force = false) {
 
 window.deleteButton = async function(id) {
 
-  if (!confirm("Deseja realmente excluir este botão?")) return;
-
   try {
 
     await apiRequest(`/api/buttons/${id}`, {
@@ -2217,7 +2208,6 @@ window.deleteButton = async function(id) {
 
     await loadButtons("", true);
 
-    alert("Botão excluído do D1!");
 
   } catch (error) {
     console.error("Erro ao excluir botão:", error);
@@ -2422,7 +2412,6 @@ document.getElementById("game-form").addEventListener("submit", async e => {
       });
     }
 
-    alert("Jogo salvo com sucesso!");
 
     document.getElementById("game-form").reset();
 
@@ -2699,7 +2688,6 @@ window.deleteGame = async function(id) {
 
     await startGamesListener();
 
-    alert("Jogo excluído com sucesso!");
 
   } catch (error) {
     console.error("Erro ao excluir jogo:", error);
@@ -2930,7 +2918,6 @@ window.saveInlineButtonEdit = async function(){
 
       cancelInlineButtonEdit();
 
-      alert("Canal adicionado no D1!");
 
       return;
     }
@@ -3002,7 +2989,6 @@ window.saveInlineButtonEdit = async function(){
 
     cancelInlineButtonEdit();
 
-    alert("Canal atualizado no D1!");
 
   } catch (error) {
 
