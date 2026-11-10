@@ -884,16 +884,6 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 <!-- Firebase + Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  addDoc as fbAddDoc,
-  getDocs as fbGetDocs,
-  deleteDoc as fbDeleteDoc,
-  updateDoc as fbUpdateDoc,
-  getDoc as fbGetDoc,
-  doc
-} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDKaETzDzJnlWlFY3I7l7LMArsegmgo_M8",
@@ -905,6 +895,7 @@ const firebaseConfig = {
     measurementId: "G-L2RV01TXJC"
   };
 
+const app = initializeApp(firebaseConfig);
 
 // ===== API FUTANIUM PAINEL 2 =====
 
@@ -1066,107 +1057,7 @@ window.clearFirestoreConsole = function() {
 };
 
 
-// ===== INTERCEPTADORES FIRESTORE =====
 
-async function getDocs(...args) {
-
-  const result = await fbGetDocs(...args);
-
-  const collectionName =
-    args[0]._query?.path?.segments?.[0] ||
-    "consulta";
-
-  logFirestore("READ", collectionName, result.size);
-
-  return result;
-}
-
-async function getDoc(...args) {
-
-  const result = await fbGetDoc(...args);
-
-  const collectionName =
-    args[0].parent?.id || "documento";
-
-  logFirestore("READ", collectionName, 1);
-
-  return result;
-}
-
-async function addDoc(...args) {
-
-  const result = await fbAddDoc(...args);
-
-  const collectionName = args[0].id;
-
-  logFirestore("WRITE", collectionName, 1);
-
-  return result;
-}
-
-async function updateDoc(...args) {
-
-  const result = await fbUpdateDoc(...args);
-
-  const collectionName =
-    args[0].parent?.id || "documento";
-
-  logFirestore("UPDATE", collectionName, 1);
-
-  return result;
-}
-
-async function deleteDoc(...args) {
-
-  const result = await fbDeleteDoc(...args);
-
-  const collectionName =
-    args[0].parent?.id || "documento";
-
-  logFirestore("DELETE", collectionName, 1);
-
-  return result;
-}
-
-function onSnapshot(reference, callback, errorCallback) {
-
-  return fbOnSnapshot(
-    reference,
-
-    snapshot => {
-
-      let changes = 0;
-
-      if (typeof snapshot.docChanges === "function") {
-        changes = snapshot.docChanges().filter(change =>
-          change.type === "added" ||
-          change.type === "modified"
-        ).length;
-      } else {
-        changes = 1;
-      }
-
-      if (changes > 0) {
-
-        const collectionName =
-          reference._query?.path?.segments?.[0] ||
-          "listener";
-
-        logFirestore("READ", collectionName, changes);
-      }
-
-      callback(snapshot);
-    },
-
-    errorCallback
-  );
-}
-
-import { enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-enableIndexedDbPersistence(db).catch((err) => {
-  console.log("Persistência não habilitada:", err.code);
-});
 
 const USER = "admin";
 const PASS = "12345";
@@ -1452,14 +1343,6 @@ window.addSelectedChannels = function() {
   closeChannelPicker();
 };
 
-import {
-  onSnapshot as fbOnSnapshot
-} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
-
-let gamesUnsubscribe = null;
-
-import { query, orderBy } from 
-"https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
 
 
 async function startGamesListener() {
