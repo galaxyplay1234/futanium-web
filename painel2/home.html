@@ -1647,7 +1647,7 @@ if(found){
   });
 }
 
-// ===== Times =====
+// ===== Times - D1 =====
 document.getElementById("team-form").addEventListener("submit", async e => {
   e.preventDefault();
 
@@ -1656,40 +1656,55 @@ document.getElementById("team-form").addEventListener("submit", async e => {
 
   const name = nameEl.value.trim();
   const logo = logoEl.value.trim();
+
   if (!name || !logo) return;
 
-  if (currentTeamEditId) {
-    await updateDoc(doc(db, "teams", currentTeamEditId), { name, logo });
+  try {
+    if (currentTeamEditId) {
+      await apiRequest(`/api/teams/${currentTeamEditId}`, {
+        method: "PUT",
+        body: JSON.stringify({ name, logo })
+      });
 
-    // 🔥 Atualiza apenas na memória
-    const index = teamsMemory.findIndex(t => t.id === currentTeamEditId);
-    if (index !== -1) {
-      teamsMemory[index].name = name;
-      teamsMemory[index].logo = logo;
+      const index = teamsMemory.findIndex(
+        t => t.id === currentTeamEditId
+      );
+
+      if (index !== -1) {
+        teamsMemory[index].name = name;
+        teamsMemory[index].logo = logo;
+      }
+
+      currentTeamEditId = null;
+      document.getElementById("team-submit").innerText = "Adicionar";
+
+    } else {
+      const result = await apiRequest("/api/teams", {
+        method: "POST",
+        body: JSON.stringify({ name, logo })
+      });
+
+      teamsMemory.push({
+        id: result.id,
+        name,
+        logo
+      });
     }
 
-    currentTeamEditId = null;
-    document.getElementById("team-submit").innerText = "Adicionar";
+    nameEl.value = "";
+    logoEl.value = "";
 
-  } else {
-    const docRef = await addDoc(collection(db, "teams"), { name, logo });
+    autoResizeTextarea(nameEl);
+    autoResizeTextarea(logoEl);
 
-    // 🔥 Adiciona somente o novo time na memória
-    teamsMemory.push({
-      id: docRef.id,
-      name,
-      logo
-    });
+    await loadTeams();
+
+    alert("Time salvo no D1 com sucesso!");
+
+  } catch (error) {
+    console.error("Erro ao salvar time no D1:", error);
+    alert("Erro ao salvar time: " + error.message);
   }
-
-  nameEl.value = "";
-  logoEl.value = "";
-
-  autoResizeTextarea(nameEl);
-  autoResizeTextarea(logoEl);
-
-  // 🔥 Apenas renderiza usando cache, sem nova leitura
-  await loadTeams();
 });
 
 async function loadTeams(filter = "", force = false){
