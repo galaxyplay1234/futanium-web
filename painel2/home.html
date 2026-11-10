@@ -572,33 +572,24 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 
 
 
+
 <!-- Console Cloudflare D1 -->
 <div id="tab-console" class="tab-content hidden">
 
   <div class="flex justify-between items-center mb-4 gap-2">
-    <h2 class="text-lg sm:text-xl font-semibold">
-      Monitor Cloudflare D1
-    </h2>
+    <div>
+      <h2 class="text-lg sm:text-xl font-semibold">
+        Monitor Cloudflare D1
+      </h2>
+      <p class="text-xs text-gray-500">
+        Operações do dia atual (virada às 21h em Brasília)
+      </p>
+    </div>
 
     <button onclick="loadConsoleHistory()"
       class="bg-blue-600 text-white px-3 py-1 rounded text-sm">
       Atualizar
     </button>
-  </div>
-
-  <div class="bg-white rounded shadow p-3 mb-4">
-    <label for="console-date"
-      class="block text-sm font-semibold mb-2">
-      Histórico diário
-    </label>
-
-    <select id="console-date"
-      class="w-full p-2 border rounded">
-    </select>
-
-    <p class="text-xs text-gray-500 mt-2">
-      O dia acompanha a virada UTC do Cloudflare (21h em Brasília).
-    </p>
   </div>
 
   <div class="grid grid-cols-2 gap-3 mb-4">
@@ -632,7 +623,7 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   <div class="bg-white rounded shadow overflow-hidden">
 
     <div class="p-3 border-b flex justify-between items-center">
-      <span class="font-semibold">Histórico de atividades</span>
+      <span class="font-semibold">Atividades de hoje</span>
 
       <span id="console-total"
         class="text-xs text-gray-500">
@@ -644,7 +635,7 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
       class="p-3 space-y-2 max-h-[550px] overflow-y-auto text-xs font-mono">
 
       <div class="text-gray-400">
-        Carregando histórico...
+        Carregando atividades...
       </div>
 
     </div>
@@ -652,6 +643,7 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
   </div>
 
 </div>
+
 
 
 
@@ -974,7 +966,8 @@ async function apiLogin(username, password) {
 
 
 
-// ===== HISTÓRICO PERMANENTE DO D1 =====
+
+// ===== HISTÓRICO DIÁRIO DO D1 =====
 
 function getCloudflareDay() {
   return new Date().toISOString().slice(0, 10);
@@ -1034,7 +1027,7 @@ function renderConsoleHistory(logs) {
 
   if (!logs.length) {
     container.innerHTML =
-      '<div class="text-gray-400">Nenhuma atividade registrada neste dia.</div>';
+      '<div class="text-gray-400">Nenhuma atividade registrada hoje.</div>';
     return;
   }
 
@@ -1075,44 +1068,22 @@ function renderConsoleHistory(logs) {
   `).join("");
 }
 
+let consoleLoading = false;
+
 window.loadConsoleHistory = async function() {
   const container = document.getElementById("console-log");
-  const dateSelect = document.getElementById("console-date");
 
-  if (!container || !dateSelect) return;
+  if (!container || !API_TOKEN || consoleLoading) return;
+
+  consoleLoading = true;
 
   container.innerHTML =
-    '<div class="text-gray-400">Carregando histórico...</div>';
+    '<div class="text-gray-400">Carregando atividades...</div>';
 
   try {
-    // Busca os dias que já possuem registros.
-    const dates = await apiRequest("/api/activity-logs/dates");
-
-    const today = getCloudflareDay();
-    const previousDate = dateSelect.value;
-
-    const availableDates = [...new Set([
-      today,
-      ...(Array.isArray(dates) ? dates : [])
-    ])].sort((a, b) => b.localeCompare(a));
-
-    dateSelect.innerHTML = availableDates.map(date => `
-      <option value="${escapeConsoleHTML(date)}">
-        ${escapeConsoleHTML(date)}
-        ${date === today ? " (hoje)" : ""}
-      </option>
-    `).join("");
-
-    dateSelect.value = availableDates.includes(previousDate)
-      ? previousDate
-      : today;
-
-    // Busca as atividades do dia selecionado.
-    const selectedDate = dateSelect.value;
-
-    const logs = await apiRequest(
-      `/api/activity-logs?date=${encodeURIComponent(selectedDate)}`
-    );
+    // Sem parâmetro de data:
+    // o Worker retorna automaticamente o dia UTC atual.
+    const logs = await apiRequest("/api/activity-logs");
 
     renderConsoleHistory(Array.isArray(logs) ? logs : []);
 
@@ -1121,17 +1092,36 @@ window.loadConsoleHistory = async function() {
 
     container.innerHTML = `
       <div class="text-red-500">
-        Erro ao carregar histórico: ${escapeConsoleHTML(error.message)}
+        Erro ao carregar histórico:
+        ${escapeConsoleHTML(error.message)}
       </div>
     `;
+  } finally {
+    consoleLoading = false;
   }
 };
 
-// Troca o histórico quando selecionar outro dia.
-document.getElementById("console-date").addEventListener(
-  "change",
-  window.loadConsoleHistory
-);
+// Detecta a virada diária do Cloudflare.
+// Só faz uma nova consulta quando o dia UTC muda.
+let lastConsoleDay = getCloudflareDay();
+
+setInterval(() => {
+  const currentDay = getCloudflareDay();
+
+  if (currentDay !== lastConsoleDay) {
+    lastConsoleDay = currentDay;
+
+    const consoleTab = document.getElementById("tab-console");
+
+    if (
+      consoleTab &&
+      !consoleTab.classList.contains("hidden")
+    ) {
+      loadConsoleHistory();
+    }
+  }
+}, 30000);
+
 
 
 
