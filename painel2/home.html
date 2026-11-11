@@ -3781,11 +3781,25 @@ if (!selectedDate) {
 });
 }
 
+        // Limpa os dados importados
     importedRows = [];
     preview.classList.add('hidden');
     tbody.innerHTML = '';
     fileInput.value = '';
     btnOCR.disabled = true;
+
+    // Seleciona a data que acabou de ser importada
+    selectedGamesDate =
+      selectedDate === getTodaySP()
+        ? "today"
+        : selectedDate;
+
+    // Atualiza imediatamente os jogos vindos do D1
+    await startGamesListener();
+
+    // Volta para a Home mostrando os jogos importados
+    showTab("home");
+
     ocrStatus.textContent = 'Importado com sucesso!';
   } catch (e) {
     console.error(e);
