@@ -645,7 +645,9 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 
 </div>
 
-</div> <!-- FIM DA ABA CONSOLE -->
+
+
+
 
 <!-- Importar (imagem -> jogos) -->
 <div id="tab-import" class="tab-content hidden">
@@ -2535,14 +2537,15 @@ function renderGames() {
 
   ul.innerHTML = "";
 
-  document.getElementById("games-total").textContent =
-  
-  updateToggleAllHidden();
-  
-    gamesArr.filter(g =>
-      !(g.home?.toLowerCase() === "aviso" &&
-        g.away?.toLowerCase() === "aviso")
-    ).length;
+  // Quantidade de jogos da data selecionada
+document.getElementById("games-total").textContent =
+  gamesArr.filter(g =>
+    !(g.home?.toLowerCase() === "aviso" &&
+      g.away?.toLowerCase() === "aviso")
+  ).length;
+
+// Atualiza o checkbox de selecionar todos
+updateToggleAllHidden();
 
   gamesArr.forEach(g => {
 
