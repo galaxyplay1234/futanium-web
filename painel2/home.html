@@ -4024,12 +4024,8 @@ document.addEventListener("change", async (e) => {
     const game = gamesMemory.find(g => g.id === gameId);
 
 if (game) {
-
-  game.hideGame = checked;
-
+  game.hideChannels = checked;
 }
-
-updateToggleAllHidden();
 
   } catch (error) {
     console.error("Erro ao ocultar canais:", error);
