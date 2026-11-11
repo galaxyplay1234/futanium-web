@@ -2538,6 +2538,9 @@ function renderGames() {
   ul.innerHTML = "";
 
   document.getElementById("games-total").textContent =
+  
+  updateToggleAllHidden();
+  
     gamesArr.filter(g =>
       !(g.home?.toLowerCase() === "aviso" &&
         g.away?.toLowerCase() === "aviso")
@@ -4020,7 +4023,14 @@ document.addEventListener("change", async (e) => {
     });
 
     const game = gamesMemory.find(g => g.id === gameId);
-    if (game) game.hideChannels = checked;
+
+if (game) {
+
+  game.hideGame = checked;
+
+}
+
+updateToggleAllHidden();
 
   } catch (error) {
     console.error("Erro ao ocultar canais:", error);
@@ -4058,13 +4068,35 @@ document.addEventListener("change", async (e) => {
 });
 
 
+
 // ===== Selecionar todos - D1 =====
+
+function updateToggleAllHidden() {
+
+  const toggle = document.getElementById("toggle-all-hidden");
+
+  const games = gamesMemory.filter(game => !(
+    game.home?.toLowerCase() === "aviso" &&
+    game.away?.toLowerCase() === "aviso"
+  ));
+
+  const hiddenCount = games.filter(game => game.hideGame).length;
+
+  toggle.checked = games.length > 0 && hiddenCount === games.length;
+
+  // Estado intermediário quando apenas alguns estão ocultos
+  toggle.indeterminate =
+    hiddenCount > 0 && hiddenCount < games.length;
+}
+
 document.addEventListener("change", async (e) => {
 
-  if (e.target.id !== "toggle-all-hidden")
-    return;
+  if (e.target.id !== "toggle-all-hidden") return;
 
-  const checked = e.target.checked;
+  const toggle = e.target;
+  const checked = toggle.checked;
+
+  toggle.indeterminate = false;
 
   const games = gamesMemory.filter(game => !(
     game.home?.toLowerCase() === "aviso" &&
@@ -4084,16 +4116,30 @@ document.addEventListener("change", async (e) => {
       )
     );
 
+    // Atualiza os dados em memória
     games.forEach(game => {
       game.hideGame = checked;
     });
 
+    // Atualiza os checkboxes individuais visíveis
+    document.querySelectorAll(".home-hide-game").forEach(checkbox => {
+      checkbox.checked = checked;
+    });
+
+    updateToggleAllHidden();
+
   } catch (error) {
+
     console.error("Erro ao selecionar todos:", error);
-    e.target.checked = !checked;
+
     alert("Erro ao atualizar jogos: " + error.message);
+
+    // Recarrega os dados reais do servidor
+    await startGamesListener();
+
   }
 });
+
 
 
 
