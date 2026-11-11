@@ -996,74 +996,7 @@ function formatConsoleTime(value) {
   });
 }
 
-function renderConsoleHistory(logs) {
-  const stats = {
-    READ: 0,
-    WRITE: 0,
-    UPDATE: 0,
-    DELETE: 0
-  };
 
-  logs.forEach(log => {
-    if (stats[log.type] !== undefined) {
-      stats[log.type]++;
-    }
-  });
-
-
-  document.getElementById("console-updates").textContent =
-    stats.UPDATE;
-
-  document.getElementById("console-deletes").textContent =
-    stats.DELETE;
-
-  document.getElementById("console-total").textContent =
-    `${logs.length} operações`;
-
-  const container = document.getElementById("console-log");
-
-  if (!logs.length) {
-    container.innerHTML =
-      '<div class="text-gray-400">Nenhuma atividade registrada hoje.</div>';
-    return;
-  }
-
-  const colors = {
-    READ: "text-blue-600",
-    WRITE: "text-green-600",
-    UPDATE: "text-yellow-600",
-    DELETE: "text-red-600"
-  };
-
-  const labels = {
-    READ: "LEITURA",
-    WRITE: "GRAVAÇÃO",
-    UPDATE: "ATUALIZAÇÃO",
-    DELETE: "EXCLUSÃO"
-  };
-
-  container.innerHTML = logs.map(log => `
-    <div class="border-b pb-2">
-      <div class="flex justify-between gap-2">
-        <span class="${colors[log.type] || "text-gray-600"} font-bold">
-          ${labels[log.type] || escapeConsoleHTML(log.type)}
-        </span>
-
-        <span class="text-gray-400 whitespace-nowrap">
-          ${escapeConsoleHTML(formatConsoleTime(log.created_at))}
-        </span>
-      </div>
-
-      <div class="text-gray-700 mt-1">
-        ${escapeConsoleHTML(log.description)}
-      </div>
-
-      <div class="text-gray-400 mt-1">
-        Coleção: ${escapeConsoleHTML(log.collection)}
-      </div>
-    </div>
-  `).join("");
-}
 
 
 // ===== ANALYTICS REAL DO CLOUDFLARE D1 =====
