@@ -1144,7 +1144,8 @@ async function apiRequest(path, options = {}) {
 // O Analytics oficial do D1 fica fora dessa contagem.
 if (
   method === "GET" &&
-  path !== "/api/d1-usage"
+  path !== "/api/d1-usage" &&
+  path !== "/api/sync"
 ) {
   registerPanelReads(result);
 }
@@ -1173,7 +1174,137 @@ async function apiLogin(username, password) {
   return result;
 }
 
+// ============================================
+// SINCRONIZAÇÃO AUTOMÁTICA ENTRE PAINÉIS
+// ============================================
 
+let syncRevisions = null;
+let syncInterval = null;
+let syncChecking = false;
+
+const SYNC_INTERVAL = 10000;
+
+async function checkPanelSync() {
+
+  if (!API_TOKEN || syncChecking) return;
+  if (document.visibilityState !== "visible") return;
+
+  syncChecking = true;
+
+  try {
+
+    const result = await apiRequest("/api/sync");
+
+    const revisions = result.revisions || result;
+
+    if (!revisions || typeof revisions !== "object") return;
+
+    // Primeira consulta: registra a situação inicial
+    if (!syncRevisions) {
+
+      syncRevisions = {
+        games: Number(revisions.games || 0),
+        teams: Number(revisions.teams || 0),
+        championships: Number(revisions.championships || 0),
+        buttons: Number(revisions.buttons || 0)
+      };
+
+      return;
+    }
+
+    const changed = {
+      games: Number(revisions.games || 0) !== syncRevisions.games,
+      teams: Number(revisions.teams || 0) !== syncRevisions.teams,
+      championships: Number(revisions.championships || 0) !== syncRevisions.championships,
+      buttons: Number(revisions.buttons || 0) !== syncRevisions.buttons
+    };
+
+    // Atualiza as revisões conhecidas
+    syncRevisions = {
+      games: Number(revisions.games || 0),
+      teams: Number(revisions.teams || 0),
+      championships: Number(revisions.championships || 0),
+      buttons: Number(revisions.buttons || 0)
+    };
+
+    // Atualiza somente o que mudou
+
+    if (changed.games) {
+
+      const games = await apiRequest("/api/games");
+
+      gamesMemory = Array.isArray(games) ? games : [];
+
+      renderGames();
+
+      if (
+        !document
+          .getElementById("tab-addgame")
+          .classList.contains("hidden")
+      ) {
+        renderMoreGamesList();
+      }
+    }
+
+    if (changed.teams) {
+      await loadTeams("", true);
+    }
+
+    if (changed.championships) {
+      await loadChamps(true);
+    }
+
+    if (changed.buttons) {
+      await loadButtons("", true);
+    }
+
+    if (
+      changed.games ||
+      changed.teams ||
+      changed.championships ||
+      changed.buttons
+    ) {
+      console.log("Painel sincronizado:", changed);
+    }
+
+  } catch (error) {
+
+    console.error("Erro na sincronização:", error);
+
+  } finally {
+
+    syncChecking = false;
+
+  }
+}
+
+
+function startPanelSync() {
+
+  if (syncInterval) {
+    clearInterval(syncInterval);
+  }
+
+  syncRevisions = null;
+
+  // Obtém a revisão inicial
+  checkPanelSync();
+
+  // Consulta a cada 10 segundos
+  syncInterval = setInterval(() => {
+    checkPanelSync();
+  }, SYNC_INTERVAL);
+}
+
+
+// Ao voltar para a página, verifica imediatamente
+document.addEventListener("visibilitychange", () => {
+
+  if (document.visibilityState === "visible" && API_TOKEN) {
+    checkPanelSync();
+  }
+
+});
 
 
 // ===== HISTÓRICO DIÁRIO DO D1 =====
