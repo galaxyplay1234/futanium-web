@@ -920,18 +920,10 @@ const db = getFirestore(app);
 // ===== MIGRAR DADOS PARA O PAINEL 2 ===================
 // ======================================================
 
+
 async function exportarParaPainel2() {
   const WORKER_URL =
     "https://futanium-painel-2-api.galaxyplay1234.workers.dev";
-
-  // Informe o mesmo ADMIN_TOKEN const ADMIN_TOKEN = prompt(
-  "Digite o token administrativo do Painel 2:"
-);
-
-if (!ADMIN_TOKEN) {
-  alert("Migração cancelada.");
-  return;
-}
 
   if (!confirm(
     "Deseja transferir todos os times, campeonatos e botões para o Painel 2?"
@@ -939,50 +931,57 @@ if (!ADMIN_TOKEN) {
     return;
   }
 
+  const ADMIN_TOKEN = prompt(
+    "Digite o token administrativo do Painel 2:"
+  );
+
+  if (!ADMIN_TOKEN || !ADMIN_TOKEN.trim()) {
+    alert("Migração cancelada.");
+    return;
+  }
+
   try {
     alert("Lendo os dados do Painel 1...");
 
-    const [teamsSnap, champsSnap, buttonsSnap] = await Promise.all([
-      fbGetDocs(collection(db, "teams")),
-      fbGetDocs(collection(db, "championships")),
-      fbGetDocs(collection(db, "buttons"))
-    ]);
+    const [teamsSnap, champsSnap, buttonsSnap] =
+      await Promise.all([
+        fbGetDocs(collection(db, "teams")),
+        fbGetDocs(collection(db, "championships")),
+        fbGetDocs(collection(db, "buttons"))
+      ]);
 
-    const teams = teamsSnap.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+    const payload = {
+      teams: teamsSnap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })),
 
-    const championships = champsSnap.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+      championships: champsSnap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      })),
 
-    const buttons = buttonsSnap.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+      buttons: buttonsSnap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }))
+    };
 
-    console.log("Times:", teams.length);
-    console.log("Campeonatos:", championships.length);
-    console.log("Botões:", buttons.length);
+    const response = await fetch(
+      `${WORKER_URL}/api/import`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${ADMIN_TOKEN.trim()}`
+        },
+        body: JSON.stringify(payload)
+      }
+    );
 
-    const result = await fetch(`${WORKER_URL}/api/import`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${ADMIN_TOKEN}`
-      },
-      body: JSON.stringify({
-        teams,
-        championships,
-        buttons
-      })
-    });
+    const data = await response.json();
 
-    const data = await result.json();
-
-    if (!result.ok || !data.success) {
+    if (!response.ok || !data.success) {
       throw new Error(
         data.message || data.error || "Erro na importação"
       );
@@ -1004,6 +1003,7 @@ if (!ADMIN_TOKEN) {
 }
 
 window.exportarParaPainel2 = exportarParaPainel2;
+
 
 
 
