@@ -645,6 +645,50 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 
 </div>
 
+<!-- NOVO CARD: ACESSOS E REGISTROS DO PAINEL -->
+<div class="bg-white rounded shadow p-4 mt-4 mb-4">
+
+  <div class="font-semibold text-gray-800 mb-1">
+    📊 Consumo do Painel — 24 horas
+  </div>
+
+  <div class="text-xs text-gray-400 mb-3">
+    Período das 21h00 às 21h00 (horário de Brasília)
+  </div>
+
+  <div class="grid grid-cols-2 gap-3">
+
+    <div class="bg-gray-50 rounded p-3">
+      <div class="text-sm text-gray-500">
+        Entradas no painel
+      </div>
+
+      <div id="panel-entries"
+        class="text-2xl font-bold text-blue-600">
+        0
+      </div>
+    </div>
+
+    <div class="bg-gray-50 rounded p-3">
+      <div class="text-sm text-gray-500">
+        Registros lidos
+      </div>
+
+      <div id="panel-records"
+        class="text-2xl font-bold text-green-600">
+        0
+      </div>
+    </div>
+
+  </div>
+
+  <div id="panel-period"
+    class="text-xs text-gray-400 mt-3">
+    Aguardando dados...
+  </div>
+
+</div>
+
 </div> <!-- FIM DA ABA CONSOLE -->
 
 <!-- Importar (imagem -> jogos) -->
@@ -915,6 +959,158 @@ const API_URL = "https://futanium-painel-2-api.galaxyplay1234.workers.dev";
 
 let API_TOKEN = "";
 
+// ===== CONTADOR DE USO DO PAINEL =====
+
+const PANEL_USAGE_KEY = "futanium_panel_usage";
+
+function getPanelPeriodKey() {
+
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(new Date());
+
+  const values = {};
+
+  parts.forEach(part => {
+    values[part.type] = part.value;
+  });
+
+  let year = Number(values.year);
+  let month = Number(values.month);
+  let day = Number(values.day);
+
+  // Antes das 21h, pertence ao período iniciado ontem
+  if (Number(values.hour) < 21) {
+
+    const previousDay = new Date(
+      Date.UTC(year, month - 1, day - 1)
+    );
+
+    year = previousDay.getUTCFullYear();
+    month = previousDay.getUTCMonth() + 1;
+    day = previousDay.getUTCDate();
+  }
+
+  return [
+    year,
+    String(month).padStart(2, "0"),
+    String(day).padStart(2, "0")
+  ].join("-");
+}
+
+
+function getPanelUsage() {
+
+  const period = getPanelPeriodKey();
+
+  try {
+
+    const saved = JSON.parse(
+      localStorage.getItem(PANEL_USAGE_KEY) || "{}"
+    );
+
+    if (saved.period !== period) {
+      return {
+        period,
+        entries: 0,
+        records: 0
+      };
+    }
+
+    return saved;
+
+  } catch (error) {
+
+    return {
+      period,
+      entries: 0,
+      records: 0
+    };
+
+  }
+}
+
+
+function savePanelUsage(usage) {
+
+  localStorage.setItem(
+    PANEL_USAGE_KEY,
+    JSON.stringify(usage)
+  );
+
+  updatePanelUsageDisplay();
+}
+
+
+function updatePanelUsageDisplay() {
+
+  const usage = getPanelUsage();
+
+  const entries = document.getElementById("panel-entries");
+  const records = document.getElementById("panel-records");
+  const period = document.getElementById("panel-period");
+
+  if (!entries || !records || !period) return;
+
+  entries.textContent =
+    Number(usage.entries).toLocaleString("pt-BR");
+
+  records.textContent =
+    Number(usage.records).toLocaleString("pt-BR");
+
+  const [year, month, day] = usage.period.split("-");
+
+  period.textContent =
+    `Período: ${day}/${month}/${year} às 21h até às 21h do dia seguinte`;
+}
+
+
+// Conta cada login bem-sucedido
+function registerPanelEntry() {
+
+  const usage = getPanelUsage();
+
+  usage.entries++;
+
+  savePanelUsage(usage);
+}
+
+
+// Conta os registros retornados nas consultas GET
+function registerPanelReads(result) {
+
+  if (result === null || result === undefined) return;
+
+  let quantity = 0;
+
+  if (Array.isArray(result)) {
+
+    quantity = result.length;
+
+  } else if (typeof result === "object") {
+
+    quantity = 1;
+
+  }
+
+  if (quantity <= 0) return;
+
+  const usage = getPanelUsage();
+
+  usage.records += quantity;
+
+  savePanelUsage(usage);
+}
+
+
+// Exibe os valores ao abrir o Console
+updatePanelUsageDisplay();
+
 
 async function apiRequest(path, options = {}) {
   const method = (options.method || "GET").toUpperCase();
@@ -936,11 +1132,19 @@ async function apiRequest(path, options = {}) {
   const result = await response.json();
 
   if (!response.ok) {
-    throw new Error(result.error || "Erro na API");
-  }
-
-    return result;
+  throw new Error(result.error || "Erro na API");
 }
+
+// Conta somente consultas GET que retornaram dados.
+// O Analytics oficial do D1 fica fora dessa contagem.
+if (
+  method === "GET" &&
+  path !== "/api/d1-usage"
+) {
+  registerPanelReads(result);
+}
+
+return result;
 
 
 // ===== LOGIN NO WORKER =====
@@ -1404,7 +1608,10 @@ window.login = async function() {
     try {
       await apiLogin(u, p);
 
-      document.getElementById("login-error").classList.add("hidden");
+// Registra uma nova entrada no painel
+registerPanelEntry();
+
+document.getElementById("login-error").classList.add("hidden");
       document.getElementById("login-screen").classList.add("hidden");
       document.getElementById("dashboard").classList.remove("hidden");
 
