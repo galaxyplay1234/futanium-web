@@ -1,4 +1,3 @@
-
 const CACHE_NAME = "futanium-painel-v1";
 
 self.addEventListener("install", event => {
