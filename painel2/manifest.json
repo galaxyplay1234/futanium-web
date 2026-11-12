@@ -1,0 +1,11 @@
+{
+  "id": "/",
+  "name": "Painel Web Futanium 2",
+  "short_name": "Futanium",
+  "description": "Painel administrativo Futanium",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#111827"
+}
