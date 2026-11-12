@@ -175,6 +175,13 @@ Versões
   <!-- Conteúdo (abaixo da barra + tabs) -->
 <div class="pt-3">
     <!-- 56px (h-14 da topbar) + 48px (tabs) = 104px -->
+    
+    <button
+  onclick="exportarParaPainel2()"
+  class="bg-purple-600 text-white px-4 py-3 rounded-lg font-bold w-full mb-4">
+  <i class="fa-solid fa-database mr-2"></i>
+  Migrar dados para Painel 2
+</button>
 
     <!-- Home -->
     <div id="tab-home" class="tab-content">
@@ -907,6 +914,99 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+
+// ======================================================
+// ===== MIGRAR DADOS PARA O PAINEL 2 ===================
+// ======================================================
+
+async function exportarParaPainel2() {
+  const WORKER_URL =
+    "https://futanium-painel-2-api.galaxyplay1234.workers.dev";
+
+  // Informe o mesmo ADMIN_TOKEN const ADMIN_TOKEN = prompt(
+  "Digite o token administrativo do Painel 2:"
+);
+
+if (!ADMIN_TOKEN) {
+  alert("Migração cancelada.");
+  return;
+}
+
+  if (!confirm(
+    "Deseja transferir todos os times, campeonatos e botões para o Painel 2?"
+  )) {
+    return;
+  }
+
+  try {
+    alert("Lendo os dados do Painel 1...");
+
+    const [teamsSnap, champsSnap, buttonsSnap] = await Promise.all([
+      fbGetDocs(collection(db, "teams")),
+      fbGetDocs(collection(db, "championships")),
+      fbGetDocs(collection(db, "buttons"))
+    ]);
+
+    const teams = teamsSnap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    const championships = champsSnap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    const buttons = buttonsSnap.docs.map(d => ({
+      id: d.id,
+      ...d.data()
+    }));
+
+    console.log("Times:", teams.length);
+    console.log("Campeonatos:", championships.length);
+    console.log("Botões:", buttons.length);
+
+    const result = await fetch(`${WORKER_URL}/api/import`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${ADMIN_TOKEN}`
+      },
+      body: JSON.stringify({
+        teams,
+        championships,
+        buttons
+      })
+    });
+
+    const data = await result.json();
+
+    if (!result.ok || !data.success) {
+      throw new Error(
+        data.message || data.error || "Erro na importação"
+      );
+    }
+
+    alert(
+      "MIGRAÇÃO CONCLUÍDA!\n\n" +
+      `Times: ${data.imported.teams}\n` +
+      `Campeonatos: ${data.imported.championships}\n` +
+      `Botões: ${data.imported.buttons}`
+    );
+
+    console.log("Resultado da migração:", data);
+
+  } catch (error) {
+    console.error("Erro na migração:", error);
+    alert("Erro na migração: " + error.message);
+  }
+}
+
+window.exportarParaPainel2 = exportarParaPainel2;
+
+
+
 
 // ===== MONITOR FIRESTORE =====
 
