@@ -1752,7 +1752,10 @@ document.getElementById("login-error").classList.add("hidden");
       document.getElementById("dashboard").classList.remove("hidden");
 
       showTab("home", true);
-      await loadData();
+await loadData();
+
+// Inicia a sincronização entre os painéis
+startPanelSync();
 
     } catch (error) {
       console.error("Erro ao conectar com Worker:", error);
