@@ -274,7 +274,14 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </div>
 
         <!-- Campos fixos para Canais -->
-        <label class="block text-sm font-semibold mt-2">Canal 1</label>
+        <div class="flex items-center justify-between mt-2">
+  <label class="text-sm font-semibold">Canal 1</label>
+
+  <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+    <input type="checkbox" id="game-channel1-tv" class="w-4 h-4">
+    TV
+  </label>
+</div>
 <div class="flex items-center gap-2">
   <select id="game-channel1" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
@@ -311,7 +318,14 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </button>
 </div>
 
-<label class="block text-sm font-semibold mt-2">Canal 2</label>
+<div class="flex items-center justify-between mt-2">
+  <label class="text-sm font-semibold">Canal 2</label>
+
+  <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+    <input type="checkbox" id="game-channel2-tv" class="w-4 h-4">
+    TV
+  </label>
+</div>
 <div class="flex items-center gap-2">
   <select id="game-channel2" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
@@ -348,7 +362,14 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </button>
 </div>
 
-<label class="block text-sm font-semibold mt-2">Canal 3</label>
+<div class="flex items-center justify-between mt-2">
+  <label class="text-sm font-semibold">Canal 3</label>
+
+  <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+    <input type="checkbox" id="game-channel3-tv" class="w-4 h-4">
+    TV
+  </label>
+</div>
 <div class="flex items-center gap-2">
   <select id="game-channel3" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
@@ -385,7 +406,14 @@ class="bg-white rounded shadow p-3 mb-4 text-center text-sm">
 </button>
 </div>
 
-<label class="block text-sm font-semibold mt-2">Canal 4</label>
+<div class="flex items-center justify-between mt-2">
+  <label class="text-sm font-semibold">Canal 4</label>
+
+  <label class="flex items-center gap-2 text-sm font-medium cursor-pointer">
+    <input type="checkbox" id="game-channel4-tv" class="w-4 h-4">
+    TV
+  </label>
+</div>
 <div class="flex items-center gap-2">
   <select id="game-channel4" class="p-2 border rounded w-[75%]">
     <option value="">Selecione um botão</option>
@@ -2679,10 +2707,11 @@ document.getElementById("game-form").addEventListener("submit", async e => {
         );
 
         return {
-          name: select.selectedOptions[0]?.text || "",
-          url: select.value,
-          captureM3u8: btn?.captureM3u8 || false
-        };
+  name: select.selectedOptions[0]?.text || "",
+  url: select.value,
+  captureM3u8: btn?.captureM3u8 || false,
+  tv: document.getElementById(`game-channel${n}-tv`).checked
+};
       })
       .filter(c => c.url);
 
@@ -3069,6 +3098,14 @@ window.editGame = async function(id) {
     $('#game-channel2').val(findButtonValue(ch[1])).trigger('change.select2');
     $('#game-channel3').val(findButtonValue(ch[2])).trigger('change.select2');
     $('#game-channel4').val(findButtonValue(ch[3])).trigger('change.select2');
+    
+    // Restaura a seleção de canais para TV
+[1, 2, 3, 4].forEach((n, index) => {
+
+  document.getElementById(`game-channel${n}-tv`).checked =
+    ch[index]?.tv === true;
+
+});
 
     document.getElementById("game-time").value = g.time || "";
     document.getElementById("game-date").value = g.date || "";
@@ -4195,11 +4232,26 @@ window.moveChannel = function(position, direction){
 
   const target = document.getElementById(`game-channel${targetPosition}`);
   if(!target) return;
+  
+  
+  const currentTv = document.getElementById(
+  `game-channel${position}-tv`
+);
+
+const targetTv = document.getElementById(
+  `game-channel${targetPosition}-tv`
+);
 
   // Troca os valores
   const tempValue = current.value;
   current.value = target.value;
   target.value = tempValue;
+  
+  
+  // Troca também a seleção de TV
+const tempTv = currentTv.checked;
+currentTv.checked = targetTv.checked;
+targetTv.checked = tempTv;
 
   // Atualiza Select2
   $(`#game-channel${position}`).trigger('change.select2');
