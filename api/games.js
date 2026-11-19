@@ -339,22 +339,26 @@ function processGames(data, isMaster) {
     // =================================================
 
     const allButtons =
-      (game.channels || []).map(
-        (channel, i) => ({
+  (game.channels || []).map(
+    (channel, i) => ({
 
-          url:
-            channel.url || "",
+      url:
+        channel.url || "",
 
-          name:
-            isAviso
-              ? (channel.name || `Canal ${i + 1}`)
-              : `Canal ${i + 1}`,
+      name:
+        isAviso
+          ? (channel.name || `Canal ${i + 1}`)
+          : `Canal ${i + 1}`,
 
-          captureM3u8:
-            channel.captureM3u8 || false
+      captureM3u8:
+        channel.captureM3u8 || false,
 
-        })
-      );
+      // Indica se o canal deve aparecer na TV
+      tv:
+        channel.tv === true
+
+    })
+  );
 
     // =================================================
     // OCULTAR CANAIS
