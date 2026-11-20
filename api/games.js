@@ -336,45 +336,34 @@ function processGames(data, isMaster) {
 
     // =================================================
     // CANAIS
+    // Mantém a ordem original do painel.
+    // Não ordenar este array aqui.
+    // A TV organiza os canais usando tvOrder
+    // no GameAdapter.
     // =================================================
 
     const allButtons = (game.channels || []).map(
-  (channel, i) => ({
+      (channel, i) => ({
 
-    url: channel.url || "",
+        url: channel.url || "",
 
-    name: isAviso
-      ? (channel.name || `Canal ${i + 1}`)
-      : `Canal ${i + 1}`,
+        name: isAviso
+          ? (channel.name || `Canal ${i + 1}`)
+          : `Canal ${i + 1}`,
 
-    captureM3u8:
-      channel.captureM3u8 || false,
+        captureM3u8:
+          channel.captureM3u8 || false,
 
-    tv:
-      channel.tv === true,
+        tv:
+          channel.tv === true,
 
-    tvOrder:
-      channel.tv === true
-        ? (channel.tvOrder || 0)
-        : 0
+        tvOrder:
+          channel.tv === true
+            ? (channel.tvOrder || 0)
+            : 0
 
-  })
-);
-  
-  
-  // Ordena os canais TV pela ordem dos checkboxes
-allButtons.sort((a, b) => {
-
-  if (a.tv && b.tv) {
-    return a.tvOrder - b.tvOrder;
-  }
-
-  if (a.tv) return -1;
-  if (b.tv) return 1;
-
-  return 0;
-
-});
+      })
+    );
 
     // =================================================
     // OCULTAR CANAIS
