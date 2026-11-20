@@ -342,23 +342,40 @@ function processGames(data, isMaster) {
   (game.channels || []).map(
     (channel, i) => ({
 
-      url:
-        channel.url || "",
+      url: channel.url || "",
 
-      name:
-        isAviso
-          ? (channel.name || `Canal ${i + 1}`)
-          : `Canal ${i + 1}`,
+      name: isAviso
+        ? (channel.name || `Canal ${i + 1}`)
+        : `Canal ${i + 1}`,
 
       captureM3u8:
         channel.captureM3u8 || false,
 
-      // Indica se o canal deve aparecer na TV
       tv:
+        channel.tv === true,
+
+      tvOrder:
         channel.tv === true
+          ? (channel.tvOrder || 0)
+          : 0
 
     })
   );
+  
+  
+  // Ordena os canais TV pela ordem dos checkboxes
+allButtons.sort((a, b) => {
+
+  if (a.tv && b.tv) {
+    return a.tvOrder - b.tvOrder;
+  }
+
+  if (a.tv) return -1;
+  if (b.tv) return 1;
+
+  return 0;
+
+});
 
     // =================================================
     // OCULTAR CANAIS
