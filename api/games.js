@@ -338,29 +338,28 @@ function processGames(data, isMaster) {
     // CANAIS
     // =================================================
 
-    const allButtons =
-  (game.channels || []).map(
-    (channel, i) => ({
+    const allButtons = (game.channels || []).map(
+  (channel, i) => ({
 
-      url: channel.url || "",
+    url: channel.url || "",
 
-      name: isAviso
-        ? (channel.name || `Canal ${i + 1}`)
-        : `Canal ${i + 1}`,
+    name: isAviso
+      ? (channel.name || `Canal ${i + 1}`)
+      : `Canal ${i + 1}`,
 
-      captureM3u8:
-        channel.captureM3u8 || false,
+    captureM3u8:
+      channel.captureM3u8 || false,
 
-      tv:
-        channel.tv === true,
+    tv:
+      channel.tv === true,
 
-      tvOrder:
-        channel.tv === true
-          ? (channel.tvOrder || 0)
-          : 0
+    tvOrder:
+      channel.tv === true
+        ? (channel.tvOrder || 0)
+        : 0
 
-    })
-  );
+  })
+);
   
   
   // Ordena os canais TV pela ordem dos checkboxes
