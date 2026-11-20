@@ -1777,6 +1777,15 @@ window.addSelectedChannels = function() {
   for (let i = 1; i <= 4; i++) {
     $(`#game-channel${i}`).val(null).trigger("change");
   }
+  
+  // Limpa também as seleções anteriores da TV
+tvSelectionOrder = [];
+
+[1, 2, 3, 4].forEach(n => {
+  document.getElementById(`game-channel${n}-tv`).checked = false;
+});
+
+updateTvSelectionOrder();
 
   // Preenche conforme a ordem em que foram selecionados
   selected.forEach((link, index) => {
@@ -3234,9 +3243,26 @@ async function loadData(){
   listenAnalytics();
 }
 
-// ✅ Limpa qualquer select individualmente ao clicar no "✕"
 window.clearSelect = function(id) {
+
   $('#' + id).val(null).trigger('change');
+
+  const match = id.match(/game-channel([1-4])/);
+  if (!match) return;
+
+  const n = Number(match[1]);
+
+  const checkbox = document.getElementById(
+    `game-channel${n}-tv`
+  );
+
+  checkbox.checked = false;
+
+  tvSelectionOrder = tvSelectionOrder.filter(
+    number => number !== n
+  );
+
+  updateTvSelectionOrder();
 };
 
 
