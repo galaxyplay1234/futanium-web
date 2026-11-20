@@ -3167,20 +3167,39 @@ window.editGame = async function(id) {
     $('#game-channel3').val(findButtonValue(ch[2])).trigger('change.select2');
     $('#game-channel4').val(findButtonValue(ch[3])).trigger('change.select2');
     
-    // Restaura a seleção de canais para TV
+    // Restaura a seleção e a ordem original da TV
 tvSelectionOrder = [];
+
+const tvChannels = [];
 
 [1, 2, 3, 4].forEach((n, index) => {
 
-  const checkbox = document.getElementById(`game-channel${n}-tv`);
+  const checkbox = document.getElementById(
+    `game-channel${n}-tv`
+  );
 
-  checkbox.checked = ch[index]?.tv === true;
+  const channel = ch[index];
+
+  checkbox.checked = channel?.tv === true;
 
   if (checkbox.checked) {
-    tvSelectionOrder.push(n);
+
+    tvChannels.push({
+      position: n,
+      order: Number(channel.tvOrder) || (index + 1)
+    });
+
   }
 
 });
+
+// Recupera a ordem salva no banco
+tvChannels.sort((a, b) => a.order - b.order);
+
+// Reconstrói a sequência dos checkboxes
+tvSelectionOrder = tvChannels.map(
+  channel => channel.position
+);
 
 updateTvSelectionOrder();
 
@@ -4329,6 +4348,19 @@ const targetTv = document.getElementById(
 const tempTv = currentTv.checked;
 currentTv.checked = targetTv.checked;
 targetTv.checked = tempTv;
+
+
+// Atualiza também a ordem interna da TV
+tvSelectionOrder = tvSelectionOrder.map(n => {
+
+  if (n === position) return targetPosition;
+  if (n === targetPosition) return position;
+
+  return n;
+
+});
+
+updateTvSelectionOrder();
 
   // Atualiza Select2
   $(`#game-channel${position}`).trigger('change.select2');
