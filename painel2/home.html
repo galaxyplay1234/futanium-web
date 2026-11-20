@@ -2756,23 +2756,32 @@ document.getElementById("game-form").addEventListener("submit", async e => {
     const hideGame = document.getElementById("game-hide-game").checked;
     const hideChannels = document.getElementById("game-hide-channels").checked;
 
-    // Coleta os canais selecionados
-    const selected = [1, 2, 3, 4]
-      .map(n => {
-        const select = document.getElementById(`game-channel${n}`);
+    
+// Coleta os canais selecionados
+const selected = [1, 2, 3, 4]
+  .map(n => {
 
-        const btn = buttonsMemory.find(
-          b => b.link === select.value
-        );
+    const select = document.getElementById(`game-channel${n}`);
 
-        return {
-  name: select.selectedOptions[0]?.text || "",
-  url: select.value,
-  captureM3u8: btn?.captureM3u8 || false,
-  tv: document.getElementById(`game-channel${n}-tv`).checked
-};
-      })
-      .filter(c => c.url);
+    const btn = buttonsMemory.find(
+      b => b.link === select.value
+    );
+
+    const tv = document.getElementById(`game-channel${n}-tv`).checked;
+
+    return {
+      name: select.selectedOptions[0]?.text || "",
+      url: select.value,
+      captureM3u8: btn?.captureM3u8 || false,
+      tv,
+      tvOrder: tv
+        ? tvSelectionOrder.indexOf(n) + 1
+        : 0
+    };
+
+  })
+  .filter(c => c.url);
+
 
     if (!champ || !home || !away || !time) {
       alert("Preencha os campos obrigatórios.");
