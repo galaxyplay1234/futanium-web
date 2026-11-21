@@ -4597,7 +4597,20 @@ function renderMoreGamesList() {
     document.getElementById("game-channel4").value,
   ].filter(v => v);
 
-  gamesMemory.forEach(g => {
+  [...gamesMemory]
+  .sort((a, b) => {
+
+    function getMinutes(time) {
+      const clean = (time || "").replace("h", ":");
+      const [hour, minute] = clean.split(":").map(Number);
+
+      return (hour || 0) * 60 + (minute || 0);
+    }
+
+    return getMinutes(a.time) - getMinutes(b.time);
+
+  })
+  .forEach(g => {
 
     // ❌ Ignorar Aviso
     const isAviso =
