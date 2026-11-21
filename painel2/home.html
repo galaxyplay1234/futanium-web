@@ -3061,16 +3061,20 @@ updateToggleAllHidden();
 
   gamesArr.forEach(g => {
 
-    // Identifica o status do jogo
-const gameStatus = isAviso ? -1 : getGameStatus(g);
+    const isAviso =
+      g.home?.toLowerCase() === "aviso" &&
+      g.away?.toLowerCase() === "aviso";
 
-// Ponto vermelho piscando para jogos ao vivo
-// Ponto cinza fixo para jogos encerrados
-const statusDot = gameStatus === 0
-  ? `<span class="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0"></span>`
-  : gameStatus === 2
-    ? `<span class="inline-block w-2 h-2 rounded-full bg-gray-400 flex-shrink-0"></span>`
-    : "";
+    // Identifica o status do jogo
+    const gameStatus = isAviso ? -1 : getGameStatus(g);
+
+    // Ponto vermelho piscando para jogos ao vivo
+    // Ponto cinza fixo para jogos encerrados
+    const statusDot = gameStatus === 0
+      ? `<span class="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse flex-shrink-0"></span>`
+      : gameStatus === 2
+        ? `<span class="inline-block w-2 h-2 rounded-full bg-gray-400 flex-shrink-0"></span>`
+        : "";
 
     const canaisLabel = (g.channels && g.channels.length)
       ? `<div class="text-[12px] font-medium text-gray-400 mt-[-2px] leading-tight">
