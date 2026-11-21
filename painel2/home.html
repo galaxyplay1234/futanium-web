@@ -4782,6 +4782,54 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// ===== Ocultar canais 30 minutos após encerrar =====
+async function autoHideEndedGames() {
+
+  const nowSP = new Date(
+    new Date().toLocaleString("en-US", {
+      timeZone: "America/Sao_Paulo"
+    })
+  );
+
+  for (const game of gamesMemory) {
+
+    if (game.hideChannels) continue;
+
+    if (
+      game.home?.toLowerCase() === "aviso" &&
+      game.away?.toLowerCase() === "aviso"
+    ) continue;
+
+    if (!game.date || !game.time) continue;
+
+    const [year, month, day] = game.date.split("-").map(Number);
+    const [hour, minute] = game.time.replace("h", ":").split(":").map(Number);
+
+    const gameDate = new Date(year, month - 1, day, hour, minute);
+
+    const elapsed = (nowSP - gameDate) / 60000;
+
+    if (!Number.isFinite(elapsed) || elapsed < 160) continue;
+
+    try {
+
+      await apiRequest(`/api/games/${game.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ hideChannels: true })
+      });
+
+      game.hideChannels = true;
+
+      console.log("Canais ocultados:", game.home, "x", game.away);
+
+    } catch (error) {
+      console.error("Erro ao ocultar canais:", game.id, error);
+    }
+  }
+}
+
+
+
 // Atualiza a classificação dos jogos a cada 30 segundos
 setInterval(() => {
 
@@ -4792,6 +4840,7 @@ setInterval(() => {
     homeTab &&
     !homeTab.classList.contains("hidden")
   ) {
+    autoHideEndedGames();
     renderGames();
   }
 
