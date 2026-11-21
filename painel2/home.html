@@ -3162,7 +3162,8 @@ updateToggleAllHidden();
 
     } else {
 
-      li.innerHTML = `
+      
+li.innerHTML = `
   <div class="grid grid-cols-[1fr_auto] gap-2">
 
     <!-- LADO ESQUERDO -->
@@ -3170,12 +3171,11 @@ updateToggleAllHidden();
 
       <!-- Indicador -->
       <div class="h-5 flex items-center -mt-2">
-  ${statusLabel}
-</div>
+        ${statusLabel}
+      </div>
 
       <!-- Hora e campeonato -->
       <div class="flex items-center gap-2">
-
         <span class="inline-block px-1 py-0.5 bg-gray-200 text-[11px] rounded flex-shrink-0">
           ${g.time}
         </span>
@@ -3183,7 +3183,6 @@ updateToggleAllHidden();
         <span class="text-[12px] text-gray-500">
           ${g.champ}
         </span>
-
       </div>
 
       <!-- Times -->
@@ -3195,32 +3194,35 @@ updateToggleAllHidden();
 
     </div>
 
-        <!-- LADO DIREITO -->
-    <div class="flex flex-col items-start gap-2 flex-shrink-0">
+    <!-- LADO DIREITO -->
+    <div class="flex flex-col items-start flex-shrink-0">
 
-  <!-- Reserva a mesma altura do indicador -->
-  <div class="h-5"></div>
+      <!-- Espaço do indicador -->
+      <div class="h-5"></div>
 
-  <!-- Botões na linha do horário e campeonato -->
-  <div class="flex gap-2">
-    <button onclick="editGame('${g.id}')"
-      class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
-      Editar
-    </button>
+      <!-- Botões alinhados com horário e campeonato -->
+      <div class="flex items-center gap-2">
+        <button onclick="editGame('${g.id}')"
+          class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
+          Editar
+        </button>
 
-    <button onclick="deleteGame('${g.id}')"
-      class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
-      Excluir
-    </button>
-  </div>
+        <button onclick="deleteGame('${g.id}')"
+          class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
+          Excluir
+        </button>
+      </div>
 
-  ${hideGameLabel}
-  ${hideChannelsLabel}
+      <div class="flex flex-col gap-2 mt-2">
+        ${hideGameLabel}
+        ${hideChannelsLabel}
+      </div>
 
-</div>
+    </div>
 
   </div>
 `;
+
     }
 
     ul.appendChild(li);
