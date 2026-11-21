@@ -2957,23 +2957,93 @@ function renderGames() {
   return g.date === activeDate;
 });
 
-  // Mantém o AVISO fixo no topo.
-// Os demais jogos respeitam a ordem recebida da API.
-gamesArr.sort((a, b) => {
+  
+  // =====================================================
+  // ORDENAÇÃO AUTOMÁTICA DOS JOGOS NO PAINEL
+  // =====================================================
 
-  const aIsAviso =
-    a.home?.toLowerCase() === "aviso" &&
-    a.away?.toLowerCase() === "aviso";
+  const nowSP = new Date(
+    new Date().toLocaleString("en-US", {
+      timeZone: "America/Sao_Paulo"
+    })
+  );
 
-  const bIsAviso =
-    b.home?.toLowerCase() === "aviso" &&
-    b.away?.toLowerCase() === "aviso";
+  function getGameStatus(game) {
 
-  if (aIsAviso && !bIsAviso) return -1;
-  if (!aIsAviso && bIsAviso) return 1;
+    const [year, month, day] = (game.date || "")
+      .split("-").map(Number);
 
-  return 0;
-});
+    const cleanTime = (game.time || "")
+      .replace("h", ":");
+
+    const [hour, minute] = cleanTime
+      .split(":").map(v => parseInt(v) || 0);
+
+    const gameDate = new Date(
+      year,
+      month - 1,
+      day,
+      hour,
+      minute,
+      0
+    );
+
+    const diffMinutes =
+      (nowSP.getTime() - gameDate.getTime()) / 60000;
+
+    // 0 = ao vivo
+    if (diffMinutes >= 0 && diffMinutes < 130) {
+      return 0;
+    }
+
+    // 2 = encerrado
+    if (diffMinutes >= 130) {
+      return 2;
+    }
+
+    // 1 = ainda não começou
+    return 1;
+  }
+
+  gamesArr.sort((a, b) => {
+
+    const aIsAviso =
+      a.home?.toLowerCase() === "aviso" &&
+      a.away?.toLowerCase() === "aviso";
+
+    const bIsAviso =
+      b.home?.toLowerCase() === "aviso" &&
+      b.away?.toLowerCase() === "aviso";
+
+    // AVISO sempre no topo
+    if (aIsAviso && !bIsAviso) return -1;
+    if (!aIsAviso && bIsAviso) return 1;
+
+    if (aIsAviso && bIsAviso) return 0;
+
+    // Classifica os jogos
+    const statusA = getGameStatus(a);
+    const statusB = getGameStatus(b);
+
+    // Ao vivo primeiro, não iniciados depois,
+    // encerrados por último
+    if (statusA !== statusB) {
+      return statusA - statusB;
+    }
+
+    // Ordena por horário crescente dentro de cada grupo
+    const timeA = Number(
+      (a.time || "").replace(/[^\d]/g, "")
+    ) || 0;
+
+    const timeB = Number(
+      (b.time || "").replace(/[^\d]/g, "")
+    ) || 0;
+
+    return timeA - timeB;
+
+  });
+
 
   const ul = document.getElementById("games-list");
 
@@ -4670,7 +4740,20 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+// Atualiza a classificação dos jogos a cada 30 segundos
+setInterval(() => {
 
+  const homeTab = document.getElementById("tab-home");
+
+  if (
+    API_TOKEN &&
+    homeTab &&
+    !homeTab.classList.contains("hidden")
+  ) {
+    renderGames();
+  }
+
+}, 30000);
 
 </script>
 </body>
