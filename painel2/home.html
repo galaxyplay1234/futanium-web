@@ -3198,23 +3198,26 @@ updateToggleAllHidden();
         <!-- LADO DIREITO -->
     <div class="flex flex-col items-start gap-2 flex-shrink-0">
 
-      <!-- Botões alinhados com hora e campeonato -->
-      <div class="flex gap-2 mt-[20px]">
-        <button onclick="editGame('${g.id}')"
-          class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
-          Editar
-        </button>
+  <!-- Reserva a mesma altura do indicador -->
+  <div class="h-5"></div>
 
-        <button onclick="deleteGame('${g.id}')"
-          class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
-          Excluir
-        </button>
-      </div>
+  <!-- Botões na linha do horário e campeonato -->
+  <div class="flex gap-2">
+    <button onclick="editGame('${g.id}')"
+      class="bg-yellow-500 text-white px-2 py-0.5 rounded text-[12px]">
+      Editar
+    </button>
 
-      ${hideGameLabel}
-      ${hideChannelsLabel}
+    <button onclick="deleteGame('${g.id}')"
+      class="bg-red-500 text-white px-2 py-0.5 rounded text-[12px]">
+      Excluir
+    </button>
+  </div>
 
-    </div>
+  ${hideGameLabel}
+  ${hideChannelsLabel}
+
+</div>
 
   </div>
 `;
