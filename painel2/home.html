@@ -4664,22 +4664,37 @@ document.addEventListener("change", async (e) => {
   const checked = e.target.checked;
 
   try {
+
+    const update = {
+      hideChannels: checked
+    };
+
+    // Desocultação manual: não permitir nova ocultação automática.
+    if (!checked) {
+      update.autoHideChannelsDone = true;
+    }
+
     await apiRequest(`/api/games/${gameId}`, {
       method: "PATCH",
-      body: JSON.stringify({
-        hideChannels: checked
-      })
+      body: JSON.stringify(update)
     });
 
     const game = gamesMemory.find(g => g.id === gameId);
 
-if (game) {
-  game.hideChannels = checked;
-}
+    if (game) {
+      game.hideChannels = checked;
+
+      if (!checked) {
+        game.autoHideChannelsDone = true;
+      }
+    }
 
   } catch (error) {
+
     console.error("Erro ao ocultar canais:", error);
+
     e.target.checked = !checked;
+
     alert("Erro ao atualizar: " + error.message);
   }
 });
@@ -4806,6 +4821,10 @@ async function autoHideEndedGames() {
 
   for (const game of gamesMemory) {
 
+    // Já executou a ocultação automática ou recebeu
+    // uma decisão manual de desocultar.
+    if (game.autoHideChannelsDone) continue;
+
     if (game.hideChannels) continue;
 
     if (
@@ -4816,9 +4835,19 @@ async function autoHideEndedGames() {
     if (!game.date || !game.time) continue;
 
     const [year, month, day] = game.date.split("-").map(Number);
-    const [hour, minute] = game.time.replace("h", ":").split(":").map(Number);
 
-    const gameDate = new Date(year, month - 1, day, hour, minute);
+    const [hour, minute] = game.time
+      .replace("h", ":")
+      .split(":")
+      .map(Number);
+
+    const gameDate = new Date(
+      year,
+      month - 1,
+      day,
+      hour,
+      minute
+    );
 
     const elapsed = (nowSP - gameDate) / 60000;
 
@@ -4828,15 +4857,30 @@ async function autoHideEndedGames() {
 
       await apiRequest(`/api/games/${game.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ hideChannels: true })
+        body: JSON.stringify({
+          hideChannels: true,
+          autoHideChannelsDone: true
+        })
       });
 
       game.hideChannels = true;
+      game.autoHideChannelsDone = true;
 
-      console.log("Canais ocultados:", game.home, "x", game.away);
+      console.log(
+        "Canais ocultados automaticamente:",
+        game.home,
+        "x",
+        game.away
+      );
 
     } catch (error) {
-      console.error("Erro ao ocultar canais:", game.id, error);
+
+      console.error(
+        "Erro ao ocultar canais:",
+        game.id,
+        error
+      );
+
     }
   }
 }
